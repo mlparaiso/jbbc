@@ -14,7 +14,18 @@ const STORAGE_KEYS = {
 function loadFromStorage(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    // Deduplicate lineups by id (in case old bug left duplicates in storage)
+    if (key === 'jbbc_lineups' && Array.isArray(parsed)) {
+      const seen = new Set();
+      return parsed.filter(item => {
+        if (!item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+    }
+    return parsed;
   } catch {
     return fallback;
   }
