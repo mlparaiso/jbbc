@@ -210,25 +210,15 @@ export default function LineupDetailPage() {
                   document.body.removeChild(wrapper);
 
                   canvas.toBlob(async (blob) => {
-                    const file = new File([blob], `jbbc-lineup-${lineup.date}.png`, { type: 'image/png' });
-                    let shared = false;
-                    // Try native share with file (works on mobile)
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                      try {
-                        await navigator.share({ title, text, url, files: [file] });
-                        shared = true;
-                      } catch (e) {
-                        // user cancelled — still offer download
-                      }
-                    }
-                    // If share with file not supported or cancelled, download the image
-                    if (!shared) {
-                      const a = document.createElement('a');
-                      a.href = URL.createObjectURL(blob);
-                      a.download = `jbbc-lineup-${lineup.date}.png`;
-                      a.click();
-                      URL.revokeObjectURL(a.href);
-                    }
+                    // Always download the image — most reliable cross-device approach
+                    // (navigator.share with files fails on Android Chrome due to gesture timeout)
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `jbbc-lineup-${lineup.date}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
                     setSharing(false);
                   }, 'image/png');
                 } else {
