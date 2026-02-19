@@ -204,14 +204,14 @@ export default function LineupDetailPage() {
                     <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{group.section}</p>
                     <div className="space-y-1">
                       {group.songs.map((song, si) => (
-                        <div key={si} className="flex items-center gap-2">
-                          <span className="text-sm text-gray-800 leading-tight flex-1">{song.title}</span>
+                        <div key={si} className="flex items-center gap-1.5">
+                          <span className="text-sm text-gray-800 leading-tight">{song.title}</span>
                           {song.youtubeUrl && (
                             <a
                               href={song.youtubeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-shrink-0 flex items-center gap-0.5 text-xs text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded transition-colors"
+                              className="flex-shrink-0 inline-flex items-center gap-0.5 text-xs text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded transition-colors"
                               onClick={e => e.stopPropagation()}
                             >
                               <Youtube size={11} /> YT
