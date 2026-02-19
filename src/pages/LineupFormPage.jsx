@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText } from 'lucide-react';
 
 const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
 
@@ -136,19 +136,23 @@ export default function LineupFormPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <button onClick={() => navigate(-1)} className="text-primary-600 hover:underline text-sm mb-4 flex items-center gap-1">
-        ‹ Back
-      </button>
-
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        {isEdit ? '✏️ Edit Lineup' : '+ New Lineup'}
-      </h2>
+      <div className="flex items-center justify-between mb-5">
+        <button onClick={() => navigate(-1)} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
+          <ChevronLeft size={16} /> Back
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">
+          {isEdit ? 'Edit Lineup' : 'New Lineup'}
+        </h2>
+        <div className="w-16" />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Basic Info */}
         <div className="card space-y-4">
-          <h3 className="font-bold text-gray-700">📋 Service Info</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+            <ClipboardList size={14} className="text-primary-500" /> Service Info
+          </h3>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -187,7 +191,9 @@ export default function LineupFormPage() {
 
         {/* Worship Leaders */}
         <div className="card space-y-3">
-          <h3 className="font-bold text-gray-700">🎤 Worship Leader(s)</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+            <Mic2 size={14} className="text-primary-500" /> Worship Leader(s)
+          </h3>
           {form.worshipLeaders.map((wl, i) => (
             <div key={i} className="flex gap-2 items-start">
               <div className="flex-1">
@@ -222,7 +228,7 @@ export default function LineupFormPage() {
         {/* Back Ups */}
         <div className="card">
           <MultiSelect
-            label="🎵 Back Ups"
+            label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><Music4 size={14} className="text-primary-500" /> Back Ups</span>}
             memberOptions={vocalists}
             selected={form.backUps}
             onChange={val => setForm(f => ({ ...f, backUps: val }))}
@@ -231,7 +237,9 @@ export default function LineupFormPage() {
 
         {/* Instruments */}
         <div className="card space-y-4">
-          <h3 className="font-bold text-gray-700">🎸 Instrumentalists</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+            <Guitar size={14} className="text-primary-500" /> Instrumentalists
+          </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SingleSelect label="Keyboard 1 (K1)" memberOptions={keyboardists}
@@ -257,14 +265,16 @@ export default function LineupFormPage() {
 
         {/* Sound Engineer */}
         <div className="card">
-          <SingleSelect label="🎚 Sound Engineer (SE)" memberOptions={soundEngineers}
+          <SingleSelect label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> Sound Engineer</span>} memberOptions={soundEngineers}
             selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))} />
         </div>
 
         {/* Songs */}
         <div className="card space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-gray-700">🎵 Songs</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <BookOpen size={14} className="text-primary-500" /> Songs
+            </h3>
             <button type="button" onClick={() => setForm(f => ({
               ...f,
               songs: [...(f.songs || []), { section: 'Opening', title: '', youtubeUrl: '' }]
@@ -308,14 +318,18 @@ export default function LineupFormPage() {
 
         {/* Next WL */}
         <div className="card">
-          <label className="label">🎤 Next Worship Leader</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+            <Mic2 size={14} className="text-primary-500" /> Next Worship Leader
+          </label>
           <input type="text" className="input" placeholder="e.g. Jasper, Team A, Myk & Miho"
             value={form.nextWL || ''} onChange={e => setForm(f => ({ ...f, nextWL: e.target.value }))} />
         </div>
 
         {/* Notes */}
         <div className="card">
-          <label className="label">📝 Notes (optional)</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+            <FileText size={14} className="text-primary-500" /> Notes (optional)
+          </label>
           <textarea className="input" rows={2} placeholder="Any other special notes..."
             value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
