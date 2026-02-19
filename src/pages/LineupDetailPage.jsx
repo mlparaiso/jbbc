@@ -17,12 +17,12 @@ function shortDate(dateStr) {
 }
 
 const INSTRUMENT_CONFIG = [
-  { key: 'k1',             icon: <Piano size={14} />,           label: 'K1' },
-  { key: 'k2',             icon: <Piano size={14} />,           label: 'K2' },
-  { key: 'bass',           icon: <Waves size={14} />,           label: 'Bass' },
-  { key: 'leadGuitar',     icon: <Guitar size={14} />,          label: 'LG' },
-  { key: 'acousticGuitar', icon: <Guitar size={14} />,          label: 'AG' },
-  { key: 'drums',          icon: <Drum size={14} />,            label: 'Drums' },
+  { key: 'k1',             icon: <Piano size={14} />,           label: 'Keyboard 1',      iconClass: 'text-primary-500' },
+  { key: 'k2',             icon: <Piano size={14} />,           label: 'Keyboard 2',      iconClass: 'text-violet-400' },
+  { key: 'bass',           icon: <Waves size={14} />,           label: 'Bass Guitar',     iconClass: 'text-primary-500' },
+  { key: 'leadGuitar',     icon: <Guitar size={14} />,          label: 'Lead Guitar',     iconClass: 'text-orange-400' },
+  { key: 'acousticGuitar', icon: <Guitar size={14} />,          label: 'Acoustic Guitar', iconClass: 'text-primary-500' },
+  { key: 'drums',          icon: <Drum size={14} />,            label: 'Drums',           iconClass: 'text-primary-500' },
 ];
 
 // Group consecutive songs by section
@@ -175,14 +175,14 @@ export default function LineupDetailPage() {
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {INSTRUMENT_CONFIG.map(({ key, icon, label }) => {
+            {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
               const names = (lineup.instruments[key] || [])
                 .map(id => getMemberById(id)?.name)
                 .filter(Boolean)
                 .join(' / ');
               return (
                 <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <span className="text-primary-500 flex-shrink-0">{icon}</span>
+                  <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
                     <p className="text-sm font-medium text-gray-800 truncate">{names || '—'}</p>

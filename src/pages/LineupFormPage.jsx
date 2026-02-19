@@ -4,9 +4,9 @@ import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
 import { Plus, Trash2 } from 'lucide-react';
 
-const SONG_SECTIONS = ['Opening', 'Welcome', 'P&W', "Lord's Table", 'Special Number', 'Other'];
+const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
 
-const TEAM_A_ROLES = ["OpWelcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
+const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
 
 function MultiSelect({ label, memberOptions, selected, onChange, placeholder }) {
   const toggle = (id) => {

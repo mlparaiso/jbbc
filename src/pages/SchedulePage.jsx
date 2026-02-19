@@ -17,11 +17,11 @@ function shortDate(dateStr) {
   return d.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function InstrumentPill({ icon, name }) {
+function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
   if (!name) return null;
   return (
     <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 rounded px-1.5 py-0.5 text-xs">
-      <span className="text-primary-400">{icon}</span>
+      <span className={iconClass}>{icon}</span>
       {name}
     </span>
   );
@@ -156,13 +156,13 @@ export default function SchedulePage() {
 
                 {/* Instruments row */}
                 <div className="flex flex-wrap gap-1 px-4 pb-2 pt-1">
-                  {k1 && <InstrumentPill icon={<Piano size={10} />} name={`K1: ${k1}`} />}
-                  {k2 && <InstrumentPill icon={<Piano size={10} />} name={`K2: ${k2}`} />}
-                  {bass && <InstrumentPill icon={<Waves size={10} />} name={bass} />}
-                  {lg && <InstrumentPill icon={<Guitar size={10} />} name={`LG: ${lg}`} />}
-                  {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} />}
-                  {drums && <InstrumentPill icon={<Drum size={10} />} name={drums} />}
-                  {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} />}
+                  {k1 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 1: ${k1}`} iconClass="text-primary-400" />}
+                  {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass="text-violet-400" />}
+                  {bass && <InstrumentPill icon={<Waves size={10} />} name={`Bass: ${bass}`} iconClass="text-primary-400" />}
+                  {lg && <InstrumentPill icon={<Guitar size={10} />} name={`Lead Guitar: ${lg}`} iconClass="text-orange-400" />}
+                  {ag && <InstrumentPill icon={<Guitar size={10} />} name={`Acoustic Guitar: ${ag}`} iconClass="text-primary-400" />}
+                  {drums && <InstrumentPill icon={<Drum size={10} />} name={`Drums: ${drums}`} iconClass="text-primary-400" />}
+                  {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
                 </div>
 
                 {/* Practice date */}
