@@ -71,6 +71,7 @@ export default function LineupFormPage() {
     soundEngineer: '',
     practiceDate: '',
     nextWL: '',
+    bibleVerse: '',
     songs: [],
     notes: '',
   };
@@ -166,6 +167,12 @@ export default function LineupFormPage() {
             <label className="label">Monthly Theme</label>
             <input type="text" className="input" placeholder="e.g. Pursuing after God's Best"
               value={form.theme} onChange={e => setForm(f => ({ ...f, theme: e.target.value }))} />
+          </div>
+
+          <div>
+            <label className="label">Bible Verse (optional)</label>
+            <input type="text" className="input" placeholder='e.g. "For I know the plans..." — Jeremiah 29:11'
+              value={form.bibleVerse || ''} onChange={e => setForm(f => ({ ...f, bibleVerse: e.target.value }))} />
           </div>
 
           <div className="flex items-center gap-3">

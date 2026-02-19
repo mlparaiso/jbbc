@@ -371,6 +371,7 @@ export const INITIAL_LINEUPS = [
     date: '2026-02-01',
     isTeamA: true,
     theme: "Pursuing after God's Best",
+    bibleVerse: '"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you, plans to give you hope and a future." — Jeremiah 29:11',
     worshipLeaders: [
       { memberId: 'mem-beng',  role: 'Opening/Welcome' },
       { memberId: 'mem-zarie', role: 'Praise' },
@@ -619,4 +620,4 @@ export const INITIAL_LINEUPS = [
 ];
 
 // Bump this version string whenever you want to force-reset all users' localStorage data
-export const DATA_VERSION = '2026-v5';
+export const DATA_VERSION = '2026-v6';

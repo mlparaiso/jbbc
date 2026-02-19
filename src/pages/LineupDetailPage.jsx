@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, ExternalLink, Youtube
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Quote
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -107,6 +107,12 @@ export default function LineupDetailPage() {
               <BookOpen size={11} /> {lineup.theme}
             </p>
           )}
+          {lineup.bibleVerse && (
+            <div className="mt-1.5 flex items-start gap-1.5">
+              <Quote size={11} className="text-primary-300 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-primary-500 italic leading-relaxed">{lineup.bibleVerse}</p>
+            </div>
+          )}
           {/* Prominent practice date badge */}
           {lineup.practiceDate && (
             <div className="mt-2 inline-flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg px-3 py-1.5 text-xs font-semibold">
@@ -193,7 +199,7 @@ export default function LineupDetailPage() {
             <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
               <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-400 leading-none">SE</p>
+                <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
                 <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
               </div>
             </div>

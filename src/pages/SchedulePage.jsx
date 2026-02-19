@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, ChevronRight as ArrowRight,
-  Piano, Guitar, Waves, Drum, SlidersHorizontal, BookOpen
+  CalendarDays, Plus, BookOpen, Quote,
+  Piano, Guitar, Waves, Drum, SlidersHorizontal
 } from 'lucide-react';
 
 const MONTHS = [
@@ -32,6 +32,7 @@ export default function SchedulePage() {
   const navigate = useNavigate();
 
   const now = new Date();
+  const today = now.toISOString().slice(0, 10);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
@@ -45,6 +46,13 @@ export default function SchedulePage() {
       return d.getFullYear() === year && d.getMonth() + 1 === month;
     })
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Find the next upcoming lineup (closest future date)
+  const upcomingLineup = monthLineups.find(l => l.date >= today);
+
+  // Monthly theme and bible verse from the first lineup
+  const monthTheme = monthLineups.find(l => l.theme)?.theme || '';
+  const monthBibleVerse = monthLineups.find(l => l.bibleVerse)?.bibleVerse || '';
 
   const prevMonth = () => {
     if (atMin) return;
@@ -72,39 +80,30 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Monthly theme */}
-      {monthLineups.length > 0 && monthLineups[0].theme && (
-        <div className="mb-3 px-3 py-1.5 bg-primary-50 border border-primary-100 rounded-lg text-xs text-primary-700 flex items-center gap-1.5">
-          <BookOpen size={12} />
-          <span className="font-semibold">Theme:</span> {monthLineups[0].theme}
+      {/* Monthly Theme + Bible Verse */}
+      {monthTheme && (
+        <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <BookOpen size={14} className="text-primary-500" />
+            <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Monthly Theme</span>
+          </div>
+          <p className="text-base font-bold text-primary-800">{monthTheme}</p>
+          {monthBibleVerse && (
+            <div className="mt-2 pt-2 border-t border-primary-100">
+              <div className="flex items-start gap-1.5">
+                <Quote size={12} className="text-primary-300 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-primary-600 italic leading-relaxed">{monthBibleVerse}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Next WL banner — show from the most recent past lineup's nextWL */}
-      {(() => {
-        const today = new Date().toISOString().slice(0, 10);
-        // Find the last lineup that has already passed (or today) with a nextWL set
-        const withNextWL = [...monthLineups]
-          .reverse()
-          .find(l => l.nextWL && l.date <= today);
-        if (!withNextWL) return null;
-        return (
-          <div className="mb-3 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center">
-              <Mic2 size={18} className="text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-amber-600 uppercase tracking-wide">Next Worship Leader</p>
-              <p className="text-base font-bold text-amber-900">{withNextWL.nextWL}</p>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Lineup list */}
       {monthLineups.length > 0 ? (
         <div className="space-y-2">
           {monthLineups.map((lineup) => {
+            const isUpcoming = lineup.id === upcomingLineup?.id;
             const wlNames = lineup.worshipLeaders.map(wl => {
               const m = getMemberById(wl.memberId);
               const roleLabel = wl.role && wl.role !== 'Worship Leader' ? ` (${wl.role})` : '';
@@ -112,7 +111,6 @@ export default function SchedulePage() {
             }).join(', ');
 
             const backupNames = lineup.backUps.map(id => getMemberById(id)?.name).filter(Boolean).join(', ');
-
             const k1 = lineup.instruments.k1?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
             const k2 = lineup.instruments.k2?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
             const bass = lineup.instruments.bass?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
@@ -122,56 +120,73 @@ export default function SchedulePage() {
             const se = getMemberById(lineup.soundEngineer);
 
             return (
-              <div
-                key={lineup.id}
-                onClick={() => navigate(`/lineup/${lineup.id}`)}
-                className={`bg-white border border-gray-100 rounded-xl cursor-pointer hover:shadow-sm hover:border-primary-200 transition-all border-l-4 ${
-                  lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'
-                }`}
-              >
-                {/* Top row: date + Team A badge + arrow */}
-                <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-800 text-sm">{shortDate(lineup.date)}</span>
-                    {lineup.isTeamA && (
-                      <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-1.5 py-0.5 rounded-full">Team A</span>
-                    )}
+              <div key={lineup.id}>
+                {/* "UPCOMING" label above the highlighted card */}
+                {isUpcoming && (
+                  <div className="flex items-center gap-2 mb-1 px-1">
+                    <span className="text-xs font-bold text-primary-500 uppercase tracking-widest">● Upcoming</span>
                   </div>
-                  <ChevronRight size={15} className="text-gray-300" />
-                </div>
+                )}
+                <div
+                  onClick={() => navigate(`/lineup/${lineup.id}`)}
+                  className={`rounded-xl cursor-pointer transition-all border-l-4 ${
+                    isUpcoming
+                      ? 'bg-primary-600 text-white border-l-primary-300 shadow-lg ring-2 ring-primary-300'
+                      : `bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'}`
+                  }`}
+                >
+                  {/* Top row: date + Team A badge + arrow */}
+                  <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold text-sm ${isUpcoming ? 'text-white' : 'text-gray-800'}`}>
+                        {shortDate(lineup.date)}
+                      </span>
+                      {lineup.isTeamA && (
+                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${isUpcoming ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'}`}>
+                          Team A
+                        </span>
+                      )}
+                    </div>
+                    <ChevronRight size={15} className={isUpcoming ? 'text-white/60' : 'text-gray-300'} />
+                  </div>
 
-                {/* WL row */}
-                <div className="flex items-start gap-1.5 px-4 pb-1">
-                  <Mic2 size={13} className="text-primary-400 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700 font-medium leading-tight">{wlNames || 'TBA'}</span>
-                </div>
-
-                {/* Backups row */}
-                {backupNames && (
+                  {/* WL row */}
                   <div className="flex items-start gap-1.5 px-4 pb-1">
-                    <Music4 size={13} className="text-gray-300 flex-shrink-0 mt-0.5" />
-                    <span className="text-xs text-gray-500 leading-tight">{backupNames}</span>
+                    <Mic2 size={13} className={`flex-shrink-0 mt-0.5 ${isUpcoming ? 'text-white/70' : 'text-primary-400'}`} />
+                    <span className={`text-sm font-medium leading-tight ${isUpcoming ? 'text-white' : 'text-gray-700'}`}>
+                      {wlNames || 'TBA'}
+                    </span>
                   </div>
-                )}
 
-                {/* Instruments row */}
-                <div className="flex flex-wrap gap-1 px-4 pb-2 pt-1">
-                  {k1 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 1: ${k1}`} iconClass="text-primary-400" />}
-                  {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass="text-violet-400" />}
-                  {bass && <InstrumentPill icon={<Waves size={10} />} name={`Bass: ${bass}`} iconClass="text-primary-400" />}
-                  {lg && <InstrumentPill icon={<Guitar size={10} />} name={`Lead Guitar: ${lg}`} iconClass="text-orange-400" />}
-                  {ag && <InstrumentPill icon={<Guitar size={10} />} name={`Acoustic Guitar: ${ag}`} iconClass="text-primary-400" />}
-                  {drums && <InstrumentPill icon={<Drum size={10} />} name={`Drums: ${drums}`} iconClass="text-primary-400" />}
-                  {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
+                  {/* Backups row */}
+                  {backupNames && (
+                    <div className="flex items-start gap-1.5 px-4 pb-1">
+                      <Music4 size={13} className={`flex-shrink-0 mt-0.5 ${isUpcoming ? 'text-white/50' : 'text-gray-300'}`} />
+                      <span className={`text-xs leading-tight ${isUpcoming ? 'text-white/80' : 'text-gray-500'}`}>{backupNames}</span>
+                    </div>
+                  )}
+
+                  {/* Instruments row */}
+                  <div className={`flex flex-wrap gap-1 px-4 pb-2 pt-1 ${isUpcoming ? '[&_span]:bg-white/15 [&_span]:text-white' : ''}`}>
+                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 1: ${k1}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-violet-400'} />}
+                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`Bass: ${bass}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`Lead Guitar: ${lg}`} iconClass={isUpcoming ? 'text-white/70' : 'text-orange-400'} />}
+                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`Acoustic Guitar: ${ag}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`Drums: ${drums}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`Sound Engineer: ${se.name}`} iconClass={isUpcoming ? 'text-white/70' : 'text-blue-400'} />}
+                  </div>
+
+                  {/* Practice date */}
+                  {lineup.practiceDate && (
+                    <div className="flex items-center gap-1 px-4 pb-2">
+                      <CalendarCheck size={11} className={isUpcoming ? 'text-white/50' : 'text-gray-300'} />
+                      <span className={`text-xs ${isUpcoming ? 'text-white/70' : 'text-gray-400'}`}>
+                        Practice: {shortDate(lineup.practiceDate)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-
-                {/* Practice date */}
-                {lineup.practiceDate && (
-                  <div className="flex items-center gap-1 px-4 pb-2">
-                    <CalendarCheck size={11} className="text-gray-300" />
-                    <span className="text-xs text-gray-400">Practice: {shortDate(lineup.practiceDate)}</span>
-                  </div>
-                )}
               </div>
             );
           })}
