@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
 
@@ -15,6 +15,11 @@ const MONTHS = [
 function shortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function fullDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
@@ -72,7 +77,7 @@ export default function SchedulePage() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 print:hidden">
         <button onClick={prevMonth} className={`p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors ${atMin ? 'opacity-30 cursor-not-allowed' : ''}`}>
           <ChevronLeft size={18} />
         </button>
@@ -85,9 +90,68 @@ export default function SchedulePage() {
         </button>
       </div>
 
+      {/* Print button */}
+      {monthLineups.length > 0 && (
+        <div className="flex justify-end mb-3 print:hidden">
+          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
+            <Printer size={13} /> Print Month
+          </button>
+        </div>
+      )}
+
+      {/* Printable monthly table — hidden on screen */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-xl font-bold text-gray-900">JBBC Music Team — {MONTHS[month - 1]} {year} Schedule</h1>
+        {monthTheme && <p className="text-sm text-gray-700 mt-1">Theme: <strong>{monthTheme}</strong></p>}
+        {monthBibleVerse && <p className="text-xs text-gray-500 italic mt-0.5">"{monthBibleVerse}"</p>}
+        <table className="w-full text-xs border-collapse mt-3">
+          <thead>
+            <tr className="border-b-2 border-gray-800 text-left">
+              <th className="py-1 pr-2">Date</th>
+              <th className="py-1 pr-2">WL</th>
+              <th className="py-1 pr-2">Back Ups</th>
+              <th className="py-1 pr-2">K1</th>
+              <th className="py-1 pr-2">K2</th>
+              <th className="py-1 pr-2">BG</th>
+              <th className="py-1 pr-2">LG</th>
+              <th className="py-1 pr-2">AG</th>
+              <th className="py-1 pr-2">D</th>
+              <th className="py-1">SE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {monthLineups.map((l, i) => {
+              const wl = l.worshipLeaders.map(w => getMemberById(w.memberId)?.name || '—').join(', ');
+              const bu = l.backUps.map(id => getMemberById(id)?.name).filter(Boolean).join(', ') || '—';
+              const k1p = (l.instruments.k1 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const k2p = (l.instruments.k2 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const bp = (l.instruments.bass || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const lgp = (l.instruments.leadGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const agp = (l.instruments.acousticGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const dp = (l.instruments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const sep = getMemberById(l.soundEngineer)?.name || '—';
+              return (
+                <tr key={l.id} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="py-1.5 pr-2 font-medium whitespace-nowrap">{fullDate(l.date)}</td>
+                  <td className="py-1.5 pr-2">{wl}</td>
+                  <td className="py-1.5 pr-2 text-gray-600">{bu}</td>
+                  <td className="py-1.5 pr-2">{k1p}</td>
+                  <td className="py-1.5 pr-2">{k2p}</td>
+                  <td className="py-1.5 pr-2">{bp}</td>
+                  <td className="py-1.5 pr-2">{lgp}</td>
+                  <td className="py-1.5 pr-2">{agp}</td>
+                  <td className="py-1.5 pr-2">{dp}</td>
+                  <td className="py-1.5">{sep}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
       {/* Monthly Theme + Bible Verse */}
       {(monthTheme || isAdmin) && (
-        <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3">
+        <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3 print:hidden">
           {!editingTheme ? (
             <>
               <div className="flex items-center justify-between mb-1">
@@ -162,7 +226,7 @@ export default function SchedulePage() {
 
       {/* Lineup list */}
       {monthLineups.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2 print:hidden">
           {monthLineups.map((lineup) => {
             const isUpcoming = lineup.id === upcomingLineup?.id;
             const wlNames = lineup.worshipLeaders.map(wl => {
@@ -247,7 +311,7 @@ export default function SchedulePage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 print:hidden">
           <CalendarDays size={40} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium">No lineups for this month yet.</p>
           {isAdmin && (
@@ -260,7 +324,7 @@ export default function SchedulePage() {
 
       {/* Admin: Add Lineup Button */}
       {isAdmin && monthLineups.length > 0 && (
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center print:hidden">
           <button onClick={() => navigate('/lineup/new')} className="btn-primary flex items-center gap-1.5 mx-auto text-sm">
             <Plus size={15} /> Add New Lineup
           </button>
