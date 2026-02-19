@@ -193,6 +193,18 @@ export default function LineupFormPage() {
     return sorted[0] || null;
   }, [form.date, lineups, isEdit]);
 
+  // Auto-fill Next WL from the next scheduled lineup
+  const suggestedNextWL = useMemo(() => {
+    if (!form.date) return null;
+    const sorted = [...lineups].filter(l => l.date > form.date).sort((a, b) => a.date.localeCompare(b.date));
+    const next = sorted[0];
+    if (!next) return null;
+    const names = (next.worshipLeaders || [])
+      .map(wl => members.find(m => m.id === wl.memberId)?.name)
+      .filter(Boolean);
+    return names.length > 0 ? names.join(' & ') : null;
+  }, [form.date, lineups, members]);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -455,11 +467,26 @@ export default function LineupFormPage() {
 
         {/* Next WL */}
         <div className="card">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-            <Mic2 size={14} className="text-primary-500" /> Next Worship Leader
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Mic2 size={14} className="text-primary-500" /> Next Worship Leader
+            </label>
+            {suggestedNextWL && form.nextWL !== suggestedNextWL && (
+              <button type="button"
+                onClick={() => setForm(f => ({ ...f, nextWL: suggestedNextWL }))}
+                className="text-xs text-primary-600 hover:underline flex items-center gap-1"
+              >
+                <Copy size={11} /> Use: {suggestedNextWL}
+              </button>
+            )}
+          </div>
           <input type="text" className="input" placeholder="e.g. Jasper, Team A, Myk & Miho"
             value={form.nextWL || ''} onChange={e => setForm(f => ({ ...f, nextWL: e.target.value }))} />
+          {suggestedNextWL && (
+            <p className="text-xs text-gray-400 mt-1">
+              💡 Next scheduled WL: <span className="font-medium text-gray-600">{suggestedNextWL}</span>
+            </p>
+          )}
         </div>
 
         {/* Notes */}
