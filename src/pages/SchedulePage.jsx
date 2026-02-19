@@ -56,9 +56,10 @@ export default function SchedulePage() {
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState('');
   const [verseInput, setVerseInput] = useState('');
-  const [showCopyModal, setShowCopyModal] = useState(false);
-  const [copyTargetYear, setCopyTargetYear] = useState(now.getFullYear());
-  const [copyTargetMonth, setCopyTargetMonth] = useState(now.getMonth() + 1 === 12 ? 1 : now.getMonth() + 2);
+  // Copy-from state — used only on empty months
+  const [showCopyPanel, setShowCopyPanel] = useState(false);
+  const [copySourceYear, setCopySourceYear] = useState(now.getFullYear());
+  const [copySourceMonth, setCopySourceMonth] = useState(now.getMonth() === 0 ? 12 : now.getMonth());
   const [copyDoing, setCopyDoing] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
 
@@ -92,30 +93,58 @@ export default function SchedulePage() {
     else setMonth(m => m + 1);
   };
 
-  const handleCopyMonth = () => {
+  const handleCopyFrom = () => {
     setCopyDoing(true);
-    const targetSundays = getSundaysInMonth(copyTargetYear, copyTargetMonth);
-    const sourceSorted = [...monthLineups].sort((a, b) => a.date.localeCompare(b.date));
-    sourceSorted.forEach((l, i) => {
-      const targetDate = targetSundays[i];
-      if (!targetDate) return;
+    // Source lineups from the selected month
+    const sourceLineups = lineups
+      .filter(l => {
+        const d = new Date(l.date + 'T00:00:00');
+        return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Target Sundays for the current (empty) month
+    const targetSundays = getSundaysInMonth(year, month);
+    const targetCount = targetSundays.length;
+    const sourceCount = sourceLineups.length;
+
+    // Copy up to min(sourceCount, targetCount) — truncate if source has more
+    const copyCount = Math.min(sourceCount, targetCount);
+    for (let i = 0; i < copyCount; i++) {
       addLineup({
-        ...l,
+        ...sourceLineups[i],
         id: undefined,
-        date: targetDate,
+        date: targetSundays[i],
         practiceDate: '',
-        songs: l.songs || [],
-        notes: l.notes || '',
         nextWL: '',
+        songs: sourceLineups[i].songs || [],
+        notes: sourceLineups[i].notes || '',
       });
-    });
+    }
+
+    // If target has more Sundays than source, create blank lineups for the rest
+    for (let i = copyCount; i < targetCount; i++) {
+      addLineup({
+        date: targetSundays[i],
+        isTeamA: false,
+        theme: '',
+        bibleVerse: '',
+        worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
+        backUps: [],
+        instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [] },
+        soundEngineer: '',
+        practiceDate: '',
+        nextWL: '',
+        songs: [],
+        notes: '',
+      });
+    }
+
     setCopyDoing(false);
     setCopyDone(true);
     setTimeout(() => {
-      setShowCopyModal(false);
+      setShowCopyPanel(false);
       setCopyDone(false);
-      setYear(copyTargetYear);
-      setMonth(copyTargetMonth);
     }, 1000);
   };
 
@@ -135,56 +164,12 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons — only when month has lineups */}
       {monthLineups.length > 0 && (
         <div className="flex justify-end gap-2 mb-3 print:hidden">
-          {isAdmin && (
-            <button onClick={() => { setShowCopyModal(true); setCopyDone(false); }} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
-              <Copy size={13} /> Copy Month
-            </button>
-          )}
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
             <Printer size={13} /> Print Month
           </button>
-        </div>
-      )}
-
-      {/* Copy Month Modal */}
-      {showCopyModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 print:hidden">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-80 space-y-4">
-            <h3 className="text-base font-bold text-gray-800">Copy {MONTHS[month - 1]} Lineup To…</h3>
-            <p className="text-xs text-gray-500">
-              This will copy the {monthLineups.length} lineup{monthLineups.length !== 1 ? 's' : ''} from {MONTHS[month - 1]} {year} to the selected month, matched by Sunday order. Members and instruments will be copied; songs and notes will be kept.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">Month</label>
-                <select className="input" value={copyTargetMonth} onChange={e => setCopyTargetMonth(Number(e.target.value))}>
-                  {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="label">Year</label>
-                <select className="input" value={copyTargetYear} onChange={e => setCopyTargetYear(Number(e.target.value))}>
-                  {[2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="text-xs text-gray-400">
-              Target Sundays: {getSundaysInMonth(copyTargetYear, copyTargetMonth).map(d => printDate(d)).join(', ')}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleCopyMonth}
-                disabled={copyDoing || copyDone}
-                className={`btn-primary flex-1 text-sm ${copyDone ? 'opacity-70' : ''}`}
-              >
-                {copyDone ? '✅ Copied!' : copyDoing ? 'Copying…' : 'Copy Lineups'}
-              </button>
-              <button onClick={() => setShowCopyModal(false)} className="btn-secondary text-sm">Cancel</button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -416,13 +401,67 @@ export default function SchedulePage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-16 text-gray-400 print:hidden">
+        <div className="text-center py-10 text-gray-400 print:hidden">
           <CalendarDays size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No lineups for this month yet.</p>
-          {isAdmin && (
-            <button onClick={() => navigate('/lineup/new')} className="btn-primary mt-4 flex items-center gap-1.5 mx-auto">
-              <Plus size={15} /> Create First Lineup
-            </button>
+          <p className="font-medium mb-4">No lineups for this month yet.</p>
+          {isAdmin && !showCopyPanel && (
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => navigate('/lineup/new')} className="btn-primary flex items-center gap-1.5">
+                <Plus size={15} /> Create First Lineup
+              </button>
+              <button onClick={() => { setShowCopyPanel(true); setCopyDone(false); }} className="btn-secondary text-sm flex items-center gap-1.5">
+                <Copy size={13} /> Copy from Another Month
+              </button>
+            </div>
+          )}
+          {isAdmin && showCopyPanel && (
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 text-left max-w-sm mx-auto space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-gray-800 mb-0.5">Copy lineup into {MONTHS[month - 1]} {year}</h3>
+                <p className="text-xs text-gray-400">
+                  {MONTHS[month - 1]} {year} has <strong>{getSundaysInMonth(year, month).length} Sundays</strong>: {getSundaysInMonth(year, month).map(d => printDate(d)).join(', ')}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Copy from Month</label>
+                  <select className="input" value={copySourceMonth} onChange={e => setCopySourceMonth(Number(e.target.value))}>
+                    {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Year</label>
+                  <select className="input" value={copySourceYear} onChange={e => setCopySourceYear(Number(e.target.value))}>
+                    {[2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+              {(() => {
+                const src = lineups.filter(l => {
+                  const d = new Date(l.date + 'T00:00:00');
+                  return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
+                });
+                const tgt = getSundaysInMonth(year, month);
+                const extra = tgt.length - src.length;
+                return (
+                  <div className="text-xs text-gray-500 space-y-0.5">
+                    <p>Source: <strong>{src.length} lineup{src.length !== 1 ? 's' : ''}</strong> in {MONTHS[copySourceMonth - 1]} {copySourceYear}</p>
+                    {extra > 0 && <p className="text-amber-600">⚠️ {extra} extra Sunday{extra !== 1 ? 's' : ''} will be created as unassigned.</p>}
+                    {extra < 0 && <p className="text-blue-600">ℹ️ Only the first {tgt.length} lineups will be copied.</p>}
+                  </div>
+                );
+              })()}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyFrom}
+                  disabled={copyDoing || copyDone}
+                  className={`btn-primary flex-1 text-sm ${copyDone ? 'opacity-70' : ''}`}
+                >
+                  {copyDone ? '✅ Copied!' : copyDoing ? 'Copying…' : 'Copy Lineups'}
+                </button>
+                <button onClick={() => setShowCopyPanel(false)} className="btn-secondary text-sm">Cancel</button>
+              </div>
+            </div>
           )}
         </div>
       )}
