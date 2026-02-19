@@ -199,6 +199,8 @@ export default function LineupFormPage() {
     const sorted = [...lineups].filter(l => l.date > form.date).sort((a, b) => a.date.localeCompare(b.date));
     const next = sorted[0];
     if (!next) return null;
+    // If next lineup is a Team A Sunday, use "Team A" nickname
+    if (next.isTeamA) return 'Team A';
     const names = (next.worshipLeaders || [])
       .map(wl => members.find(m => m.id === wl.memberId)?.name)
       .filter(Boolean);
