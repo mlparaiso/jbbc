@@ -119,8 +119,8 @@ export default function LineupDetailPage() {
                 const title = `JBBC Lineup — ${date}`;
                 const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}${lineup.theme ? `\nTheme: ${lineup.theme}` : ''}`;
 
-                // Try to capture card as image and share
-                if (cardRef.current && navigator.share && navigator.canShare) {
+                // Capture card as image
+                if (cardRef.current) {
                   const canvas = await html2canvas(cardRef.current, {
                     scale: 2,
                     backgroundColor: '#ffffff',
@@ -129,23 +129,33 @@ export default function LineupDetailPage() {
                   });
                   canvas.toBlob(async (blob) => {
                     const file = new File([blob], `jbbc-lineup-${lineup.date}.png`, { type: 'image/png' });
-                    try {
-                      if (navigator.canShare({ files: [file] })) {
+                    let shared = false;
+                    // Try native share with file (works on mobile)
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                      try {
                         await navigator.share({ title, text, url, files: [file] });
-                      } else {
-                        await navigator.share({ title, text, url });
+                        shared = true;
+                      } catch (e) {
+                        // user cancelled — still offer download
                       }
-                    } catch (e) {
-                      // user cancelled or share failed, fallback
-                      navigator.clipboard?.writeText(url).then(() => alert('Link copied!'));
+                    }
+                    // If share with file not supported or cancelled, download the image
+                    if (!shared) {
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = `jbbc-lineup-${lineup.date}.png`;
+                      a.click();
+                      URL.revokeObjectURL(a.href);
                     }
                     setSharing(false);
                   }, 'image/png');
-                } else if (navigator.share) {
-                  await navigator.share({ title, text, url });
-                  setSharing(false);
                 } else {
-                  navigator.clipboard?.writeText(url).then(() => alert('Link copied to clipboard!'));
+                  // No canvas — fallback to link share
+                  if (navigator.share) {
+                    try { await navigator.share({ title, text, url }); } catch (e) {}
+                  } else {
+                    navigator.clipboard?.writeText(url).then(() => alert('Link copied to clipboard!'));
+                  }
                   setSharing(false);
                 }
               } catch {
