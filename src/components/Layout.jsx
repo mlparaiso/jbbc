@@ -21,13 +21,13 @@ export default function Layout() {
       {/* Header */}
       <header className="bg-primary-700 text-white shadow-md">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <Music2 size={24} className="text-primary-200" />
-            <div>
+            <div className="text-left">
               <h1 className="text-lg font-bold leading-tight">JBBC Music Team</h1>
               <p className="text-xs text-primary-200">Worship Schedule Manager</p>
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-2">
             {isAdmin ? (
               <div className="flex items-center gap-2">

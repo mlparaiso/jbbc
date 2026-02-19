@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -101,6 +101,25 @@ export default function LineupDetailPage() {
           </span>
         </nav>
         <div className="flex gap-2 print:hidden">
+          <button
+            onClick={() => {
+              const url = window.location.href;
+              const date = new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+              const wlNames = lineup.worshipLeaders.map(wl => {
+                const m = getMemberById(wl.memberId);
+                return m ? m.name : '';
+              }).filter(Boolean).join(', ');
+              const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}\n${lineup.theme ? `Theme: ${lineup.theme}` : ''}`.trim();
+              if (navigator.share) {
+                navigator.share({ title: `JBBC Lineup — ${date}`, text, url });
+              } else {
+                navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!'));
+              }
+            }}
+            className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"
+          >
+            <Share2 size={12} /> Share
+          </button>
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
             <Printer size={12} /> Print
           </button>
