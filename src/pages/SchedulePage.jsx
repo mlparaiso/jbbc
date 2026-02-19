@@ -217,31 +217,28 @@ export default function SchedulePage() {
                     <ChevronRight size={15} className={isUpcoming ? 'text-white/60' : 'text-gray-300'} />
                   </div>
 
-                  {/* WL row */}
+                  {/* WL + Backups on same row */}
                   <div className="flex items-start gap-1.5 px-4 pb-1">
                     <Mic2 size={13} className={`flex-shrink-0 mt-0.5 ${isUpcoming ? 'text-white/70' : 'text-primary-400'}`} />
                     <span className={`text-sm font-medium leading-tight ${isUpcoming ? 'text-white' : 'text-gray-700'}`}>
                       {wlNames || 'TBA'}
                     </span>
+                    {backupNames && (
+                      <span className={`text-xs leading-tight mt-0.5 ml-1 ${isUpcoming ? 'text-white/60' : 'text-gray-400'}`}>
+                        + {backupNames}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Backups row */}
-                  {backupNames && (
-                    <div className="flex items-start gap-1.5 px-4 pb-1">
-                      <Music4 size={13} className={`flex-shrink-0 mt-0.5 ${isUpcoming ? 'text-white/50' : 'text-gray-300'}`} />
-                      <span className={`text-xs leading-tight ${isUpcoming ? 'text-white/80' : 'text-gray-500'}`}>{backupNames}</span>
-                    </div>
-                  )}
-
-                  {/* Instruments row */}
-                  <div className={`flex flex-wrap gap-1 px-4 pb-2 pt-1 ${isUpcoming ? '[&_span]:bg-white/15 [&_span]:text-white' : ''}`}>
-                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 1: ${k1}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-amber-500'} />}
-                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`Bass: ${bass}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`Lead Guitar: ${lg}`} iconClass={isUpcoming ? 'text-white/70' : 'text-orange-400'} />}
-                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`Acoustic Guitar: ${ag}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`Drums: ${drums}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`Sound Engineer: ${se.name}`} iconClass={isUpcoming ? 'text-white/70' : 'text-blue-400'} />}
+                  {/* Instruments — initials only, single row */}
+                  <div className={`flex flex-wrap gap-1 px-4 pb-2 pt-0.5 ${isUpcoming ? '[&_span]:bg-white/15 [&_span]:text-white' : ''}`}>
+                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`K1: ${k1}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`K2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-amber-500'} />}
+                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`BG: ${bass}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`LG: ${lg}`} iconClass={isUpcoming ? 'text-white/70' : 'text-orange-400'} />}
+                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
+                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass={isUpcoming ? 'text-white/70' : 'text-blue-400'} />}
                   </div>
 
                 </div>
