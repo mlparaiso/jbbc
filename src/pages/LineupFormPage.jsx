@@ -15,7 +15,7 @@ const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Wors
 const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
 
 // Autocomplete input for song titles
-function SongAutocomplete({ value, onChange, songLibrary }) {
+function SongAutocomplete({ value, onChange, songLibrary, compactInput }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const matches = value.trim().length > 0
@@ -28,11 +28,15 @@ function SongAutocomplete({ value, onChange, songLibrary }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const inputClass = compactInput
+    ? `${compactInput} w-full`
+    : 'input w-full';
+
   return (
     <div ref={ref} className="relative flex-1">
       <input
         type="text"
-        className="input w-full"
+        className={inputClass}
         placeholder="Song title"
         value={value}
         onChange={e => { onChange({ title: e.target.value }); setOpen(true); }}
@@ -43,7 +47,7 @@ function SongAutocomplete({ value, onChange, songLibrary }) {
         <div className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {matches.map((s, i) => (
             <button key={i} type="button"
-              className="w-full text-left px-3 py-2 hover:bg-primary-50 text-sm flex items-center justify-between"
+              className="w-full text-left px-3 py-1.5 hover:bg-primary-50 text-xs flex items-center justify-between"
               onMouseDown={() => { onChange({ title: s.title, youtubeUrl: s.youtubeUrl, section: s.section }); setOpen(false); }}
             >
               <span className="font-medium text-gray-800 truncate">{s.title}</span>
@@ -56,25 +60,28 @@ function SongAutocomplete({ value, onChange, songLibrary }) {
   );
 }
 
+// Compact input style for song rows
+const compactInput = 'w-full border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent';
+
 // Draggable song row
 function SortableSongRow({ song, index, songLibrary, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(index) });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
-    <div ref={setNodeRef} style={style} className="flex gap-2 items-start">
-      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 mt-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none">
-        <GripVertical size={16} />
+    <div ref={setNodeRef} style={style} className="flex gap-1.5 items-center">
+      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none">
+        <GripVertical size={14} />
       </button>
-      <select className="input w-32 flex-shrink-0" value={song.section}
+      <select className={`${compactInput} w-28 flex-shrink-0`} value={song.section}
         onChange={e => onChange({ section: e.target.value })}>
         {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
       </select>
-      <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} />
-      <input type="url" className="input w-28 flex-shrink-0" placeholder="YT URL (opt.)"
+      <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} compactInput={compactInput} />
+      <input type="url" className={`${compactInput} w-24 flex-shrink-0`} placeholder="YT URL (opt.)"
         value={song.youtubeUrl || ''}
         onChange={e => onChange({ youtubeUrl: e.target.value })} />
-      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 mt-2 flex-shrink-0">
-        <Trash2 size={15} />
+      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 flex-shrink-0">
+        <Trash2 size={13} />
       </button>
     </div>
   );
