@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote,
-  Piano, Guitar, Waves, Drum, SlidersHorizontal
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X
 } from 'lucide-react';
+import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -28,13 +28,16 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, getMemberById } = useApp();
+  const { lineups, isAdmin, getMemberById, updateLineup } = useApp();
   const navigate = useNavigate();
 
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [editingTheme, setEditingTheme] = useState(false);
+  const [themeInput, setThemeInput] = useState('');
+  const [verseInput, setVerseInput] = useState('');
 
   const MIN_YEAR = 2026;
   const MIN_MONTH = 1;
@@ -47,8 +50,10 @@ export default function SchedulePage() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Find the next upcoming lineup (closest future date)
-  const upcomingLineup = monthLineups.find(l => l.date >= today);
+  // Find only the single next upcoming Sunday (closest date >= today)
+  const allSorted = [...lineups].sort((a, b) => a.date.localeCompare(b.date));
+  const nextUpcoming = allSorted.find(l => l.date >= today);
+  const upcomingLineup = nextUpcoming && monthLineups.find(l => l.id === nextUpcoming.id);
 
   // Monthly theme and bible verse from the first lineup
   const monthTheme = monthLineups.find(l => l.theme)?.theme || '';
@@ -81,18 +86,74 @@ export default function SchedulePage() {
       </div>
 
       {/* Monthly Theme + Bible Verse */}
-      {monthTheme && (
+      {(monthTheme || isAdmin) && (
         <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <BookOpen size={14} className="text-primary-500" />
-            <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Monthly Theme</span>
-          </div>
-          <p className="text-base font-bold text-primary-800">{monthTheme}</p>
-          {monthBibleVerse && (
-            <div className="mt-2 pt-2 border-t border-primary-100">
-              <div className="flex items-start gap-1.5">
-                <Quote size={12} className="text-primary-300 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-primary-600 italic leading-relaxed">{monthBibleVerse}</p>
+          {!editingTheme ? (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <BookOpen size={14} className="text-primary-500" />
+                  <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Monthly Theme</span>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setThemeInput(monthTheme); setVerseInput(monthBibleVerse); setEditingTheme(true); }}
+                    className="text-primary-400 hover:text-primary-600 p-1 rounded"
+                    title="Edit theme & verse"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                )}
+              </div>
+              {monthTheme
+                ? <p className="text-base font-bold text-primary-800">{monthTheme}</p>
+                : <p className="text-sm text-primary-400 italic">No theme set for this month. Click ✏️ to add one.</p>
+              }
+              {monthBibleVerse && (
+                <div className="mt-2 pt-2 border-t border-primary-100">
+                  <div className="flex items-start gap-1.5">
+                    <Quote size={12} className="text-primary-300 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-primary-600 italic leading-relaxed">{monthBibleVerse}</p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <BookOpen size={14} className="text-primary-500" />
+                <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Edit Theme & Verse</span>
+              </div>
+              <input
+                type="text"
+                className="input text-sm"
+                placeholder="Monthly Theme..."
+                value={themeInput}
+                onChange={e => setThemeInput(e.target.value)}
+              />
+              <textarea
+                className="input text-sm"
+                rows={2}
+                placeholder='Bible verse (e.g. "For I know the plans..." — Jeremiah 29:11)'
+                value={verseInput}
+                onChange={e => setVerseInput(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    monthLineups.forEach(l => updateLineup(l.id, { ...l, theme: themeInput, bibleVerse: verseInput }));
+                    setEditingTheme(false);
+                  }}
+                  className="btn-primary text-xs py-1 px-3 flex items-center gap-1"
+                >
+                  <Check size={12} /> Save
+                </button>
+                <button
+                  onClick={() => setEditingTheme(false)}
+                  className="btn-secondary text-xs py-1 px-3 flex items-center gap-1"
+                >
+                  <X size={12} /> Cancel
+                </button>
               </div>
             </div>
           )}
@@ -169,7 +230,7 @@ export default function SchedulePage() {
                   {/* Instruments row */}
                   <div className={`flex flex-wrap gap-1 px-4 pb-2 pt-1 ${isUpcoming ? '[&_span]:bg-white/15 [&_span]:text-white' : ''}`}>
                     {k1 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 1: ${k1}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-violet-400'} />}
+                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`Keyboard 2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-amber-500'} />}
                     {bass && <InstrumentPill icon={<Waves size={10} />} name={`Bass: ${bass}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
                     {lg && <InstrumentPill icon={<Guitar size={10} />} name={`Lead Guitar: ${lg}`} iconClass={isUpcoming ? 'text-white/70' : 'text-orange-400'} />}
                     {ag && <InstrumentPill icon={<Guitar size={10} />} name={`Acoustic Guitar: ${ag}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
