@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Music2, CalendarDays, Users, LogOut, Lock, ListMusic, Settings } from 'lucide-react';
+import { Music2, CalendarDays, Users, LogOut, ListMusic, Settings } from 'lucide-react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -28,13 +28,8 @@ export default function Layout() {
           </button>
 
           <div className="flex items-center gap-2">
-            {authLoading ? null : user ? (
+            {!authLoading && user && (
               <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <span className="text-xs bg-white/20 text-white font-semibold px-2 py-1 rounded-full">
-                    Admin
-                  </span>
-                )}
                 <button onClick={() => navigate('/team-setup')} title="Team Settings"
                   className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
                   <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full border border-white/30" referrerPolicy="no-referrer" />
@@ -44,11 +39,6 @@ export default function Layout() {
                   <LogOut size={14} />
                 </button>
               </div>
-            ) : (
-              <button onClick={() => navigate('/admin')}
-                className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
-                <Lock size={13} /> Admin Login
-              </button>
             )}
           </div>
         </div>
