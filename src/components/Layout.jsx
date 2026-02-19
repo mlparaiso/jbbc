@@ -1,6 +1,15 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Music2, CalendarDays, Users, LogOut, Lock } from 'lucide-react';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 export default function Layout() {
   const { isAdmin, logout } = useApp();
@@ -8,6 +17,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       {/* Header */}
       <header className="bg-primary-700 text-white shadow-md">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -67,7 +77,7 @@ export default function Layout() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 min-h-[60vh]">
         <Outlet />
       </main>
 
