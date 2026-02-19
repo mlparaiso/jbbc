@@ -240,7 +240,9 @@ export default function LineupDetailPage() {
                   }
                   setSharing(false);
                 }
-              } catch {
+              } catch (err) {
+                console.error('Share error:', err);
+                alert('Share failed: ' + (err?.message || String(err)));
                 setSharing(false);
               }
             }}
