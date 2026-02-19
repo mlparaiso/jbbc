@@ -15,7 +15,7 @@ const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Wors
 const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
 
 // Autocomplete input for song titles
-function SongAutocomplete({ value, onChange, songLibrary, compactInput }) {
+function SongAutocomplete({ value, onChange, songLibrary, inputClass }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const matches = value.trim().length > 0
@@ -28,15 +28,11 @@ function SongAutocomplete({ value, onChange, songLibrary, compactInput }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const inputClass = compactInput
-    ? `${compactInput} w-full`
-    : 'input w-full';
-
   return (
-    <div ref={ref} className="relative flex-1">
+    <div ref={ref} className="relative min-w-0">
       <input
         type="text"
-        className={inputClass}
+        className={inputClass || 'input w-full'}
         placeholder="Song title"
         value={value}
         onChange={e => { onChange({ title: e.target.value }); setOpen(true); }}
@@ -60,27 +56,25 @@ function SongAutocomplete({ value, onChange, songLibrary, compactInput }) {
   );
 }
 
-// Compact input style for song rows
-const compactInput = 'w-full border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent';
+// Compact input style shared across all form fields
+const ci = 'w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-white';
 
 // Draggable song row
 function SortableSongRow({ song, index, songLibrary, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(index) });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
-    <div ref={setNodeRef} style={style} className="flex gap-1.5 items-center">
-      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none">
+    <div ref={setNodeRef} style={style} className="grid grid-cols-[16px_140px_1fr_140px_20px] gap-1.5 items-center">
+      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none">
         <GripVertical size={14} />
       </button>
-      <select className={`${compactInput} w-28 flex-shrink-0`} value={song.section}
-        onChange={e => onChange({ section: e.target.value })}>
+      <select className={ci} value={song.section} onChange={e => onChange({ section: e.target.value })}>
         {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
       </select>
-      <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} compactInput={compactInput} />
-      <input type="url" className={`${compactInput} w-24 flex-shrink-0`} placeholder="YT URL (opt.)"
-        value={song.youtubeUrl || ''}
-        onChange={e => onChange({ youtubeUrl: e.target.value })} />
-      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 flex-shrink-0">
+      <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} inputClass={ci} />
+      <input type="url" className={ci} placeholder="YT URL (opt.)"
+        value={song.youtubeUrl || ''} onChange={e => onChange({ youtubeUrl: e.target.value })} />
+      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 flex justify-center">
         <Trash2 size={13} />
       </button>
     </div>
