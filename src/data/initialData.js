@@ -270,7 +270,9 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-aljune',
     practiceDate: '',
-    notes: 'Songs:\nOpening: TBA\nPraise & Worship: TBA\nNext WL: Myk & Miho',
+    nextWL: 'Myk & Miho',
+    songs: [],
+    notes: '',
   },
   {
     id: 'lineup-2026-01-11',
@@ -292,7 +294,15 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '2026-01-04',
-    notes: 'Opening/Welcome: Sa Bayan ng Jalajala (lower key Bb)\nP&W: Sa Biyaya – Spring Worship | Pangako Ko | Been So Good | Salamat Panginoon\nPractice: Jan 4, after the Church Service.\nNext WL: Thony and Khrizzy',
+    nextWL: 'Thony and Khrizzy',
+    songs: [
+      { section: 'Opening/Welcome', title: 'Sa Bayan ng Jalajala (lower key Bb)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Sa Biyaya – Spring Worship', youtubeUrl: '' },
+      { section: 'P&W', title: 'Pangako Ko', youtubeUrl: '' },
+      { section: 'P&W', title: 'Been So Good', youtubeUrl: '' },
+      { section: 'P&W', title: 'Salamat Panginoon', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-01-18',
@@ -314,7 +324,16 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '2026-01-11',
-    notes: 'Opening/Welcome: Tayo na Sama-sama\nP&W: Umaapaw sa Pagsamba | Ako\'y Nananabik | Sapat | Pagsambang Alay\nSpecial Number: Matibay na Sandigan\nPractice: Jan 11, after the Service.\nNext WL: Aljune',
+    nextWL: 'Aljune',
+    songs: [
+      { section: 'Opening/Welcome', title: 'Tayo na Sama-sama', youtubeUrl: '' },
+      { section: 'P&W', title: 'Umaapaw sa Pagsamba', youtubeUrl: '' },
+      { section: 'P&W', title: "Ako'y Nananabik", youtubeUrl: '' },
+      { section: 'P&W', title: 'Sapat', youtubeUrl: '' },
+      { section: 'P&W', title: 'Pagsambang Alay', youtubeUrl: '' },
+      { section: 'Special Number', title: 'Matibay na Sandigan', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-01-25',
@@ -335,7 +354,15 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '2026-01-18',
-    notes: 'Opening/Welcome: JBBC Welcome Song (English)\nP&W: Sabay-sabay: Malayang Pilipino | Ang nais ko | Gantimpala ko | Panata/Ikaw lamang medley\nPractice: Jan 18, after the Service.\nNext WL: Team A',
+    nextWL: 'Team A',
+    songs: [
+      { section: 'Opening/Welcome', title: 'JBBC Welcome Song (English)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Malayang Pilipino', youtubeUrl: '' },
+      { section: 'P&W', title: 'Ang nais ko', youtubeUrl: '' },
+      { section: 'P&W', title: 'Gantimpala ko', youtubeUrl: '' },
+      { section: 'P&W', title: 'Panata/Ikaw lamang medley', youtubeUrl: '' },
+    ],
+    notes: '',
   },
 
   // ── FEBRUARY 2026 ─────────────────────────────────────────────
@@ -361,7 +388,17 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-aljune',
     practiceDate: '2026-01-25',
-    notes: 'Opening: As We Gather & The Steadfast Love of the Lord [Ate Beng]\nWelcome: Kamusta ka na (ang sarap ng feeling) [Ate Beng]\nP&W: Mahal na Mahal Kita Panginoon [Ate Zarie] | Pangako Ko [Ate Zarie] | God of all my Days [Kuya Lito] | I Speak Jesus [Kuya Lito]\nLord\'s Table: Cornerstone [Kuya Meo]\nPractice: Jan 25, after the Service.\nNext WL: Jasper',
+    nextWL: 'Jasper',
+    songs: [
+      { section: 'Opening', title: 'As We Gather & The Steadfast Love of the Lord', youtubeUrl: '' },
+      { section: 'Welcome', title: 'Kamusta ka na (ang sarap ng feeling)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Mahal na Mahal Kita Panginoon', youtubeUrl: '' },
+      { section: 'P&W', title: 'Pangako Ko', youtubeUrl: '' },
+      { section: "P&W", title: 'God of all my Days', youtubeUrl: '' },
+      { section: 'P&W', title: 'I Speak Jesus', youtubeUrl: '' },
+      { section: "Lord's Table", title: 'Cornerstone', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-02-08',
@@ -382,7 +419,15 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-aljune',
     practiceDate: '2026-02-01',
-    notes: 'Opening: I Love You Lord\nWelcome: Hi Love\nP&W: Ako\'y Nananabik | Kamangha-mangha | Pag-ibig mong Kayganda\nPractice: Feb 1, after the Service.\nNext WL: Jasper',
+    nextWL: 'Jasper',
+    songs: [
+      { section: 'Opening', title: 'I Love You Lord', youtubeUrl: '' },
+      { section: 'Welcome', title: 'Hi Love', youtubeUrl: '' },
+      { section: 'P&W', title: "Ako'y Nananabik", youtubeUrl: '' },
+      { section: 'P&W', title: 'Kamangha-mangha', youtubeUrl: '' },
+      { section: 'P&W', title: 'Pag-ibig mong Kayganda', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-02-15',
@@ -403,7 +448,15 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '2026-02-08',
-    notes: 'Opening: When I Look Into Your Holiness\nWelcome: JBBC Welcome Song (English)\nP&W: Father, Spirit, Jesus – Casting Crowns | Now That You\'re Near – Hillsong | Pusong Basag/Ikaw ang Hari Medley\nPractice: Feb 8, after the Mentoring.\nNext WL: Jasper',
+    nextWL: 'Jasper',
+    songs: [
+      { section: 'Opening', title: 'When I Look Into Your Holiness', youtubeUrl: '' },
+      { section: 'Welcome', title: 'JBBC Welcome Song (English)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Father, Spirit, Jesus – Casting Crowns', youtubeUrl: '' },
+      { section: 'P&W', title: "Now That You're Near – Hillsong", youtubeUrl: '' },
+      { section: 'P&W', title: 'Pusong Basag/Ikaw ang Hari Medley', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-02-22',
@@ -424,7 +477,14 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '2026-02-15',
-    notes: 'P&W: Ang Nais Ko | May Galak | Wala nang hahanapin pa | Kalakip ng Awitin\nPractice: Feb 15, after the Mentoring.\nNext WL: Team A',
+    nextWL: 'Team A',
+    songs: [
+      { section: 'P&W', title: 'Ang Nais Ko', youtubeUrl: '' },
+      { section: 'P&W', title: 'May Galak', youtubeUrl: '' },
+      { section: 'P&W', title: 'Wala nang hahanapin pa', youtubeUrl: '' },
+      { section: 'P&W', title: 'Kalakip ng Awitin', youtubeUrl: '' },
+    ],
+    notes: '',
   },
 
   // ── MARCH 2026 ────────────────────────────────────────────────
@@ -450,7 +510,17 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-aljune',
     practiceDate: '2026-02-22',
-    notes: "Opening: Salamat Panginoon (Puso Ko'y Iyong Sinisiyasat)\nWelcome: Welcome to the Family\nP&W: This is the Day (Bishop) | Today is the Day (Brewster) | Sukdulang Biyaya | Diyos Ka sa Amin\nLord's Table: God So Loved\nPractice: Feb 22, after the Mentoring.\nNext WL: Khrizzy/Thony",
+    nextWL: 'Khrizzy/Thony',
+    songs: [
+      { section: 'Opening', title: "Salamat Panginoon (Puso Ko'y Iyong Sinisiyasat)", youtubeUrl: '' },
+      { section: 'Welcome', title: 'Welcome to the Family', youtubeUrl: '' },
+      { section: 'P&W', title: 'This is the Day (Bishop)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Today is the Day (Brewster)', youtubeUrl: '' },
+      { section: 'P&W', title: 'Sukdulang Biyaya', youtubeUrl: '' },
+      { section: 'P&W', title: 'Diyos Ka sa Amin', youtubeUrl: '' },
+      { section: "Lord's Table", title: 'God So Loved', youtubeUrl: '' },
+    ],
+    notes: '',
   },
   {
     id: 'lineup-2026-03-08',
@@ -472,7 +542,9 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '',
-    notes: 'Next WL: Miho/Myk',
+    nextWL: 'Miho/Myk',
+    songs: [],
+    notes: '',
   },
   {
     id: 'lineup-2026-03-15',
@@ -494,7 +566,9 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '',
-    notes: 'Next WL: Aljune',
+    nextWL: 'Aljune',
+    songs: [],
+    notes: '',
   },
   {
     id: 'lineup-2026-03-22',
@@ -515,7 +589,9 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '',
-    notes: 'Next WL: RC',
+    nextWL: 'RC',
+    songs: [],
+    notes: '',
   },
   {
     id: 'lineup-2026-03-29',
@@ -536,9 +612,11 @@ export const INITIAL_LINEUPS = [
     },
     soundEngineer: 'mem-meo',
     practiceDate: '',
+    nextWL: '',
+    songs: [],
     notes: '',
   },
 ];
 
 // Bump this version string whenever you want to force-reset all users' localStorage data
-export const DATA_VERSION = '2026-v3';
+export const DATA_VERSION = '2026-v4';

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, ExternalLink, Youtube
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -11,15 +11,33 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// Icon + short label for each instrument slot
+function shortDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 const INSTRUMENT_CONFIG = [
-  { key: 'k1',           icon: <Piano size={14} />,          label: 'K1' },
-  { key: 'k2',           icon: <Piano size={14} />,          label: 'K2' },
-  { key: 'bass',         icon: <Waves size={14} />,          label: 'Bass' },
-  { key: 'leadGuitar',   icon: <Guitar size={14} />,         label: 'LG' },
-  { key: 'acousticGuitar', icon: <Guitar size={14} />,       label: 'AG' },
-  { key: 'drums',        icon: <Drum size={14} />,           label: 'Drums' },
+  { key: 'k1',             icon: <Piano size={14} />,           label: 'K1' },
+  { key: 'k2',             icon: <Piano size={14} />,           label: 'K2' },
+  { key: 'bass',           icon: <Waves size={14} />,           label: 'Bass' },
+  { key: 'leadGuitar',     icon: <Guitar size={14} />,          label: 'LG' },
+  { key: 'acousticGuitar', icon: <Guitar size={14} />,          label: 'AG' },
+  { key: 'drums',          icon: <Drum size={14} />,            label: 'Drums' },
 ];
+
+// Group consecutive songs by section
+function groupSongs(songs) {
+  const groups = [];
+  songs.forEach(song => {
+    const last = groups[groups.length - 1];
+    if (last && last.section === song.section) {
+      last.songs.push(song);
+    } else {
+      groups.push({ section: song.section, songs: [song] });
+    }
+  });
+  return groups;
+}
 
 export default function LineupDetailPage() {
   const { id } = useParams();
@@ -46,6 +64,8 @@ export default function LineupDetailPage() {
   };
 
   const se = getMemberById(lineup.soundEngineer);
+  const songs = lineup.songs || [];
+  const songGroups = groupSongs(songs);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -71,10 +91,10 @@ export default function LineupDetailPage() {
         </div>
       </div>
 
-      {/* Main card — everything in one compact panel */}
+      {/* Main card */}
       <div className={`card border-l-4 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'} space-y-4`}>
 
-        {/* Date + theme */}
+        {/* Date + theme + practice date */}
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-bold text-gray-800">{formatDate(lineup.date)}</h2>
@@ -87,18 +107,19 @@ export default function LineupDetailPage() {
               <BookOpen size={11} /> {lineup.theme}
             </p>
           )}
+          {/* Prominent practice date badge */}
           {lineup.practiceDate && (
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <CalendarCheck size={11} /> Practice: {formatDate(lineup.practiceDate)}
-            </p>
+            <div className="mt-2 inline-flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg px-3 py-1.5 text-xs font-semibold">
+              <CalendarCheck size={13} />
+              Practice: {shortDate(lineup.practiceDate)}, after the Service
+            </div>
           )}
         </div>
 
         <hr className="border-gray-100" />
 
-        {/* Worship Leaders + Backups side by side */}
+        {/* Worship Leaders + Backups */}
         <div className="grid grid-cols-2 gap-4">
-          {/* WL */}
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
               <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
@@ -129,7 +150,6 @@ export default function LineupDetailPage() {
             )}
           </div>
 
-          {/* Backups */}
           {lineup.backUps.length > 0 && (
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
@@ -170,8 +190,6 @@ export default function LineupDetailPage() {
                 </div>
               );
             })}
-
-            {/* Sound Engineer in the same grid */}
             <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
               <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
               <div className="min-w-0">
@@ -182,15 +200,64 @@ export default function LineupDetailPage() {
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Songs Section */}
+        {songGroups.length > 0 && (
+          <>
+            <hr className="border-gray-100" />
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-2">
+                <BookOpen size={12} /> Songs
+              </p>
+              <div className="space-y-3">
+                {songGroups.map((group, gi) => (
+                  <div key={gi}>
+                    <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{group.section}</p>
+                    <div className="space-y-1">
+                      {group.songs.map((song, si) => (
+                        <div key={si} className="flex items-center gap-2">
+                          <span className="text-sm text-gray-800 leading-tight flex-1">{song.title}</span>
+                          {song.youtubeUrl && (
+                            <a
+                              href={song.youtubeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 flex items-center gap-0.5 text-xs text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded transition-colors"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Youtube size={11} /> YT
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Legacy plain-text notes fallback */}
         {lineup.notes && (
           <>
             <hr className="border-gray-100" />
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
-                <BookOpen size={12} /> Notes / Songs
+                <BookOpen size={12} /> Notes
               </p>
               <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{lineup.notes}</p>
+            </div>
+          </>
+        )}
+
+        {/* Next WL */}
+        {lineup.nextWL && (
+          <>
+            <hr className="border-gray-100" />
+            <div className="flex items-center gap-2">
+              <Mic2 size={13} className="text-primary-400" />
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Next WL:</span>
+              <span className="text-sm font-semibold text-primary-700">{lineup.nextWL}</span>
             </div>
           </>
         )}

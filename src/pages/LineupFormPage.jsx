@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
+import { Plus, Trash2 } from 'lucide-react';
+
+const SONG_SECTIONS = ['Opening', 'Welcome', 'P&W', "Lord's Table", 'Special Number', 'Other'];
 
 const TEAM_A_ROLES = ["OpWelcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
 
@@ -67,6 +70,8 @@ export default function LineupFormPage() {
     instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [] },
     soundEngineer: '',
     practiceDate: '',
+    nextWL: '',
+    songs: [],
     notes: '',
   };
 
@@ -249,10 +254,62 @@ export default function LineupFormPage() {
             selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))} />
         </div>
 
+        {/* Songs */}
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-gray-700">🎵 Songs</h3>
+            <button type="button" onClick={() => setForm(f => ({
+              ...f,
+              songs: [...(f.songs || []), { section: 'Opening', title: '', youtubeUrl: '' }]
+            }))} className="text-primary-600 hover:underline text-xs flex items-center gap-1">
+              <Plus size={13} /> Add Song
+            </button>
+          </div>
+          {(form.songs || []).length === 0 && (
+            <p className="text-xs text-gray-400">No songs added yet. Click "Add Song" to start.</p>
+          )}
+          {(form.songs || []).map((song, i) => (
+            <div key={i} className="flex gap-2 items-start">
+              <select
+                className="input w-32 flex-shrink-0"
+                value={song.section}
+                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, section: e.target.value } : s) }))}
+              >
+                {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+              </select>
+              <input
+                type="text"
+                className="input flex-1"
+                placeholder="Song title"
+                value={song.title}
+                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, title: e.target.value } : s) }))}
+              />
+              <input
+                type="url"
+                className="input w-36 flex-shrink-0"
+                placeholder="YouTube URL (opt.)"
+                value={song.youtubeUrl}
+                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, youtubeUrl: e.target.value } : s) }))}
+              />
+              <button type="button" onClick={() => setForm(f => ({ ...f, songs: f.songs.filter((_, idx) => idx !== i) }))}
+                className="text-red-400 hover:text-red-600 mt-2 flex-shrink-0">
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Next WL */}
+        <div className="card">
+          <label className="label">🎤 Next Worship Leader</label>
+          <input type="text" className="input" placeholder="e.g. Jasper, Team A, Myk & Miho"
+            value={form.nextWL || ''} onChange={e => setForm(f => ({ ...f, nextWL: e.target.value }))} />
+        </div>
+
         {/* Notes */}
         <div className="card">
           <label className="label">📝 Notes (optional)</label>
-          <textarea className="input" rows={3} placeholder="Any special notes..."
+          <textarea className="input" rows={2} placeholder="Any other special notes..."
             value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
 
