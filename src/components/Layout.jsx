@@ -21,7 +21,7 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             {isAdmin ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-amber-400 text-gray-900 font-semibold px-2 py-1 rounded-full">
+                <span className="text-xs bg-white/20 text-white font-semibold px-2 py-1 rounded-full">
                   Admin
                 </span>
                 <button

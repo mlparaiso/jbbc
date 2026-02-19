@@ -118,7 +118,7 @@ export default function MembersPage() {
               <span className="text-xs text-gray-500">({m.nickname})</span>
             )}
             {m.isTeamA && (
-              <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Team A</span>
+              <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Team A</span>
             )}
           </div>
           <div className="flex flex-wrap gap-1 mt-1">
@@ -186,8 +186,8 @@ export default function MembersPage() {
       {/* Team A */}
       {teamA.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-            <Star size={14} /> Team A — Senior Leaders
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <Star size={14} className="text-primary-400" /> Team A — Senior Leaders
           </h3>
           <div className="space-y-2">
             {teamA.map(m => <MemberCard key={m.id} m={m} />)}

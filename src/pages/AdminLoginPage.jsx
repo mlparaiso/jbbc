@@ -22,16 +22,20 @@ export default function AdminLoginPage() {
 
   if (isAdmin) {
     return (
-      <div className="max-w-sm mx-auto mt-16 text-center">
-        <div className="card">
-          <ShieldCheck size={44} className="mx-auto mb-3 text-green-500" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">You're logged in as Admin</h2>
-          <p className="text-gray-500 text-sm mb-6">You have full access to create and edit lineups.</p>
-          <div className="flex gap-3 justify-center">
+      <div className="max-w-sm mx-auto mt-12">
+        <div className="card text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+            <ShieldCheck size={28} className="text-green-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Logged in as Admin</h2>
+            <p className="text-sm text-gray-500 mt-1">You have full access to create and edit lineups.</p>
+          </div>
+          <div className="flex gap-3 justify-center pt-1">
             <button onClick={() => navigate('/')} className="btn-primary flex items-center gap-1.5">
               <CalendarDays size={15} /> Go to Schedule
             </button>
-            <button onClick={logout} className="btn-danger flex items-center gap-1.5">
+            <button onClick={logout} className="btn-secondary flex items-center gap-1.5 text-red-500 border-red-200 hover:bg-red-50">
               <LogOut size={15} /> Log Out
             </button>
           </div>
@@ -41,12 +45,14 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="max-w-sm mx-auto mt-16">
-      <div className="card">
-        <div className="text-center mb-6">
-          <Lock size={40} className="mx-auto mb-2 text-primary-500" />
+    <div className="max-w-sm mx-auto mt-12">
+      <div className="card space-y-5">
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-3">
+            <Lock size={26} className="text-primary-600" />
+          </div>
           <h2 className="text-xl font-bold text-gray-800">Admin Login</h2>
-          <p className="text-gray-500 text-sm mt-1">Enter your PIN to access admin features.</p>
+          <p className="text-sm text-gray-500 mt-1">Enter your PIN to access admin features.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -64,9 +70,9 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm text-center flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1.5 text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg py-2 px-3">
               <AlertCircle size={14} /> {error}
-            </p>
+            </div>
           )}
 
           <button type="submit" className="btn-primary w-full flex items-center justify-center gap-1.5">
