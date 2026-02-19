@@ -7,6 +7,7 @@ import LineupDetailPage from './pages/LineupDetailPage';
 import LineupFormPage from './pages/LineupFormPage';
 import MembersPage from './pages/MembersPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import SongsPage from './pages/SongsPage';
 
 // Wrapper: if ?month is in URL → MonthView, else → YearCalendar
 function HomeRouter() {
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="lineup/:id" element={<LineupDetailPage />} />
             <Route path="lineup/:id/edit" element={<LineupFormPage />} />
             <Route path="members" element={<MembersPage />} />
+            <Route path="songs" element={<SongsPage />} />
             <Route path="admin" element={<AdminLoginPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

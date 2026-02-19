@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Music2, CalendarDays, Users, LogOut, Lock } from 'lucide-react';
+import { Music2, CalendarDays, Users, LogOut, Lock, ListMusic } from 'lucide-react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,6 +57,7 @@ export default function Layout() {
           {[
             { to: '/', icon: <CalendarDays size={15} />, label: 'Schedule' },
             { to: '/members', icon: <Users size={15} />, label: 'Members' },
+            { to: '/songs', icon: <ListMusic size={15} />, label: 'Songs' },
           ].map(({ to, icon, label }) => (
             <NavLink
               key={to}
