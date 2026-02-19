@@ -97,16 +97,16 @@ export function AppProvider({ children }) {
 
   // Lineup CRUD
   const addLineup = (lineup) => {
-    const newLineup = { ...lineup, id: `lineup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+    const newLineup = { ...lineup, id: lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}` };
     setLineups((prev) => [...prev, newLineup].sort((a, b) => a.date.localeCompare(b.date)));
     return newLineup;
   };
 
   // Add multiple lineups atomically in one state update (prevents duplicates from batching issues)
   const addLineups = (lineupList) => {
-    const newLineups = lineupList.map((lineup, i) => ({
+    const newLineups = lineupList.map((lineup) => ({
       ...lineup,
-      id: `lineup-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+      id: lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     }));
     setLineups((prev) => [...prev, ...newLineups].sort((a, b) => a.date.localeCompare(b.date)));
     return newLineups;
