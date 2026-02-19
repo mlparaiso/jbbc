@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { INSTRUMENT_ROLES } from '../data/initialData';
 import {
-  Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, CalendarCheck,
-  Printer, Pencil, Trash2, ChevronLeft, AlertCircle
+  Mic2, Music4, BookOpen, CalendarCheck,
+  Printer, Pencil, Trash2, ChevronLeft, AlertCircle,
+  SlidersHorizontal, Piano, Guitar, Waves, Drum
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -11,17 +11,15 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function RoleRow({ label, memberIds, getMemberById }) {
-  const names = (memberIds || []).map(id => getMemberById(id)?.name).filter(Boolean);
-  return (
-    <tr className="border-b border-gray-100">
-      <td className="py-2 px-3 text-sm font-semibold text-gray-600 whitespace-nowrap w-36">{label}</td>
-      <td className="py-2 px-3 text-sm text-gray-800">
-        {names.length > 0 ? names.join(' / ') : <span className="text-gray-400">—</span>}
-      </td>
-    </tr>
-  );
-}
+// Icon + short label for each instrument slot
+const INSTRUMENT_CONFIG = [
+  { key: 'k1',           icon: <Piano size={14} />,          label: 'K1' },
+  { key: 'k2',           icon: <Piano size={14} />,          label: 'K2' },
+  { key: 'bass',         icon: <Waves size={14} />,          label: 'Bass' },
+  { key: 'leadGuitar',   icon: <Guitar size={14} />,         label: 'LG' },
+  { key: 'acousticGuitar', icon: <Guitar size={14} />,       label: 'AG' },
+  { key: 'drums',        icon: <Drum size={14} />,           label: 'Drums' },
+];
 
 export default function LineupDetailPage() {
   const { id } = useParams();
@@ -47,150 +45,161 @@ export default function LineupDetailPage() {
     }
   };
 
-  const handlePrint = () => window.print();
-
   const se = getMemberById(lineup.soundEngineer);
 
   return (
-    <div>
-      {/* Back button */}
-      <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm mb-4 flex items-center gap-1">
-        <ChevronLeft size={16} /> Back to Schedule
-      </button>
-
-      {/* Header */}
-      <div className={`card mb-4 border-l-4 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'}`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl font-bold text-gray-800">{formatDate(lineup.date)}</h2>
-              {lineup.isTeamA && (
-                <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Team A Sunday</span>
-              )}
-            </div>
-            {lineup.theme && (
-              <p className="text-sm text-primary-600 font-medium flex items-center gap-1">
-                <BookOpen size={13} /> Theme: {lineup.theme}
-              </p>
-            )}
-            {lineup.practiceDate && (
-              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                <CalendarCheck size={12} /> Practice Date: {formatDate(lineup.practiceDate)}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2 flex-shrink-0 print:hidden">
-            <button onClick={handlePrint} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1">
-              <Printer size={13} /> Print
-            </button>
-            {isAdmin && (
-              <>
-                <button onClick={() => navigate(`/lineup/${lineup.id}/edit`)} className="btn-primary text-xs py-1 px-3 flex items-center gap-1">
-                  <Pencil size={13} /> Edit
-                </button>
-                <button onClick={handleDelete} className="btn-danger text-xs py-1 px-3 flex items-center gap-1">
-                  <Trash2 size={13} /> Delete
-                </button>
-              </>
-            )}
-          </div>
+    <div className="max-w-2xl mx-auto">
+      {/* Back + Action buttons row */}
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
+          <ChevronLeft size={16} /> Schedule
+        </button>
+        <div className="flex gap-2 print:hidden">
+          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
+            <Printer size={12} /> Print
+          </button>
+          {isAdmin && (
+            <>
+              <button onClick={() => navigate(`/lineup/${lineup.id}/edit`)} className="btn-primary text-xs py-1 px-2 flex items-center gap-1">
+                <Pencil size={12} /> Edit
+              </button>
+              <button onClick={handleDelete} className="btn-danger text-xs py-1 px-2 flex items-center gap-1">
+                <Trash2 size={12} /> Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Worship Leaders */}
-      <div className="card mb-4">
-        <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-          <Mic2 size={16} className="text-primary-500" />
-          <span>Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}</span>
-        </h3>
-        {lineup.isTeamA ? (
-          <div className="space-y-2">
-            {lineup.worshipLeaders.map((wl, i) => {
-              const member = getMemberById(wl.memberId);
+      {/* Main card — everything in one compact panel */}
+      <div className={`card border-l-4 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'} space-y-4`}>
+
+        {/* Date + theme */}
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-lg font-bold text-gray-800">{formatDate(lineup.date)}</h2>
+            {lineup.isTeamA && (
+              <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Team A</span>
+            )}
+          </div>
+          {lineup.theme && (
+            <p className="text-xs text-primary-600 font-medium flex items-center gap-1 mt-0.5">
+              <BookOpen size={11} /> {lineup.theme}
+            </p>
+          )}
+          {lineup.practiceDate && (
+            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <CalendarCheck size={11} /> Practice: {formatDate(lineup.practiceDate)}
+            </p>
+          )}
+        </div>
+
+        <hr className="border-gray-100" />
+
+        {/* Worship Leaders + Backups side by side */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* WL */}
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
+              <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
+            </p>
+            {lineup.isTeamA ? (
+              <div className="space-y-1">
+                {lineup.worshipLeaders.map((wl, i) => {
+                  const member = getMemberById(wl.memberId);
+                  return (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
+                      <span className="text-sm text-gray-800 font-medium">{member?.name || '—'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {lineup.worshipLeaders.map((wl, i) => {
+                  const member = getMemberById(wl.memberId);
+                  return (
+                    <span key={i} className="bg-primary-100 text-primary-800 font-semibold px-2 py-0.5 rounded-full text-sm">
+                      {member?.name || '—'}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Backups */}
+          {lineup.backUps.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
+                <Music4 size={12} /> Back Ups
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {lineup.backUps.map((bid) => {
+                  const member = getMemberById(bid);
+                  return (
+                    <span key={bid} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                      {member?.name || '—'}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <hr className="border-gray-100" />
+
+        {/* Instruments grid */}
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {INSTRUMENT_CONFIG.map(({ key, icon, label }) => {
+              const names = (lineup.instruments[key] || [])
+                .map(id => getMemberById(id)?.name)
+                .filter(Boolean)
+                .join(' / ');
               return (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-xs font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full whitespace-nowrap">{wl.role}</span>
-                  <span className="text-gray-800 font-medium">{member?.name || '—'}</span>
+                <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                  <span className="text-primary-500 flex-shrink-0">{icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">{names || '—'}</p>
+                  </div>
                 </div>
               );
             })}
+
+            {/* Sound Engineer in the same grid */}
+            <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
+              <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-400 leading-none">SE</p>
+                <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {lineup.worshipLeaders.map((wl, i) => {
-              const member = getMemberById(wl.memberId);
-              return (
-                <span key={i} className="bg-primary-100 text-primary-800 font-semibold px-3 py-1 rounded-full text-sm">
-                  {member?.name || '—'}
-                </span>
-              );
-            })}
-          </div>
+        </div>
+
+        {/* Notes */}
+        {lineup.notes && (
+          <>
+            <hr className="border-gray-100" />
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
+                <BookOpen size={12} /> Notes / Songs
+              </p>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{lineup.notes}</p>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Back Ups */}
-      {lineup.backUps.length > 0 && (
-        <div className="card mb-4">
-          <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-            <Music4 size={16} className="text-primary-500" /> Back Ups
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {lineup.backUps.map((id) => {
-              const member = getMemberById(id);
-              return (
-                <span key={id} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                  {member?.name || '—'}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Instrumentalists */}
-      <div className="card mb-4">
-        <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-          <Guitar size={16} className="text-primary-500" /> Instrumentalists
-        </h3>
-        <table className="w-full">
-          <tbody>
-            {INSTRUMENT_ROLES.filter(r => r.key !== 'soundEngineer').map((role) => (
-              <RoleRow
-                key={role.key}
-                label={role.label}
-                memberIds={lineup.instruments[role.key] || []}
-                getMemberById={getMemberById}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Sound Engineer */}
-      <div className="card mb-4">
-        <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
-          <SlidersHorizontal size={16} className="text-primary-500" /> Sound Engineer
-        </h3>
-        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-          {se?.name || '—'}
-        </span>
-      </div>
-
-      {/* Notes */}
-      {lineup.notes && (
-        <div className="card mb-4">
-          <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
-            <BookOpen size={16} className="text-primary-500" /> Notes / Songs
-          </h3>
-          <p className="text-sm text-gray-600 whitespace-pre-wrap">{lineup.notes}</p>
-        </div>
-      )}
-
       {/* Reminder */}
-      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex gap-2">
-        <AlertCircle size={14} className="flex-shrink-0 mt-0.5 text-yellow-600" />
-        <span><strong>Reminder:</strong> All assigned Worship/Music Team should be sitting in the designated seats during service | No phone usage at the stage except for worship-related items | Be presentable | Do it for the Lord.</span>
+      <div className="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex gap-2">
+        <AlertCircle size={13} className="flex-shrink-0 mt-0.5 text-yellow-600" />
+        <span><strong>Reminder:</strong> Sit in designated seats | No personal phone use on stage | Be presentable | Do it for the Lord.</span>
       </div>
     </div>
   );
