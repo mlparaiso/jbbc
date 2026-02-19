@@ -1,127 +1,190 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_MEMBERS, INITIAL_LINEUPS, DATA_VERSION } from '../data/initialData';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import {
+  doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc,
+} from 'firebase/firestore';
+import { auth, googleProvider, db } from '../firebase';
 
 const AppContext = createContext(null);
 
-const ADMIN_PIN = '1234'; // Change this to your desired PIN
-const STORAGE_KEYS = {
-  MEMBERS: 'jbbc_members',
-  LINEUPS: 'jbbc_lineups',
-  IS_ADMIN: 'jbbc_is_admin',
-  VERSION: 'jbbc_data_version',
-};
-
-function loadFromStorage(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    // Deduplicate lineups by id (in case old bug left duplicates in storage)
-    if (key === 'jbbc_lineups' && Array.isArray(parsed)) {
-      const seen = new Set();
-      return parsed.filter(item => {
-        if (!item.id || seen.has(item.id)) return false;
-        seen.add(item.id);
-        return true;
-      });
-    }
-    return parsed;
-  } catch {
-    return fallback;
-  }
-}
-
-// If the stored version doesn't match DATA_VERSION, wipe and reload fresh data
-function initStorage() {
-  const storedVersion = localStorage.getItem(STORAGE_KEYS.VERSION);
-  if (storedVersion !== DATA_VERSION) {
-    localStorage.removeItem(STORAGE_KEYS.MEMBERS);
-    localStorage.removeItem(STORAGE_KEYS.LINEUPS);
-    localStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
-  }
-}
-initStorage();
-
 export function AppProvider({ children }) {
-  const [members, setMembers] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.MEMBERS, INITIAL_MEMBERS)
-  );
-  const [lineups, setLineups] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.LINEUPS, INITIAL_LINEUPS)
-  );
-  const [isAdmin, setIsAdmin] = useState(() =>
-    loadFromStorage(STORAGE_KEYS.IS_ADMIN, false)
-  );
+  const [user, setUser] = useState(null);           // Firebase auth user
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Persist to localStorage whenever state changes
+  const [teamId, setTeamId] = useState(null);       // current team doc ID
+  const [team, setTeam] = useState(null);           // team metadata
+  const [teamLoading, setTeamLoading] = useState(false);
+
+  const [members, setMembers] = useState([]);
+  const [lineups, setLineups] = useState([]);
+
+  // --- Auth state listener ---
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
-  }, [members]);
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      setAuthLoading(false);
+      if (!u) {
+        setTeamId(null);
+        setTeam(null);
+        setMembers([]);
+        setLineups([]);
+      }
+    });
+    return unsub;
+  }, []);
 
+  // --- Load user's team when user is set ---
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.LINEUPS, JSON.stringify(lineups));
-  }, [lineups]);
+    if (!user) return;
+    setTeamLoading(true);
+    const userRef = doc(db, 'users', user.uid);
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setTeamId(data.teamId || null);
+      } else {
+        setTeamId(null);
+      }
+      setTeamLoading(false);
+    });
+    return unsub;
+  }, [user]);
 
+  // --- Load team metadata ---
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.IS_ADMIN, JSON.stringify(isAdmin));
-  }, [isAdmin]);
+    if (!teamId) { setTeam(null); return; }
+    const unsub = onSnapshot(doc(db, 'teams', teamId), (snap) => {
+      setTeam(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    });
+    return unsub;
+  }, [teamId]);
 
-  // Admin auth
-  const login = (pin) => {
-    if (pin === ADMIN_PIN) {
-      setIsAdmin(true);
-      return true;
-    }
-    return false;
+  // --- Load members ---
+  useEffect(() => {
+    if (!teamId) { setMembers([]); return; }
+    const unsub = onSnapshot(collection(db, 'teams', teamId, 'members'), (snap) => {
+      setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => a.name.localeCompare(b.name)));
+    });
+    return unsub;
+  }, [teamId]);
+
+  // --- Load lineups ---
+  useEffect(() => {
+    if (!teamId) { setLineups([]); return; }
+    const unsub = onSnapshot(collection(db, 'teams', teamId, 'lineups'), (snap) => {
+      setLineups(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => a.date.localeCompare(b.date)));
+    });
+    return unsub;
+  }, [teamId]);
+
+  // ==================== AUTH ====================
+  const loginWithGoogle = async () => {
+    await signInWithPopup(auth, googleProvider);
   };
 
-  const logout = () => setIsAdmin(false);
-
-  // Member CRUD
-  const addMember = (member) => {
-    const newMember = { ...member, id: `mem-${Date.now()}` };
-    setMembers((prev) => [...prev, newMember]);
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  const updateMember = (id, updates) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, ...updates } : m))
-    );
+  const isAdmin = !!user && !!teamId; // logged in + has a team = can edit
+
+  // ==================== TEAM MANAGEMENT ====================
+  function generateInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code.slice(0, 4) + '-' + code.slice(4);
+  }
+
+  const createTeam = async (teamName) => {
+    if (!user) throw new Error('Not logged in');
+    const inviteCode = generateInviteCode();
+    const teamRef = await addDoc(collection(db, 'teams'), {
+      name: teamName,
+      createdBy: user.uid,
+      createdByEmail: user.email,
+      inviteCode,
+      adminUids: [user.uid],
+      createdAt: new Date().toISOString(),
+    });
+    await setDoc(doc(db, 'users', user.uid), {
+      teamId: teamRef.id,
+      email: user.email,
+      displayName: user.displayName,
+      role: 'admin',
+    });
+    return teamRef.id;
   };
 
-  const deleteMember = (id) => {
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+  const joinTeam = async (inviteCode) => {
+    if (!user) throw new Error('Not logged in');
+    const code = inviteCode.trim().toUpperCase();
+    const q = query(collection(db, 'teams'), where('inviteCode', '==', code));
+    const snap = await getDocs(q);
+    if (snap.empty) throw new Error('Invalid invite code. Please check and try again.');
+    const teamDoc = snap.docs[0];
+    await setDoc(doc(db, 'users', user.uid), {
+      teamId: teamDoc.id,
+      email: user.email,
+      displayName: user.displayName,
+      role: 'admin',
+    });
+    return teamDoc.id;
+  };
+
+  const leaveTeam = async () => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid), { teamId: null, email: user.email });
+    setTeamId(null);
+  };
+
+  // ==================== MEMBERS ====================
+  const addMember = async (member) => {
+    if (!teamId) return;
+    const ref = doc(collection(db, 'teams', teamId, 'members'));
+    await setDoc(ref, member);
+    return ref.id;
+  };
+
+  const updateMember = async (id, updates) => {
+    if (!teamId) return;
+    await updateDoc(doc(db, 'teams', teamId, 'members', id), updates);
+  };
+
+  const deleteMember = async (id) => {
+    if (!teamId) return;
+    await deleteDoc(doc(db, 'teams', teamId, 'members', id));
   };
 
   const getMemberById = (id) => members.find((m) => m.id === id);
 
-  // Lineup CRUD
-  const addLineup = (lineup) => {
-    const newLineup = { ...lineup, id: lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}` };
-    setLineups((prev) => [...prev, newLineup].sort((a, b) => a.date.localeCompare(b.date)));
-    return newLineup;
+  // ==================== LINEUPS ====================
+  const addLineup = async (lineup) => {
+    if (!teamId) return;
+    const id = lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}`;
+    await setDoc(doc(db, 'teams', teamId, 'lineups', id), { ...lineup, id });
+    return id;
   };
 
-  // Add multiple lineups atomically in one state update (prevents duplicates from batching issues)
-  const addLineups = (lineupList) => {
-    const newLineups = lineupList.map((lineup) => ({
-      ...lineup,
-      id: lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    }));
-    setLineups((prev) => [...prev, ...newLineups].sort((a, b) => a.date.localeCompare(b.date)));
-    return newLineups;
+  const addLineups = async (lineupList) => {
+    if (!teamId) return;
+    const promises = lineupList.map((lineup) => {
+      const id = lineup.date ? `lineup-${lineup.date}` : `lineup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      return setDoc(doc(db, 'teams', teamId, 'lineups', id), { ...lineup, id });
+    });
+    await Promise.all(promises);
   };
 
-  const updateLineup = (id, updates) => {
-    setLineups((prev) =>
-      prev
-        .map((l) => (l.id === id ? { ...l, ...updates } : l))
-        .sort((a, b) => a.date.localeCompare(b.date))
-    );
+  const updateLineup = async (id, updates) => {
+    if (!teamId) return;
+    await setDoc(doc(db, 'teams', teamId, 'lineups', id), { ...updates, id }, { merge: true });
   };
 
-  const deleteLineup = (id) => {
-    setLineups((prev) => prev.filter((l) => l.id !== id));
+  const deleteLineup = async (id) => {
+    if (!teamId) return;
+    await deleteDoc(doc(db, 'teams', teamId, 'lineups', id));
   };
 
   const getLineupById = (id) => lineups.find((l) => l.id === id);
@@ -136,11 +199,22 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider
       value={{
+        // Auth
+        user,
+        authLoading,
+        teamLoading,
+        loginWithGoogle,
+        logout,
+        isAdmin,
+        // Team
+        team,
+        teamId,
+        createTeam,
+        joinTeam,
+        leaveTeam,
+        // Data
         members,
         lineups,
-        isAdmin,
-        login,
-        logout,
         addMember,
         updateMember,
         deleteMember,

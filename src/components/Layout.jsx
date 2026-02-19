@@ -1,18 +1,16 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Music2, CalendarDays, Users, LogOut, Lock, ListMusic } from 'lucide-react';
+import { Music2, CalendarDays, Users, LogOut, Lock, ListMusic, Settings } from 'lucide-react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
 export default function Layout() {
-  const { isAdmin, logout } = useApp();
+  const { user, team, isAdmin, logout, authLoading } = useApp();
   const navigate = useNavigate();
 
   return (
@@ -24,28 +22,31 @@ export default function Layout() {
           <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <Music2 size={24} className="text-primary-200" />
             <div className="text-left">
-              <h1 className="text-lg font-bold leading-tight">JBBC Music Team</h1>
+              <h1 className="text-lg font-bold leading-tight">{team?.name || 'Music Team'}</h1>
               <p className="text-xs text-primary-200">Worship Schedule Manager</p>
             </div>
           </button>
+
           <div className="flex items-center gap-2">
-            {isAdmin ? (
+            {authLoading ? null : user ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-white/20 text-white font-semibold px-2 py-1 rounded-full">
-                  Admin
-                </span>
-                <button
-                  onClick={() => logout()}
-                  className="flex items-center gap-1 text-xs text-primary-200 hover:text-white"
-                >
-                  <LogOut size={13} /> Log out
+                {isAdmin && (
+                  <span className="text-xs bg-white/20 text-white font-semibold px-2 py-1 rounded-full">
+                    Admin
+                  </span>
+                )}
+                <button onClick={() => navigate('/team-setup')} title="Team Settings"
+                  className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
+                  <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full border border-white/30" referrerPolicy="no-referrer" />
+                </button>
+                <button onClick={() => logout()} title="Sign out"
+                  className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
+                  <LogOut size={14} />
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => navigate('/admin')}
-                className="flex items-center gap-1 text-xs text-primary-200 hover:text-white"
-              >
+              <button onClick={() => navigate('/admin')}
+                className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
                 <Lock size={13} /> Admin Login
               </button>
             )}
@@ -58,16 +59,12 @@ export default function Layout() {
             { to: '/', icon: <CalendarDays size={15} />, label: 'Schedule' },
             { to: '/members', icon: <Users size={15} />, label: 'Members' },
             { to: '/songs', icon: <ListMusic size={15} />, label: 'Songs' },
+            ...(user ? [{ to: '/team-setup', icon: <Settings size={15} />, label: 'Team' }] : []),
           ].map(({ to, icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
+            <NavLink key={to} to={to} end={to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-white text-primary-700'
-                    : 'text-primary-100 hover:bg-primary-600'
+                  isActive ? 'bg-white text-primary-700' : 'text-primary-100 hover:bg-primary-600'
                 }`
               }
             >
@@ -84,7 +81,7 @@ export default function Layout() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-200">
-        JBBC Music Team © {new Date().getFullYear()}
+        {team?.name || 'Music Team'} © {new Date().getFullYear()}
       </footer>
     </div>
   );

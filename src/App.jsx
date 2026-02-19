@@ -8,8 +8,8 @@ import LineupFormPage from './pages/LineupFormPage';
 import MembersPage from './pages/MembersPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import SongsPage from './pages/SongsPage';
+import TeamSetupPage from './pages/TeamSetupPage';
 
-// Wrapper: if ?month is in URL → MonthView, else → YearCalendar
 function HomeRouter() {
   const [searchParams] = useSearchParams();
   return searchParams.get('month') ? <SchedulePage /> : <YearCalendarPage />;
@@ -28,6 +28,7 @@ export default function App() {
             <Route path="members" element={<MembersPage />} />
             <Route path="songs" element={<SongsPage />} />
             <Route path="admin" element={<AdminLoginPage />} />
+            <Route path="team-setup" element={<TeamSetupPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
