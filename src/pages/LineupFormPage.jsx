@@ -131,7 +131,11 @@ export default function LineupFormPage() {
       addLineup(form);
     }
     setSaved(true);
-    setTimeout(() => navigate('/'), 800);
+    // Navigate back to the lineup's own month on the schedule
+    const d = new Date(form.date + 'T00:00:00');
+    const targetMonth = d.getMonth() + 1;
+    const targetYear = d.getFullYear();
+    setTimeout(() => navigate(`/?year=${targetYear}&month=${targetMonth}`), 800);
   };
 
   return (

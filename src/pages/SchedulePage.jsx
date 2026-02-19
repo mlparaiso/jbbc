@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Copy
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
 
@@ -17,9 +17,21 @@ function shortDate(dateStr) {
   return d.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function fullDate(dateStr) {
+function printDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
+  return d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric' });
+}
+
+// Get all Sundays in a given year/month
+function getSundaysInMonth(year, month) {
+  const sundays = [];
+  const d = new Date(year, month - 1, 1);
+  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
+  while (d.getMonth() === month - 1) {
+    sundays.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() + 7);
+  }
+  return sundays;
 }
 
 function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
@@ -33,16 +45,22 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, getMemberById, updateLineup } = useApp();
+  const { lineups, isAdmin, getMemberById, updateLineup, addLineup } = useApp();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(() => parseInt(searchParams.get('year') || now.getFullYear()));
+  const [month, setMonth] = useState(() => parseInt(searchParams.get('month') || (now.getMonth() + 1)));
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState('');
   const [verseInput, setVerseInput] = useState('');
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyTargetYear, setCopyTargetYear] = useState(now.getFullYear());
+  const [copyTargetMonth, setCopyTargetMonth] = useState(now.getMonth() + 1 === 12 ? 1 : now.getMonth() + 2);
+  const [copyDoing, setCopyDoing] = useState(false);
+  const [copyDone, setCopyDone] = useState(false);
 
   const MIN_YEAR = 2026;
   const MIN_MONTH = 1;
@@ -74,6 +92,33 @@ export default function SchedulePage() {
     else setMonth(m => m + 1);
   };
 
+  const handleCopyMonth = () => {
+    setCopyDoing(true);
+    const targetSundays = getSundaysInMonth(copyTargetYear, copyTargetMonth);
+    const sourceSorted = [...monthLineups].sort((a, b) => a.date.localeCompare(b.date));
+    sourceSorted.forEach((l, i) => {
+      const targetDate = targetSundays[i];
+      if (!targetDate) return;
+      addLineup({
+        ...l,
+        id: undefined,
+        date: targetDate,
+        practiceDate: '',
+        songs: l.songs || [],
+        notes: l.notes || '',
+        nextWL: '',
+      });
+    });
+    setCopyDoing(false);
+    setCopyDone(true);
+    setTimeout(() => {
+      setShowCopyModal(false);
+      setCopyDone(false);
+      setYear(copyTargetYear);
+      setMonth(copyTargetMonth);
+    }, 1000);
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Month Navigation */}
@@ -90,12 +135,56 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Print button */}
+      {/* Action buttons */}
       {monthLineups.length > 0 && (
-        <div className="flex justify-end mb-3 print:hidden">
+        <div className="flex justify-end gap-2 mb-3 print:hidden">
+          {isAdmin && (
+            <button onClick={() => { setShowCopyModal(true); setCopyDone(false); }} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
+              <Copy size={13} /> Copy Month
+            </button>
+          )}
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
             <Printer size={13} /> Print Month
           </button>
+        </div>
+      )}
+
+      {/* Copy Month Modal */}
+      {showCopyModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 print:hidden">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-80 space-y-4">
+            <h3 className="text-base font-bold text-gray-800">Copy {MONTHS[month - 1]} Lineup To…</h3>
+            <p className="text-xs text-gray-500">
+              This will copy the {monthLineups.length} lineup{monthLineups.length !== 1 ? 's' : ''} from {MONTHS[month - 1]} {year} to the selected month, matched by Sunday order. Members and instruments will be copied; songs and notes will be kept.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Month</label>
+                <select className="input" value={copyTargetMonth} onChange={e => setCopyTargetMonth(Number(e.target.value))}>
+                  {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Year</label>
+                <select className="input" value={copyTargetYear} onChange={e => setCopyTargetYear(Number(e.target.value))}>
+                  {[2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="text-xs text-gray-400">
+              Target Sundays: {getSundaysInMonth(copyTargetYear, copyTargetMonth).map(d => printDate(d)).join(', ')}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyMonth}
+                disabled={copyDoing || copyDone}
+                className={`btn-primary flex-1 text-sm ${copyDone ? 'opacity-70' : ''}`}
+              >
+                {copyDone ? '✅ Copied!' : copyDoing ? 'Copying…' : 'Copy Lineups'}
+              </button>
+              <button onClick={() => setShowCopyModal(false)} className="btn-secondary text-sm">Cancel</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -143,7 +232,7 @@ export default function SchedulePage() {
               const sep = getMemberById(l.soundEngineer)?.name || '—';
               return (
                 <tr key={l.id} style={{backgroundColor: i % 2 === 0 ? '#f5f3ff' : '#ffffff', borderBottom: '1px solid #e5e7eb'}}>
-                  <td className="py-2 px-2 font-semibold text-gray-800 whitespace-nowrap">{fullDate(l.date)}</td>
+                  <td className="py-2 px-2 font-semibold text-gray-800 whitespace-nowrap">{printDate(l.date)}</td>
                   <td className="py-2 px-2 font-medium text-gray-800">{wl}</td>
                   <td className="py-2 px-2 text-gray-600">{bu}</td>
                   <td className="py-2 px-2 text-center text-gray-700">{k1p}</td>
