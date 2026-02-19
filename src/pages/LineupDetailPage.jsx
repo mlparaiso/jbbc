@@ -75,11 +75,31 @@ export default function LineupDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Back + Action buttons row */}
+      {/* Breadcrumb + Action buttons row */}
       <div className="flex items-center justify-between mb-3 print:hidden">
-        <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
-          <ChevronLeft size={16} /> Schedule
-        </button>
+        {/* Breadcrumb: 2026 < March < Week Mar 1 */}
+        <nav className="flex items-center gap-1 text-sm flex-wrap">
+          <button
+            onClick={() => navigate('/')}
+            className="text-primary-600 hover:underline font-medium"
+          >
+            {new Date(lineup.date + 'T00:00:00').getFullYear()}
+          </button>
+          <ChevronRight size={14} className="text-gray-400" />
+          <button
+            onClick={() => {
+              const d = new Date(lineup.date + 'T00:00:00');
+              navigate(`/?year=${d.getFullYear()}&month=${d.getMonth() + 1}`);
+            }}
+            className="text-primary-600 hover:underline font-medium"
+          >
+            {new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long' })}
+          </button>
+          <ChevronRight size={14} className="text-gray-400" />
+          <span className="text-gray-500">
+            {new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+          </span>
+        </nav>
         <div className="flex gap-2 print:hidden">
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
             <Printer size={12} /> Print
