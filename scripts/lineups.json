@@ -1,0 +1,828 @@
+[
+  {
+    "id": "lineup-2026-01-04",
+    "date": "2026-01-04",
+    "isTeamA": true,
+    "theme": "",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-beng",
+        "role": "Opening/Welcome"
+      },
+      {
+        "memberId": "mem-lito",
+        "role": "Praise"
+      },
+      {
+        "memberId": "mem-nems",
+        "role": "Worship"
+      },
+      {
+        "memberId": "mem-meo",
+        "role": "Lord's Table"
+      }
+    ],
+    "backUps": [],
+    "instruments": {
+      "k1": [
+        "mem-jireh"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-joril"
+      ],
+      "drums": [
+        "mem-dave"
+      ]
+    },
+    "soundEngineer": "mem-aljune",
+    "practiceDate": "",
+    "nextWL": "Myk & Miho",
+    "songs": [],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-01-11",
+    "date": "2026-01-11",
+    "isTeamA": false,
+    "theme": "",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-myk",
+        "role": "Worship Leader"
+      },
+      {
+        "memberId": "mem-miho",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-khrizzy",
+      "mem-malou",
+      "mem-mac",
+      "mem-shana"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "2026-01-04",
+    "nextWL": "Thony and Khrizzy",
+    "songs": [
+      {
+        "section": "Opening/Welcome",
+        "title": "Sa Bayan ng Jalajala (lower key Bb)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Sa Biyaya – Spring Worship",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Pangako Ko",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Been So Good",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Salamat Panginoon",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-01-18",
+    "date": "2026-01-18",
+    "isTeamA": false,
+    "theme": "",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-khrizzy",
+        "role": "Worship Leader"
+      },
+      {
+        "memberId": "mem-thony",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-malou",
+      "mem-mac",
+      "mem-miho",
+      "mem-rc"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-joril"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-dave"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "2026-01-11",
+    "nextWL": "Aljune",
+    "songs": [
+      {
+        "section": "Opening/Welcome",
+        "title": "Tayo na Sama-sama",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Umaapaw sa Pagsamba",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Ako'y Nananabik",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Sapat",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Pagsambang Alay",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Special Number",
+        "title": "Matibay na Sandigan",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-01-25",
+    "date": "2026-01-25",
+    "isTeamA": false,
+    "theme": "",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-aljune",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-malou",
+      "mem-mac",
+      "mem-miho",
+      "mem-khrizzy"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "2026-01-18",
+    "nextWL": "Team A",
+    "songs": [
+      {
+        "section": "Opening/Welcome",
+        "title": "JBBC Welcome Song (English)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Malayang Pilipino",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Ang nais ko",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Gantimpala ko",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Panata/Ikaw lamang medley",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-02-01",
+    "date": "2026-02-01",
+    "isTeamA": true,
+    "theme": "Pursuing after God's Best",
+    "bibleVerse": "\"For I know the plans I have for you,\" declares the Lord, \"plans to prosper you and not to harm you, plans to give you hope and a future.\" — Jeremiah 29:11",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-beng",
+        "role": "Opening/Welcome"
+      },
+      {
+        "memberId": "mem-zarie",
+        "role": "Praise"
+      },
+      {
+        "memberId": "mem-lito",
+        "role": "Worship"
+      },
+      {
+        "memberId": "mem-meo",
+        "role": "Lord's Table"
+      }
+    ],
+    "backUps": [],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-aljune",
+    "practiceDate": "2026-01-25",
+    "nextWL": "Jasper",
+    "songs": [
+      {
+        "section": "Opening",
+        "title": "As We Gather & The Steadfast Love of the Lord",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Welcome",
+        "title": "Kamusta ka na (ang sarap ng feeling)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Mahal na Mahal Kita Panginoon",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Pangako Ko",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "God of all my Days",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "I Speak Jesus",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Lord's Table",
+        "title": "Cornerstone",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-02-08",
+    "date": "2026-02-08",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-shana",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-aljune",
+      "mem-mac",
+      "mem-khrizzy",
+      "mem-miho"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-myk"
+      ],
+      "acousticGuitar": [
+        "mem-thony"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-aljune",
+    "practiceDate": "2026-02-01",
+    "nextWL": "Jasper",
+    "songs": [
+      {
+        "section": "Opening",
+        "title": "I Love You Lord",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Welcome",
+        "title": "Hi Love",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Ako'y Nananabik",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Kamangha-mangha",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Pag-ibig mong Kayganda",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-02-15",
+    "date": "2026-02-15",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-aljune",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-mac",
+      "mem-khrizzy",
+      "mem-miho",
+      "mem-shana"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "2026-02-08",
+    "nextWL": "Jasper",
+    "songs": [
+      {
+        "section": "Opening",
+        "title": "When I Look Into Your Holiness",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Welcome",
+        "title": "JBBC Welcome Song (English)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Father, Spirit, Jesus – Casting Crowns",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Now That You're Near – Hillsong",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Pusong Basag/Ikaw ang Hari Medley",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-02-22",
+    "date": "2026-02-22",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-jasper",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-mac",
+      "mem-aljune",
+      "mem-miho",
+      "mem-malou",
+      "mem-khrizzy"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "2026-02-15",
+    "nextWL": "Team A",
+    "songs": [
+      {
+        "section": "Praise and Worship",
+        "title": "Ang Nais Ko",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "May Galak",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Wala nang hahanapin pa",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Kalakip ng Awitin",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-03-01",
+    "date": "2026-03-01",
+    "isTeamA": true,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-beng",
+        "role": "Opening/Welcome"
+      },
+      {
+        "memberId": "mem-lito",
+        "role": "Praise"
+      },
+      {
+        "memberId": "mem-zarie",
+        "role": "Worship"
+      },
+      {
+        "memberId": "mem-meo",
+        "role": "Lord's Table"
+      }
+    ],
+    "backUps": [],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-myk"
+      ],
+      "acousticGuitar": [
+        "mem-thony"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-aljune",
+    "practiceDate": "2026-02-22",
+    "nextWL": "Khrizzy/Thony",
+    "songs": [
+      {
+        "section": "Opening",
+        "title": "Salamat Panginoon (Puso Ko'y Iyong Sinisiyasat)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Welcome",
+        "title": "Welcome to the Family",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "This is the Day (Bishop)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Today is the Day (Brewster)",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Sukdulang Biyaya",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Praise and Worship",
+        "title": "Diyos Ka sa Amin",
+        "youtubeUrl": ""
+      },
+      {
+        "section": "Lord's Table",
+        "title": "God So Loved",
+        "youtubeUrl": ""
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-03-08",
+    "date": "2026-03-08",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-khrizzy",
+        "role": "Worship Leader"
+      },
+      {
+        "memberId": "mem-thony",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-jasper",
+      "mem-miho",
+      "mem-malou",
+      "mem-aljune"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-myk"
+      ],
+      "acousticGuitar": [
+        "mem-thony"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "",
+    "nextWL": "Miho/Myk",
+    "songs": [],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-03-15",
+    "date": "2026-03-15",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-miho",
+        "role": "Worship Leader"
+      },
+      {
+        "memberId": "mem-myk",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-mac",
+      "mem-khrizzy",
+      "mem-aljune",
+      "mem-malou"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "",
+    "nextWL": "Aljune",
+    "songs": [],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-03-22",
+    "date": "2026-03-22",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-aljune",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-mac",
+      "mem-khrizzy",
+      "mem-jasper",
+      "mem-miho"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-myk"
+      ],
+      "acousticGuitar": [
+        "mem-thony"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "",
+    "nextWL": "RC",
+    "songs": [],
+    "notes": ""
+  },
+  {
+    "id": "lineup-2026-03-29",
+    "date": "2026-03-29",
+    "isTeamA": false,
+    "theme": "Pursuing after God's Best",
+    "worshipLeaders": [
+      {
+        "memberId": "mem-rc",
+        "role": "Worship Leader"
+      }
+    ],
+    "backUps": [
+      "mem-mac",
+      "mem-miho",
+      "mem-malou",
+      "mem-aljune"
+    ],
+    "instruments": {
+      "k1": [
+        "mem-anjie"
+      ],
+      "k2": [
+        "mem-cj"
+      ],
+      "bass": [
+        "mem-job"
+      ],
+      "leadGuitar": [
+        "mem-thony"
+      ],
+      "acousticGuitar": [
+        "mem-myk"
+      ],
+      "drums": [
+        "mem-joril"
+      ]
+    },
+    "soundEngineer": "mem-meo",
+    "practiceDate": "",
+    "nextWL": "",
+    "songs": [],
+    "notes": ""
+  }
+]
