@@ -119,14 +119,21 @@ export default function LineupDetailPage() {
                 const title = `JBBC Lineup — ${date}`;
                 const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}${lineup.theme ? `\nTheme: ${lineup.theme}` : ''}`;
 
-                // Capture card as image
+                // Capture card as image — temporarily widen to avoid wrapping
                 if (cardRef.current) {
-                  const canvas = await html2canvas(cardRef.current, {
+                  const el = cardRef.current;
+                  const prevStyle = el.style.cssText;
+                  el.style.width = '640px';
+                  el.style.minWidth = '640px';
+                  const canvas = await html2canvas(el, {
                     scale: 2,
                     backgroundColor: '#ffffff',
                     useCORS: true,
                     logging: false,
+                    width: 640,
+                    windowWidth: 640,
                   });
+                  el.style.cssText = prevStyle;
                   canvas.toBlob(async (blob) => {
                     const file = new File([blob], `jbbc-lineup-${lineup.date}.png`, { type: 'image/png' });
                     let shared = false;
@@ -277,7 +284,7 @@ export default function LineupDetailPage() {
         {/* Instruments grid */}
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
               const names = (lineup.instruments[key] || [])
                 .map(id => getMemberById(id)?.name)
