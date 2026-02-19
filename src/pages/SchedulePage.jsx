@@ -22,13 +22,16 @@ function printDate(dateStr) {
   return d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric' });
 }
 
-// Get all Sundays in a given year/month
+// Get all Sundays in a given year/month (timezone-safe: use local date parts)
 function getSundaysInMonth(year, month) {
   const sundays = [];
   const d = new Date(year, month - 1, 1);
   while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
   while (d.getMonth() === month - 1) {
-    sundays.push(d.toISOString().slice(0, 10));
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    sundays.push(`${y}-${m}-${day}`);
     d.setDate(d.getDate() + 7);
   }
   return sundays;
@@ -94,6 +97,7 @@ export default function SchedulePage() {
   };
 
   const handleCopyFrom = () => {
+    if (copyDoing || copyDone) return;
     setCopyDoing(true);
     // Source lineups from the selected month
     const sourceLineups = lineups
