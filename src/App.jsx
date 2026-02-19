@@ -1,11 +1,18 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
+import YearCalendarPage from './pages/YearCalendarPage';
 import SchedulePage from './pages/SchedulePage';
 import LineupDetailPage from './pages/LineupDetailPage';
 import LineupFormPage from './pages/LineupFormPage';
 import MembersPage from './pages/MembersPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+
+// Wrapper: if ?month is in URL → MonthView, else → YearCalendar
+function HomeRouter() {
+  const [searchParams] = useSearchParams();
+  return searchParams.get('month') ? <SchedulePage /> : <YearCalendarPage />;
+}
 
 export default function App() {
   return (
@@ -13,7 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<SchedulePage />} />
+            <Route index element={<HomeRouter />} />
             <Route path="lineup/new" element={<LineupFormPage />} />
             <Route path="lineup/:id" element={<LineupDetailPage />} />
             <Route path="lineup/:id/edit" element={<LineupFormPage />} />

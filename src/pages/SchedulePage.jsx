@@ -48,14 +48,13 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, getMemberById, updateLineup, addLineup } = useApp();
+  const { lineups, isAdmin, getMemberById, updateLineup, addLineups } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const [year, setYear] = useState(() => parseInt(searchParams.get('year') || now.getFullYear()));
-  const [month, setMonth] = useState(() => parseInt(searchParams.get('month') || (now.getMonth() + 1)));
+  const year = parseInt(searchParams.get('year') || now.getFullYear());
+  const month = parseInt(searchParams.get('month') || (now.getMonth() + 1));
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState('');
   const [verseInput, setVerseInput] = useState('');
@@ -77,23 +76,19 @@ export default function SchedulePage() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Find only the single next upcoming Sunday (closest date >= today)
-  const allSorted = [...lineups].sort((a, b) => a.date.localeCompare(b.date));
-  const nextUpcoming = allSorted.find(l => l.date >= today);
-  const upcomingLineup = nextUpcoming && monthLineups.find(l => l.id === nextUpcoming.id);
-
   // Monthly theme and bible verse from the first lineup
   const monthTheme = monthLineups.find(l => l.theme)?.theme || '';
   const monthBibleVerse = monthLineups.find(l => l.bibleVerse)?.bibleVerse || '';
 
+  const goToMonth = (y, m) => setSearchParams({ year: y, month: m });
   const prevMonth = () => {
     if (atMin) return;
-    if (month === 1) { setMonth(12); setYear(y => y - 1); }
-    else setMonth(m => m - 1);
+    if (month === 1) goToMonth(year - 1, 12);
+    else goToMonth(year, month - 1);
   };
   const nextMonth = () => {
-    if (month === 12) { setMonth(1); setYear(y => y + 1); }
-    else setMonth(m => m + 1);
+    if (month === 12) goToMonth(year + 1, 1);
+    else goToMonth(year, month + 1);
   };
 
   const handleCopyFrom = () => {
@@ -112,10 +107,10 @@ export default function SchedulePage() {
     const targetCount = targetSundays.length;
     const sourceCount = sourceLineups.length;
 
-    // Copy up to min(sourceCount, targetCount) — truncate if source has more
+    const toAdd = [];
     const copyCount = Math.min(sourceCount, targetCount);
     for (let i = 0; i < copyCount; i++) {
-      addLineup({
+      toAdd.push({
         ...sourceLineups[i],
         id: undefined,
         date: targetSundays[i],
@@ -125,10 +120,8 @@ export default function SchedulePage() {
         notes: sourceLineups[i].notes || '',
       });
     }
-
-    // If target has more Sundays than source, create blank lineups for the rest
     for (let i = copyCount; i < targetCount; i++) {
-      addLineup({
+      toAdd.push({
         date: targetSundays[i],
         isTeamA: false,
         theme: '',
@@ -143,7 +136,7 @@ export default function SchedulePage() {
         notes: '',
       });
     }
-
+    addLineups(toAdd);
     setCopyDoing(false);
     setCopyDone(true);
     setTimeout(() => {
@@ -154,6 +147,13 @@ export default function SchedulePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Back to Year Calendar */}
+      <div className="mb-3 print:hidden">
+        <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
+          <ChevronLeft size={16} /> All Months
+        </button>
+      </div>
+
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4 print:hidden">
         <button onClick={prevMonth} className={`p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors ${atMin ? 'opacity-30 cursor-not-allowed' : ''}`}>
@@ -322,7 +322,6 @@ export default function SchedulePage() {
       {monthLineups.length > 0 ? (
         <div className="space-y-2 print:hidden">
           {monthLineups.map((lineup) => {
-            const isUpcoming = lineup.id === upcomingLineup?.id;
             const wlNames = lineup.worshipLeaders.map(wl => {
               const m = getMemberById(wl.memberId);
               const roleLabel = wl.role && wl.role !== 'Worship Leader' ? ` (${wl.role})` : '';
@@ -340,63 +339,45 @@ export default function SchedulePage() {
 
             return (
               <div key={lineup.id}>
-                {/* "UPCOMING" label above the highlighted card */}
-                {isUpcoming && (
-                  <div className="flex items-center gap-2 mb-1 px-1">
-                    <span className="text-xs font-bold text-primary-500 uppercase tracking-widest">● Upcoming</span>
-                  </div>
-                )}
                 <div
                   onClick={() => navigate(`/lineup/${lineup.id}`)}
-                  className={`rounded-xl cursor-pointer transition-all border-l-4 ${
-                    isUpcoming
-                      ? 'bg-primary-600 text-white border-l-primary-300 shadow-lg ring-2 ring-primary-300'
-                      : 'bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 border-l-primary-400'
-                  }`}
+                  className="rounded-xl cursor-pointer transition-all border-l-4 bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 border-l-primary-400"
                 >
                   {/* Top row: date + Team A badge + practice date + arrow */}
                   <div className="flex items-center justify-between px-4 pt-3 pb-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-bold text-sm ${isUpcoming ? 'text-white' : 'text-gray-800'}`}>
-                        {shortDate(lineup.date)}
-                      </span>
+                      <span className="font-bold text-sm text-gray-800">{shortDate(lineup.date)}</span>
                       {lineup.isTeamA && (
-                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${isUpcoming ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                          Team A
-                        </span>
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Team A</span>
                       )}
                       {lineup.practiceDate && (
-                        <span className={`text-xs flex items-center gap-0.5 ${isUpcoming ? 'text-white/70' : 'text-teal-600'}`}>
+                        <span className="text-xs flex items-center gap-0.5 text-teal-600">
                           <CalendarCheck size={10} />
                           Practice: {shortDate(lineup.practiceDate)}
                         </span>
                       )}
                     </div>
-                    <ChevronRight size={15} className={isUpcoming ? 'text-white/60' : 'text-gray-300'} />
+                    <ChevronRight size={15} className="text-gray-300" />
                   </div>
 
                   {/* WL + Backups on same row */}
                   <div className="flex items-start gap-1.5 px-4 pb-1">
-                    <Mic2 size={13} className={`flex-shrink-0 mt-0.5 ${isUpcoming ? 'text-white/70' : 'text-primary-400'}`} />
-                    <span className={`text-sm font-medium leading-tight ${isUpcoming ? 'text-white' : 'text-gray-700'}`}>
-                      {wlNames || 'TBA'}
-                    </span>
+                    <Mic2 size={13} className="flex-shrink-0 mt-0.5 text-primary-400" />
+                    <span className="text-sm font-medium leading-tight text-gray-700">{wlNames || 'TBA'}</span>
                     {backupNames && (
-                      <span className={`text-xs leading-tight mt-0.5 ml-1 ${isUpcoming ? 'text-white/60' : 'text-gray-400'}`}>
-                        + {backupNames}
-                      </span>
+                      <span className="text-xs leading-tight mt-0.5 ml-1 text-gray-400">+ {backupNames}</span>
                     )}
                   </div>
 
-                  {/* Instruments — initials only, single row */}
-                  <div className={`flex flex-wrap gap-1 px-4 pb-2 pt-0.5 ${isUpcoming ? '[&_span]:bg-white/15 [&_span]:text-white' : ''}`}>
-                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`K1: ${k1}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`K2: ${k2}`} iconClass={isUpcoming ? 'text-white/70' : 'text-amber-500'} />}
-                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`BG: ${bass}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`LG: ${lg}`} iconClass={isUpcoming ? 'text-white/70' : 'text-orange-400'} />}
-                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass={isUpcoming ? 'text-white/70' : 'text-primary-400'} />}
-                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass={isUpcoming ? 'text-white/70' : 'text-blue-400'} />}
+                  {/* Instruments */}
+                  <div className="flex flex-wrap gap-1 px-4 pb-2 pt-0.5">
+                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`K1: ${k1}`} iconClass="text-primary-400" />}
+                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`K2: ${k2}`} iconClass="text-amber-500" />}
+                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`BG: ${bass}`} iconClass="text-primary-400" />}
+                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`LG: ${lg}`} iconClass="text-orange-400" />}
+                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass="text-primary-400" />}
+                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass="text-primary-400" />}
+                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
                   </div>
 
                 </div>

@@ -91,6 +91,16 @@ export function AppProvider({ children }) {
     return newLineup;
   };
 
+  // Add multiple lineups atomically in one state update (prevents duplicates from batching issues)
+  const addLineups = (lineupList) => {
+    const newLineups = lineupList.map((lineup, i) => ({
+      ...lineup,
+      id: `lineup-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+    }));
+    setLineups((prev) => [...prev, ...newLineups].sort((a, b) => a.date.localeCompare(b.date)));
+    return newLineups;
+  };
+
   const updateLineup = (id, updates) => {
     setLineups((prev) =>
       prev
@@ -125,6 +135,7 @@ export function AppProvider({ children }) {
         deleteMember,
         getMemberById,
         addLineup,
+        addLineups,
         updateLineup,
         deleteLineup,
         getLineupById,
