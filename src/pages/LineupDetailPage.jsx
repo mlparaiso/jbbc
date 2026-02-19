@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Loader
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -43,6 +45,8 @@ export default function LineupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getLineupById, getMemberById, isAdmin, deleteLineup, lineups } = useApp();
+  const cardRef = useRef(null);
+  const [sharing, setSharing] = useState(false);
 
   const lineup = getLineupById(id);
 
@@ -102,23 +106,56 @@ export default function LineupDetailPage() {
         </nav>
         <div className="flex gap-2 print:hidden">
           <button
-            onClick={() => {
-              const url = window.location.href;
-              const date = new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
-              const wlNames = lineup.worshipLeaders.map(wl => {
-                const m = getMemberById(wl.memberId);
-                return m ? m.name : '';
-              }).filter(Boolean).join(', ');
-              const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}\n${lineup.theme ? `Theme: ${lineup.theme}` : ''}`.trim();
-              if (navigator.share) {
-                navigator.share({ title: `JBBC Lineup — ${date}`, text, url });
-              } else {
-                navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!'));
+            onClick={async () => {
+              if (sharing) return;
+              setSharing(true);
+              try {
+                const date = new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+                const url = window.location.href;
+                const wlNames = lineup.worshipLeaders.map(wl => {
+                  const m = getMemberById(wl.memberId);
+                  return m ? m.name : '';
+                }).filter(Boolean).join(', ');
+                const title = `JBBC Lineup — ${date}`;
+                const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}${lineup.theme ? `\nTheme: ${lineup.theme}` : ''}`;
+
+                // Try to capture card as image and share
+                if (cardRef.current && navigator.share && navigator.canShare) {
+                  const canvas = await html2canvas(cardRef.current, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false,
+                  });
+                  canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `jbbc-lineup-${lineup.date}.png`, { type: 'image/png' });
+                    try {
+                      if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({ title, text, url, files: [file] });
+                      } else {
+                        await navigator.share({ title, text, url });
+                      }
+                    } catch (e) {
+                      // user cancelled or share failed, fallback
+                      navigator.clipboard?.writeText(url).then(() => alert('Link copied!'));
+                    }
+                    setSharing(false);
+                  }, 'image/png');
+                } else if (navigator.share) {
+                  await navigator.share({ title, text, url });
+                  setSharing(false);
+                } else {
+                  navigator.clipboard?.writeText(url).then(() => alert('Link copied to clipboard!'));
+                  setSharing(false);
+                }
+              } catch {
+                setSharing(false);
               }
             }}
+            disabled={sharing}
             className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"
           >
-            <Share2 size={12} /> Share
+            {sharing ? <Loader size={12} className="animate-spin" /> : <Share2 size={12} />} Share
           </button>
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
             <Printer size={12} /> Print
@@ -158,7 +195,7 @@ export default function LineupDetailPage() {
       </div>
 
       {/* Main card */}
-      <div className="card border-l-4 border-l-primary-400 space-y-4">
+      <div ref={cardRef} className="card border-l-4 border-l-primary-400 space-y-4">
 
         {/* Date + theme + practice date */}
         <div>
