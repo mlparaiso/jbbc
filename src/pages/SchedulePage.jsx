@@ -101,22 +101,33 @@ export default function SchedulePage() {
 
       {/* Printable monthly table — hidden on screen */}
       <div className="hidden print:block mb-6">
-        <h1 className="text-xl font-bold text-gray-900">JBBC Music Team — {MONTHS[month - 1]} {year} Schedule</h1>
-        {monthTheme && <p className="text-sm text-gray-700 mt-1">Theme: <strong>{monthTheme}</strong></p>}
-        {monthBibleVerse && <p className="text-xs text-gray-500 italic mt-0.5">"{monthBibleVerse}"</p>}
-        <table className="w-full text-xs border-collapse mt-3">
+        {/* Print Header */}
+        <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-primary-600">
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">JBBC Music Team</h1>
+            <h2 className="text-base font-semibold text-primary-700">{MONTHS[month - 1]} {year} — Worship Schedule</h2>
+          </div>
+          <div className="text-right">
+            {monthTheme && <p className="text-xs font-bold text-primary-600 uppercase tracking-wide">Theme</p>}
+            {monthTheme && <p className="text-sm font-semibold text-gray-800">{monthTheme}</p>}
+            {monthBibleVerse && <p className="text-xs text-gray-500 italic mt-0.5 max-w-xs">"{monthBibleVerse}"</p>}
+          </div>
+        </div>
+
+        {/* Styled Table */}
+        <table className="w-full text-xs border-collapse rounded-lg overflow-hidden">
           <thead>
-            <tr className="border-b-2 border-gray-800 text-left">
-              <th className="py-1 pr-2">Date</th>
-              <th className="py-1 pr-2">WL</th>
-              <th className="py-1 pr-2">Back Ups</th>
-              <th className="py-1 pr-2">K1</th>
-              <th className="py-1 pr-2">K2</th>
-              <th className="py-1 pr-2">BG</th>
-              <th className="py-1 pr-2">LG</th>
-              <th className="py-1 pr-2">AG</th>
-              <th className="py-1 pr-2">D</th>
-              <th className="py-1">SE</th>
+            <tr style={{backgroundColor: '#4f46e5', color: 'white'}}>
+              <th className="py-2 px-2 text-left font-semibold whitespace-nowrap">Date</th>
+              <th className="py-2 px-2 text-left font-semibold">Worship Leader</th>
+              <th className="py-2 px-2 text-left font-semibold">Back Ups</th>
+              <th className="py-2 px-2 text-center font-semibold">K1</th>
+              <th className="py-2 px-2 text-center font-semibold">K2</th>
+              <th className="py-2 px-2 text-center font-semibold">BG</th>
+              <th className="py-2 px-2 text-center font-semibold">LG</th>
+              <th className="py-2 px-2 text-center font-semibold">AG</th>
+              <th className="py-2 px-2 text-center font-semibold">D</th>
+              <th className="py-2 px-2 text-center font-semibold">SE</th>
             </tr>
           </thead>
           <tbody>
@@ -131,22 +142,27 @@ export default function SchedulePage() {
               const dp = (l.instruments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
               const sep = getMemberById(l.soundEngineer)?.name || '—';
               return (
-                <tr key={l.id} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="py-1.5 pr-2 font-medium whitespace-nowrap">{fullDate(l.date)}</td>
-                  <td className="py-1.5 pr-2">{wl}</td>
-                  <td className="py-1.5 pr-2 text-gray-600">{bu}</td>
-                  <td className="py-1.5 pr-2">{k1p}</td>
-                  <td className="py-1.5 pr-2">{k2p}</td>
-                  <td className="py-1.5 pr-2">{bp}</td>
-                  <td className="py-1.5 pr-2">{lgp}</td>
-                  <td className="py-1.5 pr-2">{agp}</td>
-                  <td className="py-1.5 pr-2">{dp}</td>
-                  <td className="py-1.5">{sep}</td>
+                <tr key={l.id} style={{backgroundColor: i % 2 === 0 ? '#f5f3ff' : '#ffffff', borderBottom: '1px solid #e5e7eb'}}>
+                  <td className="py-2 px-2 font-semibold text-gray-800 whitespace-nowrap">{fullDate(l.date)}</td>
+                  <td className="py-2 px-2 font-medium text-gray-800">{wl}</td>
+                  <td className="py-2 px-2 text-gray-600">{bu}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{k1p}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{k2p}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{bp}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{lgp}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{agp}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{dp}</td>
+                  <td className="py-2 px-2 text-center text-gray-700">{sep}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+
+        {/* Print Footer */}
+        <p className="text-xs text-gray-400 text-center mt-4">
+          JBBC Music Team © {new Date().getFullYear()} — Sit in designated seats | No personal phone use on stage | Be presentable | Do it for the Lord.
+        </p>
       </div>
 
       {/* Monthly Theme + Bible Verse */}
