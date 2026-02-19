@@ -1,12 +1,84 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle } from 'lucide-react';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
-
 const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
+
+// Autocomplete input for song titles
+function SongAutocomplete({ value, onChange, songLibrary }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const matches = value.trim().length > 0
+    ? songLibrary.filter(s => s.title.toLowerCase().includes(value.trim().toLowerCase())).slice(0, 6)
+    : [];
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative flex-1">
+      <input
+        type="text"
+        className="input w-full"
+        placeholder="Song title"
+        value={value}
+        onChange={e => { onChange({ title: e.target.value }); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        autoComplete="off"
+      />
+      {open && matches.length > 0 && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {matches.map((s, i) => (
+            <button key={i} type="button"
+              className="w-full text-left px-3 py-2 hover:bg-primary-50 text-sm flex items-center justify-between"
+              onMouseDown={() => { onChange({ title: s.title, youtubeUrl: s.youtubeUrl, section: s.section }); setOpen(false); }}
+            >
+              <span className="font-medium text-gray-800 truncate">{s.title}</span>
+              <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{s.section} · {s.count}×</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Draggable song row
+function SortableSongRow({ song, index, songLibrary, onChange, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(index) });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="flex gap-2 items-start">
+      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 mt-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none">
+        <GripVertical size={16} />
+      </button>
+      <select className="input w-32 flex-shrink-0" value={song.section}
+        onChange={e => onChange({ section: e.target.value })}>
+        {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+      </select>
+      <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} />
+      <input type="url" className="input w-28 flex-shrink-0" placeholder="YT URL (opt.)"
+        value={song.youtubeUrl || ''}
+        onChange={e => onChange({ youtubeUrl: e.target.value })} />
+      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 mt-2 flex-shrink-0">
+        <Trash2 size={15} />
+      </button>
+    </div>
+  );
+}
 
 function MultiSelect({ label, memberOptions, selected, onChange, placeholder }) {
   const toggle = (id) => {
@@ -56,7 +128,7 @@ function SingleSelect({ label, memberOptions, selected, onChange }) {
 export default function LineupFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, addLineup, updateLineup, members, isAdmin } = useApp();
+  const { getLineupById, addLineup, updateLineup, members, isAdmin, lineups } = useApp();
 
   const isEdit = id && id !== 'new';
   const existing = isEdit ? getLineupById(id) : null;
@@ -92,6 +164,51 @@ export default function LineupFormPage() {
   useEffect(() => {
     if (existing) setForm(existing);
   }, [id]);
+
+  // Song library: all unique songs from past lineups (for autocomplete)
+  const songLibrary = useMemo(() => {
+    const map = {};
+    for (const l of lineups) {
+      for (const s of l.songs || []) {
+        const key = s.title.trim().toLowerCase();
+        if (!key) continue;
+        if (!map[key]) map[key] = { title: s.title.trim(), section: s.section, youtubeUrl: s.youtubeUrl || '', count: 0 };
+        map[key].count++;
+        if (s.youtubeUrl) map[key].youtubeUrl = s.youtubeUrl;
+      }
+    }
+    return Object.values(map).sort((a, b) => b.count - a.count);
+  }, [lineups]);
+
+  // Duplicate detection: is there already a lineup on this date (excluding current edit)?
+  const duplicateLineup = !isEdit && form.date
+    ? lineups.find(l => l.date === form.date)
+    : null;
+
+  // Previous lineup (for copy instruments)
+  const prevLineup = useMemo(() => {
+    if (!form.date || isEdit) return null;
+    const sorted = [...lineups].filter(l => l.date < form.date).sort((a, b) => b.date.localeCompare(a.date));
+    return sorted[0] || null;
+  }, [form.date, lineups, isEdit]);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setForm(f => {
+        const songs = f.songs || [];
+        const oldIndex = Number(active.id);
+        const newIndex = Number(over.id);
+        return { ...f, songs: arrayMove(songs, oldIndex, newIndex) };
+      });
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -173,6 +290,11 @@ export default function LineupFormPage() {
               <label className="label">Service Date *</label>
               <input type="date" className="input" value={form.date}
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required />
+              {duplicateLineup && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 font-medium">
+                  <AlertTriangle size={12} /> A lineup already exists for this date — saving will overwrite it.
+                </p>
+              )}
             </div>
             <div>
               <label className="label">Practice Date</label>
@@ -251,9 +373,19 @@ export default function LineupFormPage() {
 
         {/* Instruments */}
         <div className="card space-y-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Guitar size={14} className="text-primary-500" /> Instrumentalists
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Guitar size={14} className="text-primary-500" /> Instrumentalists
+            </h3>
+            {prevLineup && (
+              <button type="button"
+                onClick={() => setForm(f => ({ ...f, instruments: prevLineup.instruments, soundEngineer: prevLineup.soundEngineer }))}
+                className="flex items-center gap-1 text-xs text-primary-600 hover:underline"
+              >
+                <Copy size={12} /> Copy from {prevLineup.date}
+              </button>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SingleSelect label="Keyboard 1 (K1)" memberOptions={keyboardists}
@@ -291,7 +423,7 @@ export default function LineupFormPage() {
             </h3>
             <button type="button" onClick={() => setForm(f => ({
               ...f,
-              songs: [...(f.songs || []), { section: 'Opening', title: '', youtubeUrl: '' }]
+              songs: [...(f.songs || []), { section: 'Praise and Worship', title: '', youtubeUrl: '' }]
             }))} className="text-primary-600 hover:underline text-xs flex items-center gap-1">
               <Plus size={13} /> Add Song
             </button>
@@ -299,35 +431,25 @@ export default function LineupFormPage() {
           {(form.songs || []).length === 0 && (
             <p className="text-xs text-gray-400">No songs added yet. Click "Add Song" to start.</p>
           )}
-          {(form.songs || []).map((song, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <select
-                className="input w-32 flex-shrink-0"
-                value={song.section}
-                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, section: e.target.value } : s) }))}
-              >
-                {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
-              </select>
-              <input
-                type="text"
-                className="input flex-1"
-                placeholder="Song title"
-                value={song.title}
-                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, title: e.target.value } : s) }))}
-              />
-              <input
-                type="url"
-                className="input w-36 flex-shrink-0"
-                placeholder="YouTube URL (opt.)"
-                value={song.youtubeUrl}
-                onChange={e => setForm(f => ({ ...f, songs: f.songs.map((s, idx) => idx === i ? { ...s, youtubeUrl: e.target.value } : s) }))}
-              />
-              <button type="button" onClick={() => setForm(f => ({ ...f, songs: f.songs.filter((_, idx) => idx !== i) }))}
-                className="text-red-400 hover:text-red-600 mt-2 flex-shrink-0">
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={(form.songs || []).map((_, i) => String(i))} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {(form.songs || []).map((song, i) => (
+                  <SortableSongRow
+                    key={i}
+                    song={song}
+                    index={i}
+                    songLibrary={songLibrary}
+                    onChange={updates => setForm(f => ({
+                      ...f,
+                      songs: f.songs.map((s, idx) => idx === i ? { ...s, ...updates } : s),
+                    }))}
+                    onRemove={() => setForm(f => ({ ...f, songs: f.songs.filter((_, idx) => idx !== i) }))}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Next WL */}
