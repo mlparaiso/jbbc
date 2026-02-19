@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
 import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText } from 'lucide-react';
@@ -60,9 +60,19 @@ export default function LineupFormPage() {
 
   const isEdit = id && id !== 'new';
   const existing = isEdit ? getLineupById(id) : null;
+  const [searchParams] = useSearchParams();
+
+  // Pre-fill date from ?year=&month= when creating a new lineup
+  const prefillDate = (() => {
+    if (isEdit || existing) return '';
+    const y = searchParams.get('year');
+    const m = searchParams.get('month');
+    if (y && m) return `${y}-${String(m).padStart(2, '0')}-01`;
+    return '';
+  })();
 
   const emptyForm = {
-    date: '',
+    date: prefillDate,
     isTeamA: false,
     theme: '',
     worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],

@@ -391,8 +391,8 @@ export default function SchedulePage() {
           <p className="font-medium mb-4">No lineups for this month yet.</p>
           {isAdmin && !showCopyPanel && (
             <div className="flex flex-col items-center gap-2">
-              <button onClick={() => navigate('/lineup/new')} className="btn-primary flex items-center gap-1.5">
-                <Plus size={15} /> Create First Lineup
+              <button onClick={() => navigate(`/lineup/new?year=${year}&month=${month}`)} className="btn-primary flex items-center gap-1.5">
+                <Plus size={15} /> Add Service Slot
               </button>
               <button onClick={() => { setShowCopyPanel(true); setCopyDone(false); }} className="btn-secondary text-sm flex items-center gap-1.5">
                 <Copy size={13} /> Copy from Another Month
@@ -454,8 +454,8 @@ export default function SchedulePage() {
       {/* Admin: Add Lineup Button */}
       {isAdmin && monthLineups.length > 0 && (
         <div className="mt-4 text-center print:hidden">
-          <button onClick={() => navigate('/lineup/new')} className="btn-primary flex items-center gap-1.5 mx-auto text-sm">
-            <Plus size={15} /> Add New Lineup
+          <button onClick={() => navigate(`/lineup/new?year=${year}&month=${month}`)} className="btn-primary flex items-center gap-1.5 mx-auto text-sm">
+            <Plus size={15} /> Add Service Slot
           </button>
         </div>
       )}
