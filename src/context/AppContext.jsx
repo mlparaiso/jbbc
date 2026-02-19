@@ -86,7 +86,7 @@ export function AppProvider({ children }) {
 
   // Lineup CRUD
   const addLineup = (lineup) => {
-    const newLineup = { ...lineup, id: `lineup-${Date.now()}` };
+    const newLineup = { ...lineup, id: `lineup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
     setLineups((prev) => [...prev, newLineup].sort((a, b) => a.date.localeCompare(b.date)));
     return newLineup;
   };
@@ -107,7 +107,7 @@ export function AppProvider({ children }) {
 
   const getLineupsByMonth = (year, month) => {
     return lineups.filter((l) => {
-      const d = new Date(l.date);
+      const d = new Date(l.date + 'T00:00:00');
       return d.getFullYear() === year && d.getMonth() + 1 === month;
     });
   };

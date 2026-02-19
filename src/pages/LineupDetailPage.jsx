@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
-  Printer, Pencil, Trash2, ChevronLeft, AlertCircle,
+  Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
   SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube
 } from 'lucide-react';
 
@@ -42,9 +42,15 @@ function groupSongs(songs) {
 export default function LineupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, getMemberById, isAdmin, deleteLineup } = useApp();
+  const { getLineupById, getMemberById, isAdmin, deleteLineup, lineups } = useApp();
 
   const lineup = getLineupById(id);
+
+  // Sorted all lineups for prev/next navigation
+  const sorted = [...lineups].sort((a, b) => a.date.localeCompare(b.date));
+  const currentIndex = sorted.findIndex(l => l.id === id);
+  const prevLineup = currentIndex > 0 ? sorted[currentIndex - 1] : null;
+  const nextLineup = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : null;
 
   if (!lineup) {
     return (
@@ -89,6 +95,27 @@ export default function LineupDetailPage() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Prev / Next week navigation */}
+      <div className="flex items-center justify-between mb-3 print:hidden">
+        <button
+          onClick={() => prevLineup && navigate(`/lineup/${prevLineup.id}`)}
+          disabled={!prevLineup}
+          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 transition-colors ${prevLineup ? 'text-gray-600 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'}`}
+        >
+          <ChevronLeft size={14} />
+          {prevLineup ? shortDate(prevLineup.date) : 'No prev'}
+        </button>
+        <span className="text-xs text-gray-400">week {currentIndex + 1} of {sorted.length}</span>
+        <button
+          onClick={() => nextLineup && navigate(`/lineup/${nextLineup.id}`)}
+          disabled={!nextLineup}
+          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 transition-colors ${nextLineup ? 'text-gray-600 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'}`}
+        >
+          {nextLineup ? shortDate(nextLineup.date) : 'No next'}
+          <ChevronRight size={14} />
+        </button>
       </div>
 
       {/* Main card */}
