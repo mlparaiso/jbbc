@@ -70,7 +70,7 @@ export default function LineupDetailPage() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Back + Action buttons row */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 print:hidden">
         <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
           <ChevronLeft size={16} /> Schedule
         </button>
@@ -164,7 +164,7 @@ export default function LineupDetailPage() {
         {/* Instruments grid */}
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
               const names = (lineup.instruments[key] || [])
                 .map(id => getMemberById(id)?.name)
@@ -254,7 +254,7 @@ export default function LineupDetailPage() {
       </div>
 
       {/* Reminder */}
-      <div className="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex gap-2">
+      <div className="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex gap-2 print:hidden">
         <AlertCircle size={13} className="flex-shrink-0 mt-0.5 text-yellow-600" />
         <span><strong>Reminder:</strong> Sit in designated seats | No personal phone use on stage | Be presentable | Do it for the Lord.</span>
       </div>

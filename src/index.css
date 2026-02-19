@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  header, footer, nav {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900;
