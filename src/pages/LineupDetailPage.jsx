@@ -119,21 +119,96 @@ export default function LineupDetailPage() {
                 const title = `JBBC Lineup — ${date}`;
                 const text = `JBBC Music Team — ${date}\nWorship Leader: ${wlNames || 'TBA'}${lineup.theme ? `\nTheme: ${lineup.theme}` : ''}`;
 
-                // Capture card as image — temporarily widen to avoid wrapping
+                // Build a self-contained HTML snapshot (no Tailwind needed)
                 if (cardRef.current) {
-                  const el = cardRef.current;
-                  const prevStyle = el.style.cssText;
-                  el.style.width = '640px';
-                  el.style.minWidth = '640px';
-                  const canvas = await html2canvas(el, {
+                  const CARD_WIDTH = 640;
+                  const PAD = 24;
+
+                  // Gather data for rendering
+                  const wlRows = lineup.worshipLeaders.map(wl => {
+                    const m = getMemberById(wl.memberId);
+                    const showRole = wl.role && wl.role !== 'Worship Leader';
+                    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                      ${showRole ? `<span style="font-size:11px;background:#e0e7ff;color:#4338ca;padding:2px 6px;border-radius:4px;white-space:nowrap;">${wl.role}</span>` : ''}
+                      <span style="font-size:14px;color:#1f2937;font-weight:600;">${m?.name || '—'}</span>
+                    </div>`;
+                  }).join('');
+
+                  const buRows = lineup.backUps.map(bid => {
+                    const m = getMemberById(bid);
+                    return `<span style="font-size:11px;background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:999px;margin:2px;">${m?.name || '—'}</span>`;
+                  }).join('');
+
+                  const instrItems = INSTRUMENT_CONFIG.map(({ key, label }) => {
+                    const names = (lineup.instruments[key] || []).map(iid => getMemberById(iid)?.name).filter(Boolean).join(' / ') || '—';
+                    return `<div style="background:#f9fafb;border-radius:8px;padding:8px 10px;flex:1;min-width:130px;">
+                      <div style="font-size:10px;color:#9ca3af;font-weight:600;margin-bottom:2px;">${label}</div>
+                      <div style="font-size:13px;color:#1f2937;font-weight:600;">${names}</div>
+                    </div>`;
+                  }).join('');
+                  const seItem = `<div style="background:#eff6ff;border-radius:8px;padding:8px 10px;flex:1;min-width:130px;">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:600;margin-bottom:2px;">Sound Engineer</div>
+                    <div style="font-size:13px;color:#1f2937;font-weight:600;">${se?.name || '—'}</div>
+                  </div>`;
+
+                  const songHTML = songGroups.map(g => `
+                    <div style="margin-bottom:10px;">
+                      <div style="font-size:10px;color:#6366f1;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${g.section}</div>
+                      ${g.songs.map(s => `<div style="font-size:13px;color:#1f2937;margin-bottom:2px;">${s.title}</div>`).join('')}
+                    </div>`).join('');
+
+                  const practiceHTML = lineup.practiceDate ? `
+                    <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;">
+                      📅 Practice: ${shortDate(lineup.practiceDate)}, after the Service
+                    </div>` : '';
+
+                  const themeHTML = lineup.theme ? `<div style="font-size:11px;color:#6366f1;font-weight:500;margin-top:4px;">📖 ${lineup.theme}</div>` : '';
+                  const nextWLHTML = lineup.nextWL ? `
+                    <div style="border-top:1px solid #f3f4f6;padding-top:12px;margin-top:4px;font-size:12px;color:#6b7280;">
+                      <strong>NEXT WL:</strong> <span style="color:#4f46e5;font-weight:700;">${lineup.nextWL}</span>
+                    </div>` : '';
+
+                  const html = `
+                    <div style="font-family:system-ui,-apple-system,sans-serif;background:#f3f4f6;padding:${PAD}px;width:${CARD_WIDTH + PAD * 2}px;box-sizing:border-box;">
+                      <div style="background:#ffffff;border-radius:12px;padding:24px;border-left:4px solid #818cf8;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                        <div style="margin-bottom:16px;">
+                          <div style="font-size:18px;font-weight:800;color:#111827;">
+                            ${formatDate(lineup.date)}
+                            ${lineup.isTeamA ? '<span style="font-size:11px;background:#f3f4f6;color:#6b7280;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;">Team A</span>' : ''}
+                          </div>
+                          ${themeHTML}${practiceHTML}
+                        </div>
+                        <hr style="border:none;border-top:1px solid #f3f4f6;margin:12px 0;" />
+                        <div style="margin-bottom:16px;">
+                          <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">🎤 Worship Leader${lineup.worshipLeaders.length > 1 ? 's' : ''}</div>
+                          ${wlRows}
+                          ${buRows ? `<div style="margin-top:8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">🎵 Back Ups</div><div style="display:flex;flex-wrap:wrap;">${buRows}</div>` : ''}
+                        </div>
+                        <hr style="border:none;border-top:1px solid #f3f4f6;margin:12px 0;" />
+                        <div style="margin-bottom:16px;">
+                          <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Instruments</div>
+                          <div style="display:flex;flex-wrap:wrap;gap:8px;">${instrItems}${seItem}</div>
+                        </div>
+                        ${songGroups.length ? `<hr style="border:none;border-top:1px solid #f3f4f6;margin:12px 0;" /><div style="margin-bottom:16px;"><div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">📖 Songs</div>${songHTML}</div>` : ''}
+                        ${nextWLHTML}
+                        <div style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:10px;font-size:11px;color:#6366f1;">🔗 ${url}</div>
+                      </div>
+                    </div>`;
+
+                  const wrapper = document.createElement('div');
+                  wrapper.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+                  wrapper.innerHTML = html;
+                  document.body.appendChild(wrapper);
+
+                  const canvas = await html2canvas(wrapper.firstChild, {
                     scale: 2,
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f3f4f6',
                     useCORS: true,
                     logging: false,
-                    width: 640,
-                    windowWidth: 640,
                   });
-                  el.style.cssText = prevStyle;
+
+                  document.body.removeChild(wrapper);
+
                   canvas.toBlob(async (blob) => {
                     const file = new File([blob], `jbbc-lineup-${lineup.date}.png`, { type: 'image/png' });
                     let shared = false;
