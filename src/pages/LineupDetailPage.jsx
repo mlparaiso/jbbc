@@ -27,18 +27,31 @@ const INSTRUMENT_CONFIG = [
   { key: 'drums',          icon: <Drum size={14} />,            label: 'Drums',           iconClass: 'text-primary-500' },
 ];
 
-// Group consecutive songs by section
+const SECTION_ORDER = [
+  'Opening',
+  'Opening/Welcome',
+  'Welcome',
+  'Praise and Worship',
+  "Lord's Table",
+  'Special Number',
+  'Other',
+];
+
+// Group songs by section, sorted by predefined section order
 function groupSongs(songs) {
-  const groups = [];
-  songs.forEach(song => {
-    const last = groups[groups.length - 1];
-    if (last && last.section === song.section) {
-      last.songs.push(song);
-    } else {
-      groups.push({ section: song.section, songs: [song] });
-    }
+  const map = {};
+  for (const song of songs) {
+    const sec = song.section || 'Other';
+    if (!map[sec]) map[sec] = [];
+    map[sec].push(song);
+  }
+  // Sort sections by SECTION_ORDER, then unknowns at the end
+  const sortedSections = Object.keys(map).sort((a, b) => {
+    const ai = SECTION_ORDER.indexOf(a);
+    const bi = SECTION_ORDER.indexOf(b);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
   });
-  return groups;
+  return sortedSections.map(sec => ({ section: sec, songs: map[sec] }));
 }
 
 export default function LineupDetailPage() {
