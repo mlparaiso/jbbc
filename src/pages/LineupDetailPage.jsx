@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Quote
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube
 } from 'lucide-react';
 
 function formatDate(dateStr) {
@@ -92,26 +92,20 @@ export default function LineupDetailPage() {
       </div>
 
       {/* Main card */}
-      <div className={`card border-l-4 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'} space-y-4`}>
+      <div className="card border-l-4 border-l-primary-400 space-y-4">
 
         {/* Date + theme + practice date */}
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-bold text-gray-800">{formatDate(lineup.date)}</h2>
             {lineup.isTeamA && (
-              <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Team A</span>
+              <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Team A</span>
             )}
           </div>
           {lineup.theme && (
             <p className="text-xs text-primary-600 font-medium flex items-center gap-1 mt-0.5">
               <BookOpen size={11} /> {lineup.theme}
             </p>
-          )}
-          {lineup.bibleVerse && (
-            <div className="mt-1.5 flex items-start gap-1.5">
-              <Quote size={11} className="text-primary-300 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-primary-500 italic leading-relaxed">{lineup.bibleVerse}</p>
-            </div>
           )}
           {/* Prominent practice date badge */}
           {lineup.practiceDate && (
@@ -130,30 +124,20 @@ export default function LineupDetailPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
               <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
             </p>
-            {lineup.isTeamA ? (
-              <div className="space-y-1">
-                {lineup.worshipLeaders.map((wl, i) => {
-                  const member = getMemberById(wl.memberId);
-                  return (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
-                      <span className="text-sm text-gray-800 font-medium">{member?.name || '—'}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {lineup.worshipLeaders.map((wl, i) => {
-                  const member = getMemberById(wl.memberId);
-                  return (
-                    <span key={i} className="bg-primary-100 text-primary-800 font-semibold px-2 py-0.5 rounded-full text-sm">
-                      {member?.name || '—'}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
+            <div className="space-y-1">
+              {lineup.worshipLeaders.map((wl, i) => {
+                const member = getMemberById(wl.memberId);
+                const showRole = wl.role && wl.role !== 'Worship Leader';
+                return (
+                  <div key={i} className="flex items-center gap-1.5">
+                    {showRole && (
+                      <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
+                    )}
+                    <span className="text-sm text-gray-800 font-medium">{member?.name || '—'}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {lineup.backUps.length > 0 && (

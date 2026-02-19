@@ -193,18 +193,24 @@ export default function SchedulePage() {
                   className={`rounded-xl cursor-pointer transition-all border-l-4 ${
                     isUpcoming
                       ? 'bg-primary-600 text-white border-l-primary-300 shadow-lg ring-2 ring-primary-300'
-                      : `bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 ${lineup.isTeamA ? 'border-l-amber-400' : 'border-l-primary-400'}`
+                      : 'bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 border-l-primary-400'
                   }`}
                 >
-                  {/* Top row: date + Team A badge + arrow */}
+                  {/* Top row: date + Team A badge + practice date + arrow */}
                   <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`font-bold text-sm ${isUpcoming ? 'text-white' : 'text-gray-800'}`}>
                         {shortDate(lineup.date)}
                       </span>
                       {lineup.isTeamA && (
-                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${isUpcoming ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'}`}>
+                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${isUpcoming ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
                           Team A
+                        </span>
+                      )}
+                      {lineup.practiceDate && (
+                        <span className={`text-xs flex items-center gap-0.5 ${isUpcoming ? 'text-white/70' : 'text-teal-600'}`}>
+                          <CalendarCheck size={10} />
+                          Practice: {shortDate(lineup.practiceDate)}
                         </span>
                       )}
                     </div>
@@ -238,15 +244,6 @@ export default function SchedulePage() {
                     {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`Sound Engineer: ${se.name}`} iconClass={isUpcoming ? 'text-white/70' : 'text-blue-400'} />}
                   </div>
 
-                  {/* Practice date */}
-                  {lineup.practiceDate && (
-                    <div className="flex items-center gap-1 px-4 pb-2">
-                      <CalendarCheck size={11} className={isUpcoming ? 'text-white/50' : 'text-gray-300'} />
-                      <span className={`text-xs ${isUpcoming ? 'text-white/70' : 'text-gray-400'}`}>
-                        Practice: {shortDate(lineup.practiceDate)}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             );
