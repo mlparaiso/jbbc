@@ -1,7 +1,6 @@
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Music2 } from 'lucide-react';
 
 export default function LandingPage() {
   const { user, teamId, authLoading, teamLoading, loginWithGoogle } = useApp();
@@ -26,8 +25,8 @@ export default function LandingPage() {
       <div className="max-w-sm w-full text-center space-y-8">
         {/* Logo */}
         <div className="space-y-3">
-          <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mx-auto">
-            <Music2 size={40} className="text-primary-200" />
+          <div className="w-24 h-24 flex items-center justify-center mx-auto">
+            <img src="/logo.svg" alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
           </div>
           <h1 className="text-3xl font-bold">Worship Schedule</h1>
           <p className="text-primary-200 text-sm">Manage your music team's lineup, members, and songs — all in one place.</p>

@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Music2, CalendarDays, Users, LogOut, ListMusic, Settings } from 'lucide-react';
+import { CalendarDays, Users, LogOut, ListMusic, Settings } from 'lucide-react';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -20,7 +20,7 @@ export default function Layout() {
       <header className="bg-primary-700 text-white shadow-md">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <Music2 size={24} className="text-primary-200" />
+            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" />
             <div className="text-left">
               <h1 className="text-lg font-bold leading-tight">{team?.name || 'Music Team'}</h1>
               <p className="text-xs text-primary-200">Worship Schedule Manager</p>
