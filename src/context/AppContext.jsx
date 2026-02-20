@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import {
   doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc,
@@ -86,6 +86,7 @@ export function AppProvider({ children }) {
 
   const logout = async () => {
     await signOut(auth);
+    // redirect to login — handled by AuthGuard reacting to user becoming null
   };
 
   const isAdmin = !!user && !!teamId; // logged in + has a team = can edit

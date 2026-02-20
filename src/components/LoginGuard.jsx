@@ -1,11 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-export default function AuthGuard() {
-  const { user, teamId, authLoading, teamLoading } = useApp();
+// Requires only login (not a team) — used for /team-setup
+export default function LoginGuard() {
+  const { user, authLoading } = useApp();
 
-  // Show loading spinner while Firebase resolves auth state
-  if (authLoading || (user && teamLoading)) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-primary-400 text-sm animate-pulse">Loading...</div>
@@ -15,9 +15,6 @@ export default function AuthGuard() {
 
   // Not logged in → go to login page
   if (!user) return <Navigate to="/login" replace />;
-
-  // Logged in but no team → go to team setup
-  if (!teamId) return <Navigate to="/team-setup" replace />;
 
   return <Outlet />;
 }

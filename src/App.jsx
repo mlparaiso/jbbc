@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-r
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
 import AuthGuard from './components/AuthGuard';
+import LoginGuard from './components/LoginGuard';
 import LandingPage from './pages/LandingPage';
 import YearCalendarPage from './pages/YearCalendarPage';
 import SchedulePage from './pages/SchedulePage';
@@ -24,9 +25,11 @@ export default function App() {
           {/* Public: login/landing */}
           <Route path="/login" element={<LandingPage />} />
 
-          {/* Needs login but NOT a team yet (team setup) */}
-          <Route path="/team-setup" element={<Layout />}>
-            <Route index element={<TeamSetupPage />} />
+          {/* Needs login but NOT a team yet */}
+          <Route element={<LoginGuard />}>
+            <Route path="/team-setup" element={<Layout />}>
+              <Route index element={<TeamSetupPage />} />
+            </Route>
           </Route>
 
           {/* Needs login + team */}
@@ -38,9 +41,11 @@ export default function App() {
               <Route path="lineup/:id/edit" element={<LineupFormPage />} />
               <Route path="members" element={<MembersPage />} />
               <Route path="songs" element={<SongsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AppProvider>

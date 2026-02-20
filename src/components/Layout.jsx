@@ -34,7 +34,7 @@ export default function Layout() {
                   className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
                   <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full border border-white/30" referrerPolicy="no-referrer" />
                 </button>
-                <button onClick={() => logout()} title="Sign out"
+                <button onClick={async () => { await logout(); navigate('/login'); }} title="Sign out"
                   className="flex items-center gap-1 text-xs text-primary-200 hover:text-white">
                   <LogOut size={14} />
                 </button>
