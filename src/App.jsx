@@ -11,6 +11,8 @@ import LineupFormPage from './pages/LineupFormPage';
 import MembersPage from './pages/MembersPage';
 import SongsPage from './pages/SongsPage';
 import TeamSetupPage from './pages/TeamSetupPage';
+import PublicSchedulePage from './pages/PublicSchedulePage';
+import PublicLineupDetailPage from './pages/PublicLineupDetailPage';
 
 function HomeRouter() {
   const [searchParams] = useSearchParams();
@@ -43,6 +45,10 @@ export default function App() {
               <Route path="songs" element={<SongsPage />} />
             </Route>
           </Route>
+
+          {/* Public team schedule (no login required) */}
+          <Route path="/team/:teamId" element={<PublicSchedulePage />} />
+          <Route path="/team/:teamId/lineup/:lineupId" element={<PublicLineupDetailPage />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/login" replace />} />

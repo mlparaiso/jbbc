@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock } from 'lucide-react';
 
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, createTeam, joinTeam, leaveTeam, switchToTeam, logout, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -63,6 +63,32 @@ export default function TeamSetupPage() {
               <span className="text-lg font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
               <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
                 {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Visibility toggle */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {isPublic
+                  ? <Globe size={15} className="text-green-500" />
+                  : <Lock size={15} className="text-gray-400" />
+                }
+                <div>
+                  <p className="text-xs font-semibold text-gray-700">Schedule Visibility</p>
+                  <p className="text-xs text-gray-400">{isPublic ? 'Anyone can view your schedule' : 'Only team members can view'}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => updateTeamVisibility(!isPublic)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                  isPublic ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                  isPublic ? 'translate-x-5' : 'translate-x-0'
+                }`} />
               </button>
             </div>
           </div>
