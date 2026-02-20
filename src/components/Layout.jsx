@@ -69,7 +69,7 @@ export default function Layout() {
       </header>
 
       {/* Scrollable content area only */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50 content-scroll">
         <main className="max-w-5xl mx-auto w-full px-4 py-6 min-h-full">
           <Outlet />
         </main>
