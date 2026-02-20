@@ -110,10 +110,10 @@ export default function MembersPage() {
       );
     }
     return (
-      <div className="card flex items-start justify-between gap-3">
+      <div className="card py-3 px-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-800">{m.name}</span>
+            <span className="text-sm font-semibold text-gray-800">{m.name}</span>
             {m.nickname && m.nickname !== m.name && (
               <span className="text-xs text-gray-500">({m.nickname})</span>
             )}
@@ -146,10 +146,10 @@ export default function MembersPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Users size={22} className="text-primary-600" /> Team Members
+        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <Users size={20} className="text-primary-500" /> Team Members
         </h2>
         {isAdmin && !showAdd && (
           <button onClick={() => setShowAdd(true)} className="btn-primary text-sm flex items-center gap-1.5">

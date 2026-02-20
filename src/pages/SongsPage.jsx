@@ -42,27 +42,25 @@ export default function SongsPage() {
     : songHistory;
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Music2 size={22} className="text-primary-600" />
-        <h2 className="text-2xl font-bold text-gray-800">Song History</h2>
+        <Music2 size={20} className="text-primary-500" />
+        <h2 className="text-lg font-bold text-gray-800">Song History</h2>
         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">
           {songHistory.length} songs
         </span>
       </div>
 
       {/* Search */}
-      <div className="flex gap-3 mb-4 flex-wrap">
-        <div className="relative max-w-xs w-full">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search songs..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="input pl-8 w-full"
-          />
-        </div>
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search songs..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="input pl-8"
+        />
       </div>
 
       {filtered.length === 0 && (
@@ -74,10 +72,10 @@ export default function SongsPage() {
 
       <div className="space-y-2">
         {filtered.map((song, i) => (
-          <div key={i} className="card flex items-start justify-between gap-3">
+          <div key={i} className="card py-3 px-4 flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-gray-800">{song.title}</span>
+                <span className="text-sm font-semibold text-gray-800">{song.title}</span>
                 <span className="text-xs bg-primary-50 text-primary-600 px-1.5 py-0.5 rounded font-medium">
                   {song.section}
                 </span>
