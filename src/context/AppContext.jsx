@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
   const [teamId, setTeamId] = useState(null);       // current team doc ID
   const [team, setTeam] = useState(null);           // team metadata
   const [teamLoading, setTeamLoading] = useState(false);
+  const [userTeams, setUserTeams] = useState([]);   // all teams user has ever joined
 
   const [members, setMembers] = useState([]);
   const [lineups, setLineups] = useState([]);
@@ -38,12 +39,35 @@ export function AppProvider({ children }) {
     if (!user) return;
     setTeamLoading(true);
     const userRef = doc(db, 'users', user.uid);
-    const unsub = onSnapshot(userRef, (snap) => {
+    const unsub = onSnapshot(userRef, async (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        setTeamId(data.teamId || null);
+        const currentTeamId = data.teamId || null;
+        setTeamId(currentTeamId);
+
+        // Backfill teams history for existing users who don't have it yet
+        if (currentTeamId && (!data.teams || data.teams.length === 0)) {
+          try {
+            const teamSnap = await getDoc(doc(db, 'teams', currentTeamId));
+            if (teamSnap.exists()) {
+              const teamData = teamSnap.data();
+              const backfilledTeams = [
+                { teamId: currentTeamId, name: teamData.name, inviteCode: teamData.inviteCode }
+              ];
+              await setDoc(userRef, { teams: backfilledTeams }, { merge: true });
+              setUserTeams(backfilledTeams);
+            } else {
+              setUserTeams([]);
+            }
+          } catch (e) {
+            setUserTeams(data.teams || []);
+          }
+        } else {
+          setUserTeams(data.teams || []);
+        }
       } else {
         setTeamId(null);
+        setUserTeams([]);
       }
       setTeamLoading(false);
     });
@@ -110,11 +134,18 @@ export function AppProvider({ children }) {
       adminUids: [user.uid],
       createdAt: new Date().toISOString(),
     });
+    // Build updated teams history (avoid duplicates)
+    const existingTeams = userTeams.filter(t => t.teamId !== teamRef.id);
+    const updatedTeams = [
+      ...existingTeams,
+      { teamId: teamRef.id, name: teamName, inviteCode },
+    ];
     await setDoc(doc(db, 'users', user.uid), {
       teamId: teamRef.id,
       email: user.email,
       displayName: user.displayName,
       role: 'admin',
+      teams: updatedTeams,
     });
     return teamRef.id;
   };
@@ -126,18 +157,48 @@ export function AppProvider({ children }) {
     const snap = await getDocs(q);
     if (snap.empty) throw new Error('Invalid invite code. Please check and try again.');
     const teamDoc = snap.docs[0];
+    const teamData = teamDoc.data();
+    // Build updated teams history (avoid duplicates)
+    const existingTeams = userTeams.filter(t => t.teamId !== teamDoc.id);
+    const updatedTeams = [
+      ...existingTeams,
+      { teamId: teamDoc.id, name: teamData.name, inviteCode: teamData.inviteCode },
+    ];
     await setDoc(doc(db, 'users', user.uid), {
       teamId: teamDoc.id,
       email: user.email,
       displayName: user.displayName,
       role: 'admin',
+      teams: updatedTeams,
     });
     return teamDoc.id;
   };
 
+  const switchToTeam = async (targetTeamId) => {
+    if (!user) return;
+    // Get fresh team data to ensure invite code is current
+    const teamSnap = await getDoc(doc(db, 'teams', targetTeamId));
+    if (!teamSnap.exists()) throw new Error('Team not found.');
+    const teamData = teamSnap.data();
+    const existingTeams = userTeams.filter(t => t.teamId !== targetTeamId);
+    const updatedTeams = [
+      ...existingTeams,
+      { teamId: targetTeamId, name: teamData.name, inviteCode: teamData.inviteCode },
+    ];
+    await setDoc(doc(db, 'users', user.uid), {
+      teamId: targetTeamId,
+      email: user.email,
+      displayName: user.displayName,
+      role: 'admin',
+      teams: updatedTeams,
+    });
+  };
+
   const leaveTeam = async () => {
     if (!user) return;
-    await setDoc(doc(db, 'users', user.uid), { teamId: null, email: user.email });
+    // Only clear active teamId — preserve teams history
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, { teamId: null, email: user.email }, { merge: true });
     setTeamId(null);
   };
 
@@ -210,9 +271,11 @@ export function AppProvider({ children }) {
         // Team
         team,
         teamId,
+        userTeams,
         createTeam,
         joinTeam,
         leaveTeam,
+        switchToTeam,
         // Data
         members,
         lineups,

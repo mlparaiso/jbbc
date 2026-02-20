@@ -14,10 +14,10 @@ export default function Layout() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <ScrollToTop />
-      {/* Header */}
-      <header className="bg-primary-700 text-white shadow-md">
+      {/* Header — sticky via fixed positioning with body padding offset */}
+      <header className="bg-primary-700 text-white shadow-md fixed top-0 left-0 right-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" />
@@ -64,8 +64,11 @@ export default function Layout() {
         </nav>
       </header>
 
+      {/* Spacer to push content below fixed header (~py-3 + nav pb-2 + text heights ≈ 88px) */}
+      <div className="h-[88px]" />
+
       {/* Main content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 min-h-[60vh]">
+      <main className="max-w-5xl mx-auto w-full px-4 py-6 min-h-[calc(100vh-88px-48px)]">
         <Outlet />
       </main>
 
@@ -73,6 +76,6 @@ export default function Layout() {
       <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-200">
         {team?.name || 'Music Team'} © {new Date().getFullYear()}
       </footer>
-    </div>
+    </>
   );
 }

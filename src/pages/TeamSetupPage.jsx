@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users } from 'lucide-react';
 
 export default function TeamSetupPage() {
-  const { user, team, teamId, createTeam, joinTeam, leaveTeam, logout, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, createTeam, joinTeam, leaveTeam, switchToTeam, logout, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
   const [teamName, setTeamName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [switchingTo, setSwitchingTo] = useState(null); // teamId being switched to
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false); // show leave confirmation
 
   if (authLoading || teamLoading) {
     return (
@@ -34,6 +36,15 @@ export default function TeamSetupPage() {
       navigator.clipboard.writeText(team.inviteCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleLeaveClick = () => {
+      setConfirmLeave(true);
+    };
+
+    const handleConfirmLeave = async () => {
+      await leaveTeam();
+      setConfirmLeave(false);
     };
 
     return (
@@ -60,20 +71,53 @@ export default function TeamSetupPage() {
               Go to Schedule →
             </button>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={async () => { await leaveTeam(); }}
-              className="text-xs text-gray-400 hover:text-red-500 flex-1"
-            >
-              Switch / Leave Team
-            </button>
-            <button
-              onClick={async () => { await logout(); navigate('/'); }}
-              className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 flex-1 justify-center"
-            >
-              <LogOut size={12} /> Sign Out
-            </button>
-          </div>
+
+          {/* Leave confirmation */}
+          {!confirmLeave ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleLeaveClick}
+                className="text-xs text-gray-400 hover:text-red-500 flex-1"
+              >
+                Switch / Leave Team
+              </button>
+              <button
+                onClick={async () => { await logout(); navigate('/'); }}
+                className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 flex-1 justify-center"
+              >
+                <LogOut size={12} /> Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 text-left space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-700 font-medium">
+                  Save your invite code before switching — you'll need it to rejoin if it's not in your team history.
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-2 bg-white border border-amber-200 rounded p-2">
+                <span className="font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
+                <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
+                  {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleConfirmLeave}
+                  className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded py-1.5 font-medium"
+                >
+                  Yes, switch team
+                </button>
+                <button
+                  onClick={() => setConfirmLeave(false)}
+                  className="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded py-1.5 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -110,6 +154,22 @@ export default function TeamSetupPage() {
     }
   };
 
+  const handleSwitchTo = async (targetTeamId) => {
+    setError('');
+    setSwitchingTo(targetTeamId);
+    try {
+      await switchToTeam(targetTeamId);
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSwitchingTo(null);
+    }
+  };
+
+  // Teams the user has been in (excluding current, which is null here)
+  const previousTeams = userTeams.filter(t => t.teamId !== teamId);
+
   return (
     <div className="max-w-sm mx-auto mt-12 space-y-6">
       {/* Welcome */}
@@ -121,6 +181,38 @@ export default function TeamSetupPage() {
         <h2 className="text-xl font-bold text-gray-800 mt-1">Set up your team</h2>
         <p className="text-xs text-gray-400 mt-1">Create a new team or join an existing one with an invite code.</p>
       </div>
+
+      {/* My Teams — quick rejoin */}
+      {!mode && previousTeams.length > 0 && (
+        <div className="card space-y-3">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-primary-500" />
+            <h3 className="font-semibold text-gray-700 text-sm">My Teams</h3>
+          </div>
+          <div className="space-y-2">
+            {previousTeams.map(t => (
+              <div key={t.teamId} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{t.name}</p>
+                  <p className="text-xs text-gray-400 font-mono">{t.inviteCode}</p>
+                </div>
+                <button
+                  onClick={() => handleSwitchTo(t.teamId)}
+                  disabled={switchingTo === t.teamId}
+                  className="flex items-center gap-1 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded px-2.5 py-1.5 font-medium disabled:opacity-60"
+                >
+                  <RefreshCw size={12} className={switchingTo === t.teamId ? 'animate-spin' : ''} />
+                  {switchingTo === t.teamId ? 'Switching...' : 'Switch'}
+                </button>
+              </div>
+            ))}
+          </div>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <div className="border-t pt-2">
+            <p className="text-xs text-gray-400 text-center">Or join / create a different team below</p>
+          </div>
+        </div>
+      )}
 
       {/* Mode buttons */}
       {!mode && (
