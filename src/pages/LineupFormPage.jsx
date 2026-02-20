@@ -230,7 +230,7 @@ export default function LineupFormPage() {
       <div className="text-center py-16 text-gray-400">
         <div className="text-4xl mb-3">🔐</div>
         <p>You need to be an admin to create or edit lineups.</p>
-        <button onClick={() => navigate('/admin')} className="btn-primary mt-4">Admin Login</button>
+        <button onClick={() => navigate('/')} className="btn-primary mt-4">Back to Schedule</button>
       </div>
     );
   }
@@ -264,20 +264,22 @@ export default function LineupFormPage() {
     worshipLeaders: f.worshipLeaders.filter((_, idx) => idx !== i),
   }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.date) return alert('Please select a date.');
     if (isEdit) {
-      updateLineup(id, form);
+      await updateLineup(id, form);
+      setSaved(true);
+      // After editing, go back to the lineup detail page
+      setTimeout(() => navigate(`/lineup/${id}`), 500);
     } else {
-      addLineup(form);
+      const newId = await addLineup(form);
+      setSaved(true);
+      // After creating, go to the new lineup's detail page
+      const d = new Date(form.date + 'T00:00:00');
+      const targetId = newId || `lineup-${form.date}`;
+      setTimeout(() => navigate(`/lineup/${targetId}`), 500);
     }
-    setSaved(true);
-    // Navigate back to the lineup's own month on the schedule
-    const d = new Date(form.date + 'T00:00:00');
-    const targetMonth = d.getMonth() + 1;
-    const targetYear = d.getFullYear();
-    setTimeout(() => navigate(`/?year=${targetYear}&month=${targetMonth}`), 800);
   };
 
   return (
