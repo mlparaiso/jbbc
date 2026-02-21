@@ -326,8 +326,18 @@ export default function LineupDetailPage() {
                     <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{group.section}</p>
                     <div className="space-y-1">
                       {group.songs.map((song, si) => (
-                        <div key={si} className="flex items-center gap-1.5">
+                        <div key={si} className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-sm text-gray-800 leading-tight">{song.title}</span>
+                          {song.key && (
+                            <span className="flex-shrink-0 inline-flex items-center text-xs font-semibold text-primary-700 bg-primary-50 border border-primary-200 px-1.5 py-0.5 rounded">
+                              {song.key}
+                            </span>
+                          )}
+                          {(song.capo !== undefined && song.capo !== '' && song.capo !== null && Number(song.capo) > 0) && (
+                            <span className="flex-shrink-0 inline-flex items-center text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                              Capo {song.capo}
+                            </span>
+                          )}
                           {song.youtubeUrl && (
                             <a
                               href={song.youtubeUrl}

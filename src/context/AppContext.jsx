@@ -225,6 +225,26 @@ export function AppProvider({ children }) {
       role: 'admin',
       teams: updatedTeams,
     });
+
+    // Send welcome email (fire-and-forget — don't block team creation)
+    try {
+      const scheduleUrl = `${window.location.origin}/team/${teamRef.id}`;
+      await fetch('/api/send-welcome-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: user.email,
+          toName: user.displayName || '',
+          teamName,
+          inviteCode,
+          scheduleUrl,
+        }),
+      });
+    } catch (e) {
+      // Email failure is non-fatal
+      console.warn('Welcome email failed:', e);
+    }
+
     return teamRef.id;
   };
 
