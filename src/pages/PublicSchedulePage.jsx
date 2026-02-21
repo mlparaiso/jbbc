@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CalendarDays, ChevronLeft, ChevronRight, Music2, LogIn, Lock, Mic2, BookOpen, Quote, CalendarCheck } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
+import DonateSection from '../components/DonateSection';
 
 function shortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -297,9 +298,12 @@ export default function PublicSchedulePage() {
         )}
       </main>
 
-      <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-200">
-        {publicTeam.name} © {new Date().getFullYear()} ·{' '}
-        <span className="text-primary-500 cursor-pointer hover:underline" onClick={() => navigate('/login')}>Sign in to manage</span>
+      <footer className="max-w-2xl mx-auto w-full px-4 pb-6">
+        <DonateSection />
+        <p className="text-center text-xs text-gray-400 pt-4 mt-2 border-t border-gray-100">
+          {publicTeam.name} © {new Date().getFullYear()} ·{' '}
+          <span className="text-primary-500 cursor-pointer hover:underline" onClick={() => navigate('/login')}>Sign in to manage</span>
+        </p>
       </footer>
     </div>
   );
