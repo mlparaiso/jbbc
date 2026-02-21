@@ -37,6 +37,23 @@ export function AppProvider({ children }) {
         setTeam(null);
         setMembers([]);
         setLineups([]);
+        return;
+      }
+      // Detect first-time sign-in: check Firestore for a 'welcomeSent' flag
+      try {
+        const userRef = doc(db, 'users', u.uid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists() || !snap.data().welcomeSent) {
+          // Mark sent immediately (before the fetch) to avoid duplicates on fast re-renders
+          await setDoc(userRef, { welcomeSent: true }, { merge: true });
+          fetch('/api/send-signup-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toEmail: u.email, toName: u.displayName || '' }),
+          }).catch(e => console.warn('Signup welcome email failed:', e));
+        }
+      } catch (e) {
+        console.warn('Could not check/send signup welcome email:', e);
       }
     });
     return unsub;
@@ -269,6 +286,26 @@ export function AppProvider({ children }) {
       role: 'admin',
       teams: updatedTeams,
     });
+
+    // Send join emails: welcome to joiner + notification to admin (fire-and-forget)
+    try {
+      const scheduleUrl = `${window.location.origin}/team/${teamDoc.id}`;
+      fetch('/api/send-join-emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          joinerEmail: user.email,
+          joinerName: user.displayName || '',
+          adminEmail: teamData.createdByEmail || null,
+          adminName: '',
+          teamName: teamData.name,
+          scheduleUrl,
+        }),
+      }).catch(e => console.warn('Join emails failed:', e));
+    } catch (e) {
+      console.warn('Join emails failed:', e);
+    }
+
     return teamDoc.id;
   };
 
