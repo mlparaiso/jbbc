@@ -5,7 +5,7 @@ import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
   CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Copy
 } from 'lucide-react';
-import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
+import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -378,6 +378,11 @@ export default function SchedulePage() {
                     {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass="text-primary-400" />}
                     {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass="text-primary-400" />}
                     {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
+                    {(lineup.instruments.extras || []).map((extra, ei) => {
+                      const names = (extra.memberIds || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/');
+                      if (!names) return null;
+                      return <InstrumentPill key={ei} icon={<Music2 size={10} />} name={`${extra.label}: ${names}`} iconClass="text-purple-400" />;
+                    })}
                   </div>
 
                 </div>

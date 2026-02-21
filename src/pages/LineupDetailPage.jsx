@@ -5,8 +5,20 @@ import { generateLineupImage } from '../utils/generateLineupImage';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Loader
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Loader,
+  Music2, AudioLines, Bell, Repeat2
 } from 'lucide-react';
+
+// Map icon string names → actual Lucide components (for extra instruments)
+const EXTRA_ICON_MAP = {
+  Music2: <Music2 size={14} />,
+  AudioLines: <AudioLines size={14} />,
+  Drum: <Drum size={14} />,
+  Bell: <Bell size={14} />,
+  Guitar: <Guitar size={14} />,
+  Piano: <Piano size={14} />,
+  Repeat2: <Repeat2 size={14} />,
+};
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -280,6 +292,23 @@ export default function LineupDetailPage() {
                 <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
               </div>
             </div>
+            {/* Extra instruments */}
+            {(lineup.instruments.extras || []).map((extra, ei) => {
+              const names = (extra.memberIds || [])
+                .map(id => getMemberById(id)?.name)
+                .filter(Boolean)
+                .join(' / ');
+              const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
+              return (
+                <div key={ei} className="flex items-center gap-2 bg-purple-50 rounded-lg px-3 py-2">
+                  <span className="text-purple-400 flex-shrink-0">{icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">{names || '—'}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

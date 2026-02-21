@@ -2,7 +2,36 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2 } from 'lucide-react';
+
+// Extra instrument catalogue (label → icon component)
+export const EXTRA_INSTRUMENTS = [
+  { label: 'Violin',            icon: 'Music2' },
+  { label: 'Viola',             icon: 'Music2' },
+  { label: 'Cello',             icon: 'Music2' },
+  { label: 'Violin Section',    icon: 'Music2' },
+  { label: 'Trumpet',           icon: 'AudioLines' },
+  { label: 'Flugelhorn',        icon: 'AudioLines' },
+  { label: 'Trombone',          icon: 'AudioLines' },
+  { label: 'French Horn',       icon: 'AudioLines' },
+  { label: 'Tuba',              icon: 'AudioLines' },
+  { label: 'Flute',             icon: 'AudioLines' },
+  { label: 'Piccolo',           icon: 'AudioLines' },
+  { label: 'Clarinet',          icon: 'AudioLines' },
+  { label: 'Alto Saxophone',    icon: 'AudioLines' },
+  { label: 'Tenor Saxophone',   icon: 'AudioLines' },
+  { label: 'Oboe',              icon: 'AudioLines' },
+  { label: 'Cajon',             icon: 'Drum' },
+  { label: 'Djembe',            icon: 'Drum' },
+  { label: 'Tambourine',        icon: 'Drum' },
+  { label: 'Shaker',            icon: 'Drum' },
+  { label: 'Hand Bells',        icon: 'Bell' },
+  { label: 'Ukulele',           icon: 'Guitar' },
+  { label: 'Banjo',             icon: 'Guitar' },
+  { label: 'Mandolin',          icon: 'Guitar' },
+  { label: 'Synth / Pads',      icon: 'Piano' },
+  { label: 'Loop Station',      icon: 'Repeat2' },
+];
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -156,7 +185,7 @@ export default function LineupFormPage() {
     theme: '',
     worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
     backUps: [],
-    instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [] },
+    instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
     soundEngineer: '',
     practiceDate: '',
     nextWL: '',
@@ -436,6 +465,102 @@ export default function LineupFormPage() {
         <div className="card">
           <SingleSelect label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> Sound Engineer</span>} memberOptions={soundEngineers}
             selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))} />
+        </div>
+
+        {/* Additional Instruments */}
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Music2 size={14} className="text-primary-500" /> Additional Instruments
+            </h3>
+            <button
+              type="button"
+              onClick={() => setForm(f => ({
+                ...f,
+                instruments: {
+                  ...f.instruments,
+                  extras: [...(f.instruments.extras || []), { label: EXTRA_INSTRUMENTS[0].label, memberIds: [] }],
+                },
+              }))}
+              className="text-primary-600 hover:underline text-xs flex items-center gap-1"
+            >
+              <Plus size={13} /> Add Instrument
+            </button>
+          </div>
+          {(form.instruments.extras || []).length === 0 && (
+            <p className="text-xs text-gray-400">No additional instruments. Click "Add Instrument" to include violin, trumpet, etc.</p>
+          )}
+          {(form.instruments.extras || []).map((extra, ei) => (
+            <div key={ei} className="border border-gray-100 rounded-lg p-3 space-y-2 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <select
+                  className={`${ci} flex-1`}
+                  value={extra.label}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    instruments: {
+                      ...f.instruments,
+                      extras: f.instruments.extras.map((x, i) => i === ei ? { ...x, label: e.target.value } : x),
+                    },
+                  }))}
+                >
+                  {EXTRA_INSTRUMENTS.map(inst => (
+                    <option key={inst.label} value={inst.label}>{inst.label}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({
+                    ...f,
+                    instruments: {
+                      ...f.instruments,
+                      extras: f.instruments.extras.filter((_, i) => i !== ei),
+                    },
+                  }))}
+                  className="text-red-400 hover:text-red-600 flex-shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              {/* Member multi-select */}
+              <div className="flex flex-wrap gap-1.5 p-2 border border-gray-200 rounded-md bg-white min-h-8">
+                {members.map(m => {
+                  const selected = (extra.memberIds || []).includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        instruments: {
+                          ...f.instruments,
+                          extras: f.instruments.extras.map((x, i) => i === ei
+                            ? {
+                                ...x,
+                                memberIds: selected
+                                  ? x.memberIds.filter(id => id !== m.id)
+                                  : [...(x.memberIds || []), m.id],
+                              }
+                            : x
+                          ),
+                        },
+                      }))}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                        selected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {(extra.memberIds || []).length > 0 && (
+                <p className="text-xs text-gray-500">
+                  Selected: {extra.memberIds.map(id => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Songs */}
