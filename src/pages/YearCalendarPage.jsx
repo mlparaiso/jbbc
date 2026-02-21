@@ -108,16 +108,11 @@ export default function YearCalendarPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
 
-      {/* Scripture block */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 text-white px-5 py-4 shadow-md">
-        <div className="flex items-start gap-3">
-          <BookOpen size={18} className="mt-0.5 flex-shrink-0 text-primary-200" />
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-primary-300 font-semibold mb-1">Verse of the Week</p>
-            <p className="text-sm leading-relaxed text-white/90 italic">"{verse.text}"</p>
-            <p className="text-xs text-primary-300 mt-2 font-semibold">— {verse.ref}</p>
-          </div>
-        </div>
+      {/* Scripture strip — compact 1-liner */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-xs text-primary-700 overflow-hidden">
+        <BookOpen size={13} className="flex-shrink-0 text-primary-400" title="Verse of the Week" />
+        <p className="truncate italic min-w-0">"{verse.text}"</p>
+        <span className="flex-shrink-0 font-semibold text-primary-400 whitespace-nowrap">— {verse.ref}</span>
       </div>
 
       {/* Year navigation + progress */}
@@ -173,7 +168,7 @@ export default function YearCalendarPage() {
                 group relative rounded-xl px-2 py-4 sm:px-4 sm:py-5 text-center transition-all border
                 hover:-translate-y-0.5 hover:shadow-md
                 ${isCurrentMonth
-                  ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white border-primary-400 shadow-md ring-2 ring-primary-300'
+                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-amber-300 shadow-md ring-2 ring-amber-200'
                   : hasSched
                     ? 'bg-white border-teal-200 hover:border-teal-400 text-gray-800'
                     : 'bg-gray-50 border-gray-100 hover:bg-gray-100 text-gray-400'
@@ -186,7 +181,7 @@ export default function YearCalendarPage() {
 
               {hasSched ? (
                 <span className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full
-                  ${isCurrentMonth ? 'bg-white/20 text-white' : 'bg-teal-50 text-teal-700 border border-teal-200'}`}>
+                  ${isCurrentMonth ? 'bg-white/30 text-white' : 'bg-teal-50 text-teal-700 border border-teal-200'}`}>
                   {count} service{count !== 1 ? 's' : ''}
                 </span>
               ) : (
@@ -211,7 +206,7 @@ export default function YearCalendarPage() {
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-primary-600 inline-block"></span> Current month
+          <span className="w-3 h-3 rounded bg-amber-400 inline-block"></span> Current month
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-white border border-teal-200 inline-block"></span> Has schedule

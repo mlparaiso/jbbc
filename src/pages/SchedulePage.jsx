@@ -69,6 +69,8 @@ export default function SchedulePage() {
   const MIN_MONTH = 1;
   const atMin = year === MIN_YEAR && month === MIN_MONTH;
 
+  const todayStr = now.toISOString().slice(0, 10);
+
   const monthLineups = lineups
     .filter((l) => {
       const d = new Date(l.date + 'T00:00:00');
@@ -147,11 +149,16 @@ export default function SchedulePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Back to Year Calendar */}
-      <div className="mb-3 print:hidden">
+      {/* Top bar: All Months + Print (same row) */}
+      <div className="flex items-center justify-between mb-3 print:hidden">
         <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
           <ChevronLeft size={16} /> All Months
         </button>
+        {monthLineups.length > 0 && (
+          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
+            <Printer size={13} /> Print Month
+          </button>
+        )}
       </div>
 
       {/* Month Navigation */}
@@ -161,21 +168,11 @@ export default function SchedulePage() {
         </button>
         <div className="text-center">
           <h2 className="text-xl font-bold text-gray-800">{MONTHS[month - 1]} {year}</h2>
-          <p className="text-xs text-gray-400">{monthLineups.length} service{monthLineups.length !== 1 ? 's' : ''}</p>
         </div>
         <button onClick={nextMonth} className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
           <ChevronRight size={18} />
         </button>
       </div>
-
-      {/* Action buttons — only when month has lineups */}
-      {monthLineups.length > 0 && (
-        <div className="flex justify-end gap-2 mb-3 print:hidden">
-          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
-            <Printer size={13} /> Print Month
-          </button>
-        </div>
-      )}
 
       {/* Printable monthly table — hidden on screen */}
       <div className="hidden print:block mb-6">
@@ -250,8 +247,11 @@ export default function SchedulePage() {
             <>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
-                  <BookOpen size={14} className="text-primary-500" />
-                  <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Monthly Theme</span>
+                  <BookOpen size={14} className="text-primary-500" title="Monthly Theme" />
+                  {monthTheme
+                    ? <span className="text-sm font-bold text-primary-800">{monthTheme}</span>
+                    : <span className="text-sm text-primary-400 italic">No theme set. Click ✏️ to add one.</span>
+                  }
                 </div>
                 {canManageLineups && (
                   <button
@@ -263,10 +263,7 @@ export default function SchedulePage() {
                   </button>
                 )}
               </div>
-              {monthTheme
-                ? <p className="text-base font-bold text-primary-800">{monthTheme}</p>
-                : <p className="text-sm text-primary-400 italic">No theme set for this month. Click ✏️ to add one.</p>
-              }
+              {false && null /* theme name is now inline above */}
               {monthBibleVerse && (
                 <div className="mt-2 pt-2 border-t border-primary-100">
                   <div className="flex items-start gap-1.5">
@@ -321,7 +318,11 @@ export default function SchedulePage() {
       {/* Lineup list */}
       {monthLineups.length > 0 ? (
         <div className="space-y-2 print:hidden">
-          {monthLineups.map((lineup) => {
+          {(() => {
+            // Find the date of the next upcoming (or today's) service this month
+            const upcomingDate = monthLineups.map(l => l.date).sort().find(d => d >= todayStr) || null;
+            return monthLineups.map((lineup) => {
+            const isGold = lineup.date === upcomingDate;
             const wlNames = lineup.worshipLeaders.map(wl => {
               const m = getMemberById(wl.memberId);
               const roleLabel = wl.role && wl.role !== 'Worship Leader' ? ` (${wl.role})` : '';
@@ -341,12 +342,17 @@ export default function SchedulePage() {
               <div key={lineup.id}>
                 <div
                   onClick={() => navigate(`/lineup/${lineup.id}`)}
-                  className="rounded-xl cursor-pointer transition-all border-l-4 bg-white border border-gray-100 hover:shadow-sm hover:border-primary-200 border-l-primary-400"
+                  className={`rounded-xl cursor-pointer transition-all border-l-4 border hover:shadow-sm ${
+                    isGold
+                      ? 'bg-amber-50 border-amber-200 border-l-amber-400 hover:border-amber-300 shadow-sm'
+                      : 'bg-white border-gray-100 hover:border-primary-200 border-l-primary-400'
+                  }`}
                 >
                   {/* Top row: date + Team A badge + practice date + arrow */}
                   <div className="flex items-center justify-between px-4 pt-3 pb-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm text-gray-800">{shortDate(lineup.date)}</span>
+                      <span className={`font-bold text-sm ${isGold ? 'text-amber-800' : 'text-gray-800'}`}>{shortDate(lineup.date)}</span>
+                      {isGold && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800">Upcoming</span>}
                       {lineup.isTeamA && (
                         <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Team A</span>
                       )}
@@ -388,7 +394,8 @@ export default function SchedulePage() {
                 </div>
               </div>
             );
-          })}
+          });
+          })()}
         </div>
       ) : (
         <div className="text-center py-10 text-gray-400 print:hidden">
