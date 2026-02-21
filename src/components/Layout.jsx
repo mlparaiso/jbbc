@@ -23,11 +23,11 @@ export default function Layout() {
       {/* Header — always visible, never scrolls */}
       <header className="bg-primary-700 text-white shadow-md flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" />
-            <div className="text-left">
-              <h1 className="text-lg font-bold leading-tight">{team?.name || 'Music Team'}</h1>
-              <p className="text-xs text-primary-200">Worship Schedule Manager</p>
+        <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
+            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
+            <div className="text-left min-w-0">
+              <h1 className="text-base font-bold leading-tight truncate">{team?.name || 'Music Team'}</h1>
+              <p className="text-xs text-primary-200 hidden sm:block">Worship Schedule Manager</p>
             </div>
           </button>
 
@@ -48,7 +48,7 @@ export default function Layout() {
         </div>
 
         {/* Nav */}
-        <nav className="max-w-5xl mx-auto px-4 pb-2 flex gap-1">
+        <nav className="max-w-5xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto scrollbar-none">
           {[
             { to: '/', icon: <CalendarDays size={15} />, label: 'Schedule' },
             { to: '/members', icon: <Users size={15} />, label: 'Members' },
@@ -57,7 +57,7 @@ export default function Layout() {
           ].map(({ to, icon, label }) => (
             <NavLink key={to} to={to} end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                `flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   isActive ? 'bg-white text-primary-700' : 'text-primary-100 hover:bg-primary-600'
                 }`
               }

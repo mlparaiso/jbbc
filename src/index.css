@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent horizontal overflow on mobile globally */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 @media print {
   header, footer, nav {
     display: none !important;
@@ -25,6 +31,15 @@
   body {
     @apply bg-gray-50 text-gray-900;
   }
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Content scroll area — hide scrollbar when not needed */

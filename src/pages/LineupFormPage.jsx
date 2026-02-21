@@ -64,17 +64,23 @@ function SortableSongRow({ song, index, songLibrary, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(index) });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
-    <div ref={setNodeRef} style={style} className="grid grid-cols-[16px_140px_1fr_140px_20px] gap-1.5 items-center">
-      <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none">
-        <GripVertical size={14} />
-      </button>
-      <select className={ci} value={song.section} onChange={e => onChange({ section: e.target.value })}>
-        {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
-      </select>
+    <div ref={setNodeRef} style={style} className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[16px_140px_1fr_140px_20px] sm:items-center border border-gray-100 rounded-lg p-2 sm:border-0 sm:p-0 bg-gray-50 sm:bg-transparent">
+      {/* Top row on mobile: drag handle + section + remove */}
+      <div className="flex items-center gap-1.5 sm:contents">
+        <button type="button" {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0">
+          <GripVertical size={14} />
+        </button>
+        <select className={`${ci} flex-1 sm:flex-none`} value={song.section} onChange={e => onChange({ section: e.target.value })}>
+          {SONG_SECTIONS.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+        </select>
+        <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 flex justify-center sm:hidden flex-shrink-0">
+          <Trash2 size={13} />
+        </button>
+      </div>
       <SongAutocomplete value={song.title} onChange={onChange} songLibrary={songLibrary} inputClass={ci} />
       <input type="url" className={ci} placeholder="YT URL (opt.)"
         value={song.youtubeUrl || ''} onChange={e => onChange({ youtubeUrl: e.target.value })} />
-      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 flex justify-center">
+      <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 justify-center hidden sm:flex">
         <Trash2 size={13} />
       </button>
     </div>

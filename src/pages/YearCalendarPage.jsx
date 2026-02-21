@@ -65,7 +65,7 @@ export default function YearCalendarPage() {
               key={m}
               onClick={() => navigate(`/?year=${year}&month=${m}`)}
               className={`
-                relative rounded-xl px-4 py-5 text-center transition-all border
+                relative rounded-xl px-2 py-4 sm:px-4 sm:py-5 text-center transition-all border
                 ${isCurrentMonth
                   ? 'bg-primary-600 text-white border-primary-500 shadow-md ring-2 ring-primary-300'
                   : hasSched
@@ -74,12 +74,12 @@ export default function YearCalendarPage() {
                 }
               `}
             >
-              <p className={`text-sm font-bold ${isCurrentMonth ? 'text-white' : hasSched ? 'text-gray-800' : 'text-gray-400'}`}>
+              <p className={`text-xs sm:text-sm font-bold truncate ${isCurrentMonth ? 'text-white' : hasSched ? 'text-gray-800' : 'text-gray-400'}`}>
                 {name}
               </p>
               {hasSched ? (
                 <p className={`text-xs mt-1 font-medium ${isCurrentMonth ? 'text-white/80' : 'text-primary-500'}`}>
-                  {count} service{count !== 1 ? 's' : ''}
+                  {count}<span className="hidden sm:inline"> service{count !== 1 ? 's' : ''}</span>
                 </p>
               ) : (
                 <p className="text-xs mt-1 text-gray-300">—</p>

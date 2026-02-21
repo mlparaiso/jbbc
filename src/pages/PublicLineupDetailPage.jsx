@@ -102,19 +102,19 @@ export default function PublicLineupDetailPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-primary-700 text-white shadow-md">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" />
-            <div>
-              <h1 className="text-lg font-bold leading-tight">{publicTeam?.name || 'Worship Team'}</h1>
-              <p className="text-xs text-primary-200">Worship Schedule</p>
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-base font-bold leading-tight truncate">{publicTeam?.name || 'Worship Team'}</h1>
+              <p className="text-xs text-primary-200 hidden sm:block">Worship Schedule</p>
             </div>
           </div>
           <button
             onClick={() => navigate('/login')}
-            className="flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors flex-shrink-0 whitespace-nowrap"
           >
-            <LogIn size={13} /> Sign in to edit
+            <LogIn size={13} /> <span className="hidden xs:inline">Sign in to edit</span><span className="xs:hidden">Sign in</span>
           </button>
         </div>
       </header>
@@ -184,7 +184,7 @@ export default function PublicLineupDetailPage() {
           {/* Instruments */}
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-            <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
                 const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
                 return (

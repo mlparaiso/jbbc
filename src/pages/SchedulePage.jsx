@@ -171,7 +171,7 @@ export default function SchedulePage() {
       {/* Action buttons — only when month has lineups */}
       {monthLineups.length > 0 && (
         <div className="flex justify-end gap-2 mb-3 print:hidden">
-          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5">
+          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
             <Printer size={13} /> Print Month
           </button>
         </div>
