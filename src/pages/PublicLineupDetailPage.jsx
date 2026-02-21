@@ -148,7 +148,7 @@ export default function PublicLineupDetailPage() {
           <hr className="border-gray-100" />
 
           {/* Worship Leaders + Backups */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className={`grid gap-4 ${(lineup.backUps || []).length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
                 <Mic2 size={12} /> Worship Leader{(lineup.worshipLeaders || []).length > 1 ? 's' : ''}
