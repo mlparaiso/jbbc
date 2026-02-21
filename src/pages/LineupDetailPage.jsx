@@ -224,7 +224,7 @@ export default function LineupDetailPage() {
         <hr className="border-gray-100" />
 
         {/* Worship Leaders + Backups */}
-        <div className={`grid gap-4 ${lineup.backUps.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div className={`grid gap-4 ${lineup.backUps.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
               <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
@@ -269,7 +269,7 @@ export default function LineupDetailPage() {
         {/* Instruments grid */}
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
             {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
               const names = (lineup.instruments[key] || [])
                 .map(id => getMemberById(id)?.name)

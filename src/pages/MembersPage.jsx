@@ -169,13 +169,13 @@ export default function MembersPage() {
       )}
 
       {/* Filters */}
-      <div className="flex gap-3 mb-4 flex-wrap">
-        <div className="relative max-w-xs w-full">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input className="input pl-8 w-full" placeholder="Search by name..."
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className="input max-w-xs" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+        <select className="input sm:max-w-[180px]" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
           <option value="">All Roles</option>
           {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </select>

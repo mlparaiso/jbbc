@@ -354,13 +354,13 @@ export default function LineupFormPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Basic Info */}
+      {/* Basic Info */}
         <div className="card space-y-4">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
             <ClipboardList size={14} className="text-primary-500" /> Service Info
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Service Date *</label>
               <input type="date" className="input" value={form.date}
@@ -406,7 +406,7 @@ export default function LineupFormPage() {
             <Mic2 size={14} className="text-primary-500" /> Worship Leader(s)
           </h3>
           {form.worshipLeaders.map((wl, i) => (
-            <div key={i} className="flex gap-2 items-start">
+            <div key={i} className="flex flex-col sm:flex-row gap-2 sm:items-start">
               <div className="flex-1">
                 <select className="input" value={wl.memberId}
                   onChange={e => updateWL(i, 'memberId', e.target.value)}>
@@ -414,21 +414,21 @@ export default function LineupFormPage() {
                   {vocalists.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               </div>
-              {form.isTeamA ? (
-                <div className="flex-1">
-                  <select className="input" value={wl.role}
+              <div className="flex gap-2 items-center flex-1">
+                {form.isTeamA ? (
+                  <select className="input flex-1" value={wl.role}
                     onChange={e => updateWL(i, 'role', e.target.value)}>
                     {TEAM_A_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
-                </div>
-              ) : (
-                <input type="text" className="input flex-1" placeholder="Role (optional)"
-                  value={wl.role} onChange={e => updateWL(i, 'role', e.target.value)} />
-              )}
-              {form.worshipLeaders.length > 1 && (
-                <button type="button" onClick={() => removeWL(i)}
-                  className="text-red-400 hover:text-red-600 text-xl mt-1 flex-shrink-0">×</button>
-              )}
+                ) : (
+                  <input type="text" className="input flex-1" placeholder="Role (optional)"
+                    value={wl.role} onChange={e => updateWL(i, 'role', e.target.value)} />
+                )}
+                {form.worshipLeaders.length > 1 && (
+                  <button type="button" onClick={() => removeWL(i)}
+                    className="text-red-400 hover:text-red-600 text-xl flex-shrink-0">×</button>
+                )}
+              </div>
             </div>
           ))}
           <button type="button" onClick={addWL} className="text-primary-600 hover:underline text-sm">
