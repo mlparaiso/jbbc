@@ -182,7 +182,7 @@ export default function SchedulePage() {
         {/* Print Header */}
         <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-primary-600">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">JBBC Music Team</h1>
+            <h1 className="text-lg font-bold text-gray-900">Worship Schedule</h1>
             <h2 className="text-base font-semibold text-primary-700">{MONTHS[month - 1]} {year} — Worship Schedule</h2>
           </div>
           <div className="text-right">
@@ -239,7 +239,7 @@ export default function SchedulePage() {
 
         {/* Print Footer */}
         <p className="text-xs text-gray-400 text-center mt-4">
-          JBBC Music Team © {new Date().getFullYear()} — Sit in designated seats | No personal phone use on stage | Be presentable | Do it for the Lord.
+          Worship Schedule © {new Date().getFullYear()} — Sit in designated seats | No personal phone use on stage | Be presentable | Do it for the Lord.
         </p>
       </div>
 

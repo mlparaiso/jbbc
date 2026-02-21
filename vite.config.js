@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.svg'],
       manifest: {
-        name: 'Worship Schedule Manager',
-        short_name: 'Worship',
+        name: 'Worship Schedule',
+        short_name: 'Worship Schedule',
         description: 'Manage your church music team lineup and schedule.',
         theme_color: '#4263eb',
         background_color: '#f0f4ff',

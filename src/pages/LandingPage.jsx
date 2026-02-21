@@ -156,7 +156,7 @@ export default function LandingPage() {
       </div>
 
       <footer className="absolute bottom-4 text-xs text-primary-400">
-        Worship Schedule Manager © {new Date().getFullYear()}
+        Worship Schedule © {new Date().getFullYear()}
       </footer>
     </div>
   );

@@ -142,7 +142,7 @@ export default function LineupDetailPage() {
                 });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = `jbbc-lineup-${lineup.date}.png`;
+                a.download = `worship-lineup-${lineup.date}.png`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
