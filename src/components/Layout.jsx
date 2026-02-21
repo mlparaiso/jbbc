@@ -1,8 +1,13 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { CalendarDays, Users, LogOut, ListMusic, Settings } from 'lucide-react';
-import DonateSection from './DonateSection';
+import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X } from 'lucide-react';
+
+const DONATE_METHODS = [
+  { key: 'gcash',   label: 'GCash',   color: 'bg-green-500 hover:bg-green-600',  qr: '/gcash-qr.png' },
+  { key: 'paymaya', label: 'PayMaya', color: 'bg-blue-500 hover:bg-blue-600',    qr: '/paymaya-qr.png' },
+  { key: 'paypal',  label: 'PayPal',  color: 'bg-yellow-500 hover:bg-yellow-600', url: 'https://paypal.me/mlparaiso' },
+];
 
 function ScrollToTop({ scrollRef }) {
   const { pathname } = useLocation();
@@ -13,18 +18,59 @@ function ScrollToTop({ scrollRef }) {
 }
 
 export default function Layout() {
-  const { user, team, isAdmin, logout, authLoading } = useApp();
+  const { user, team, logout, authLoading } = useApp();
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+
+  // Donate state
+  const [donateOpen, setDonateOpen] = useState(false);
+  const [qrMethod, setQrMethod]     = useState(null); // 'gcash' | 'paymaya' | null
+  const donateRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!donateOpen) return;
+    const handler = (e) => {
+      if (donateRef.current && !donateRef.current.contains(e.target)) {
+        setDonateOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [donateOpen]);
+
+  const activeQr = DONATE_METHODS.find(m => m.key === qrMethod);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <ScrollToTop scrollRef={scrollRef} />
 
+      {/* QR modal */}
+      {qrMethod && activeQr && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setQrMethod(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl p-5 max-w-xs w-full text-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-bold text-gray-800">{activeQr.label} QR Code</p>
+              <button onClick={() => setQrMethod(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <img src={activeQr.qr} alt={`${activeQr.label} QR`} className="w-full rounded-lg border border-gray-100" />
+            <p className="text-xs text-gray-400 mt-3">Screenshot this QR and scan with {activeQr.label} app</p>
+          </div>
+        </div>
+      )}
+
       {/* Header — always visible, never scrolls */}
       <header className="bg-primary-700 text-white shadow-md flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-        <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
+          <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-primary-500 flex items-center justify-center">
               {team?.logoUrl
                 ? <img src={team.logoUrl} alt="Team logo" className="w-full h-full object-cover" />
@@ -38,6 +84,52 @@ export default function Layout() {
           </button>
 
           <div className="flex items-center gap-2">
+            {/* ❤️ Donate button */}
+            <div className="relative" ref={donateRef}>
+              <button
+                onClick={() => setDonateOpen(o => !o)}
+                title="Support our ministry"
+                className="flex items-center gap-1 text-xs text-rose-300 hover:text-rose-100 px-2 py-1 rounded-md hover:bg-primary-600 transition-colors"
+              >
+                <Heart size={14} className="fill-rose-400" />
+                <span className="hidden sm:inline">Donate</span>
+              </button>
+
+              {/* Dropdown */}
+              {donateOpen && (
+                <div className="absolute right-0 top-full mt-2 z-40 bg-white rounded-xl shadow-xl border border-gray-100 p-4 w-56 text-center">
+                  <div className="flex items-center justify-center gap-1.5 mb-1 text-rose-500">
+                    <Heart size={13} className="fill-rose-500" />
+                    <span className="text-sm font-bold text-gray-800">Support Ministry</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                    Donations go to{' '}
+                    <a href="https://www.facebook.com/JalajalaBibleBaptistChurch" target="_blank" rel="noopener noreferrer"
+                      className="text-primary-600 hover:underline font-medium">JBBC</a>. 🙏
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {DONATE_METHODS.map(m => (
+                      <button
+                        key={m.key}
+                        onClick={() => {
+                          if (m.url) {
+                            window.open(m.url, '_blank', 'noopener,noreferrer');
+                            setDonateOpen(false);
+                          } else {
+                            setQrMethod(m.key);
+                            setDonateOpen(false);
+                          }
+                        }}
+                        className={`${m.color} text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {!authLoading && user && (
               <div className="flex items-center gap-2">
                 <button onClick={() => navigate('/team-setup')} title="Team Settings"
@@ -81,11 +173,8 @@ export default function Layout() {
         </main>
 
         {/* Footer */}
-        <footer className="max-w-2xl mx-auto w-full px-4 pb-6 pt-2">
-          <DonateSection />
-          <p className="text-center text-xs text-gray-400 pt-4 mt-2 border-t border-gray-100">
-            {team?.name || 'Music Team'} © {new Date().getFullYear()}
-          </p>
+        <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-200">
+          {team?.name || 'Music Team'} © {new Date().getFullYear()}
         </footer>
       </div>
     </div>
