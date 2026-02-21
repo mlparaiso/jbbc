@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock } from 'lucide-react';
+import TeamLogoUploader from '../components/TeamLogoUploader';
 
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -50,8 +51,17 @@ export default function TeamSetupPage() {
     return (
       <div className="max-w-sm mx-auto mt-12 space-y-6">
         <div className="card text-center space-y-3">
-          <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mx-auto">
-            <Music2 size={28} className="text-primary-600" />
+          {/* Team Logo — click to upload */}
+          <div className="flex flex-col items-center gap-1">
+            <TeamLogoUploader currentLogoUrl={team.logoUrl} onUpload={updateTeamLogo}>
+              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
+                {team.logoUrl
+                  ? <img src={team.logoUrl} alt="Team logo" className="w-full h-full object-cover" />
+                  : <Music2 size={30} className="text-primary-600" />
+                }
+              </div>
+            </TeamLogoUploader>
+            <p className="text-[10px] text-gray-400">Click to change logo</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Your Team</p>

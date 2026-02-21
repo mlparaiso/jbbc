@@ -3,7 +3,8 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import {
   doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc,
 } from 'firebase/firestore';
-import { auth, googleProvider, db } from '../firebase';
+import { auth, googleProvider, db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AppContext = createContext(null);
 
@@ -393,6 +394,16 @@ export function AppProvider({ children }) {
     });
   };
 
+  // ==================== TEAM LOGO ====================
+  const updateTeamLogo = async (blob) => {
+    if (!teamId || !user) throw new Error('Not logged in or no team');
+    const storageRef = ref(storage, `team-logos/${teamId}/logo.jpg`);
+    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+    const url = await getDownloadURL(storageRef);
+    await updateDoc(doc(db, 'teams', teamId), { logoUrl: url });
+    return url;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -413,6 +424,7 @@ export function AppProvider({ children }) {
         leaveTeam,
         switchToTeam,
         updateTeamVisibility,
+        updateTeamLogo,
         // Public (guest) access
         loadPublicTeam,
         searchPublicTeams,

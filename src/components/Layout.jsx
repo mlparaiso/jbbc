@@ -24,7 +24,12 @@ export default function Layout() {
       <header className="bg-primary-700 text-white shadow-md flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-primary-500 flex items-center justify-center">
+              {team?.logoUrl
+                ? <img src={team.logoUrl} alt="Team logo" className="w-full h-full object-cover" />
+                : <img src="/logo.svg" alt="Logo" className="w-5 h-5 object-contain" />
+              }
+            </div>
             <div className="text-left min-w-0">
               <h1 className="text-base font-bold leading-tight truncate">{team?.name || 'Music Team'}</h1>
               <p className="text-xs text-primary-200 hidden sm:block">Worship Schedule Manager</p>
