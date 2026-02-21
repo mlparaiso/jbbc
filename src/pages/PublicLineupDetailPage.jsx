@@ -114,7 +114,12 @@ export default function PublicLineupDetailPage() {
       <header className="bg-primary-700 text-white shadow-md">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-primary-500 flex items-center justify-center">
+              {publicTeam?.logoUrl
+                ? <img src={publicTeam.logoUrl} alt="Team logo" className="w-full h-full object-cover" />
+                : <img src="/logo.svg" alt="Logo" className="w-5 h-5 object-contain" />
+              }
+            </div>
             <div className="min-w-0">
               <h1 className="text-base font-bold leading-tight truncate">{publicTeam?.name || 'Worship Team'}</h1>
               <p className="text-xs text-primary-200 hidden sm:block">Worship Schedule</p>
