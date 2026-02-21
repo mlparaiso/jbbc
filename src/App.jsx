@@ -16,7 +16,10 @@ import PublicLineupDetailPage from './pages/PublicLineupDetailPage';
 
 function HomeRouter() {
   const [searchParams] = useSearchParams();
-  return searchParams.get('month') ? <SchedulePage /> : <YearCalendarPage />;
+  // If month param present, show schedule; otherwise redirect to current month schedule
+  if (searchParams.get('month')) return <SchedulePage />;
+  const now = new Date();
+  return <Navigate to={`/?year=${now.getFullYear()}&month=${now.getMonth() + 1}`} replace />;
 }
 
 export default function App() {

@@ -108,11 +108,13 @@ export default function YearCalendarPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
 
-      {/* Scripture strip — compact 1-liner */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-xs text-primary-700 overflow-hidden">
+      {/* Scripture strip — marquee for verse, fixed ref */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-gray-800 border border-primary-100 dark:border-gray-700 text-xs text-primary-700 dark:text-primary-300 overflow-hidden">
         <BookOpen size={13} className="flex-shrink-0 text-primary-400" title="Verse of the Week" />
-        <p className="truncate italic min-w-0">"{verse.text}"</p>
-        <span className="flex-shrink-0 font-semibold text-primary-400 whitespace-nowrap">— {verse.ref}</span>
+        <div className="marquee-track">
+          <span className="marquee-inner italic">"{verse.text}"</span>
+        </div>
+        <span className="flex-shrink-0 font-semibold text-primary-400 dark:text-primary-400 whitespace-nowrap ml-2">— {verse.ref}</span>
       </div>
 
       {/* Year navigation + progress */}
@@ -120,26 +122,26 @@ export default function YearCalendarPage() {
         <button
           onClick={() => setYear(y => Math.max(MIN_YEAR, y - 1))}
           disabled={year <= MIN_YEAR}
-          className={`p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors ${year <= MIN_YEAR ? 'opacity-30 cursor-not-allowed' : ''}`}
+          className={`p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${year <= MIN_YEAR ? 'opacity-30 cursor-not-allowed' : ''}`}
         >
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">{year}</h2>
-          <p className="text-xs text-gray-400">Worship Schedule</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{year}</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Worship Schedule</p>
           <div className="mt-1 flex items-center justify-center gap-1.5">
-            <div className="h-1.5 w-24 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-1.5 w-24 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary-500 rounded-full transition-all"
                 style={{ width: `${(scheduledMonths / 12) * 100}%` }}
               />
             </div>
-            <span className="text-[11px] text-gray-400">{scheduledMonths}/12 months</span>
+            <span className="text-[11px] text-gray-400 dark:text-gray-500">{scheduledMonths}/12 months</span>
           </div>
         </div>
         <button
           onClick={() => setYear(y => y + 1)}
-          className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <ChevronRight size={18} />
         </button>
@@ -170,23 +172,23 @@ export default function YearCalendarPage() {
                 ${isCurrentMonth
                   ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-amber-300 shadow-md ring-2 ring-amber-200'
                   : hasSched
-                    ? 'bg-white border-teal-200 hover:border-teal-400 text-gray-800'
-                    : 'bg-gray-50 border-gray-100 hover:bg-gray-100 text-gray-400'
+                    ? 'bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-900 hover:border-teal-400 dark:hover:border-teal-700 text-gray-800 dark:text-gray-100'
+                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500'
                 }
               `}
             >
-              <p className={`text-xs sm:text-sm font-bold truncate ${isCurrentMonth ? 'text-white' : hasSched ? 'text-gray-800' : 'text-gray-400'}`}>
+              <p className={`text-xs sm:text-sm font-bold truncate ${isCurrentMonth ? 'text-white' : hasSched ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>
                 {name}
               </p>
 
               {hasSched ? (
                 <span className={`inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full
-                  ${isCurrentMonth ? 'bg-white/30 text-white' : 'bg-teal-50 text-teal-700 border border-teal-200'}`}>
+                  ${isCurrentMonth ? 'bg-white/30 text-white' : 'bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'}`}>
                   {count} service{count !== 1 ? 's' : ''}
                 </span>
               ) : (
                 <div className="mt-1.5 flex flex-col items-center gap-1">
-                  <p className="text-[10px] text-gray-300">No services yet</p>
+                  <p className="text-[10px] text-gray-300 dark:text-gray-600">No services yet</p>
                   {canManageLineups && (
                     <span className="inline-flex items-center gap-0.5 text-[10px] text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Plus size={10} /> Add

@@ -40,7 +40,7 @@ function getSundaysInMonth(year, month) {
 function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
   if (!name) return null;
   return (
-    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 rounded px-1.5 py-0.5 text-xs">
+    <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-1.5 py-0.5 text-xs">
       <span className={iconClass}>{icon}</span>
       {name}
     </span>
@@ -163,13 +163,13 @@ export default function SchedulePage() {
 
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4 print:hidden">
-        <button onClick={prevMonth} className={`p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors ${atMin ? 'opacity-30 cursor-not-allowed' : ''}`}>
+        <button onClick={prevMonth} className={`p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${atMin ? 'opacity-30 cursor-not-allowed' : ''}`}>
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-800">{MONTHS[month - 1]} {year}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{MONTHS[month - 1]} {year}</h2>
         </div>
-        <button onClick={nextMonth} className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+        <button onClick={nextMonth} className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
           <ChevronRight size={18} />
         </button>
       </div>
@@ -242,7 +242,7 @@ export default function SchedulePage() {
 
       {/* Monthly Theme + Bible Verse */}
       {(monthTheme || canManageLineups) && (
-        <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3 print:hidden">
+        <div className="mb-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800 rounded-xl px-4 py-3 print:hidden">
           {!editingTheme ? (
             <>
               <div className="flex items-center justify-between mb-1">
@@ -344,20 +344,20 @@ export default function SchedulePage() {
                   onClick={() => navigate(`/lineup/${lineup.id}`)}
                   className={`rounded-xl cursor-pointer transition-all border-l-4 border hover:shadow-sm ${
                     isGold
-                      ? 'bg-amber-50 border-amber-200 border-l-amber-400 hover:border-amber-300 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-primary-200 border-l-primary-400'
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 border-l-amber-400 hover:border-amber-300 shadow-sm'
+                      : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-700 border-l-primary-400'
                   }`}
                 >
                   {/* Top row: date + Team A badge + practice date + arrow */}
                   <div className="flex items-center justify-between px-4 pt-3 pb-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-bold text-sm ${isGold ? 'text-amber-800' : 'text-gray-800'}`}>{shortDate(lineup.date)}</span>
-                      {isGold && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800">Upcoming</span>}
+                      <span className={`font-bold text-sm ${isGold ? 'text-amber-800 dark:text-amber-300' : 'text-gray-800 dark:text-gray-100'}`}>{shortDate(lineup.date)}</span>
+                      {isGold && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200">Upcoming</span>}
                       {lineup.isTeamA && (
-                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Team A</span>
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Team A</span>
                       )}
                       {lineup.practiceDate && (
-                        <span className="text-xs flex items-center gap-0.5 text-teal-600">
+                        <span className="text-xs flex items-center gap-0.5 text-teal-600 dark:text-teal-400">
                           <CalendarCheck size={10} />
                           Practice: {shortDate(lineup.practiceDate)}
                         </span>
@@ -369,7 +369,7 @@ export default function SchedulePage() {
                   {/* WL + Backups on same row */}
                   <div className="flex items-start gap-1.5 px-4 pb-1">
                     <Mic2 size={13} className="flex-shrink-0 mt-0.5 text-primary-400" />
-                    <span className="text-sm font-medium leading-tight text-gray-700">{wlNames || 'TBA'}</span>
+                    <span className="text-sm font-medium leading-tight text-gray-700 dark:text-gray-200">{wlNames || 'TBA'}</span>
                     {backupNames && (
                       <span className="text-xs leading-tight mt-0.5 ml-1 text-gray-400">+ {backupNames}</span>
                     )}
@@ -412,9 +412,9 @@ export default function SchedulePage() {
             </div>
           )}
           {canManageLineups && showCopyPanel && (
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 text-left max-w-sm mx-auto space-y-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 text-left max-w-sm mx-auto space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-gray-800 mb-0.5">Copy lineup into {MONTHS[month - 1]} {year}</h3>
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0.5">Copy lineup into {MONTHS[month - 1]} {year}</h3>
                 <p className="text-xs text-gray-400">
                   {MONTHS[month - 1]} {year} has <strong>{getSundaysInMonth(year, month).length} Sundays</strong>: {getSundaysInMonth(year, month).map(d => printDate(d)).join(', ')}
                 </p>

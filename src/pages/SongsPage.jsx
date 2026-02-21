@@ -45,7 +45,7 @@ export default function SongsPage() {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-2 mb-4">
         <Music2 size={20} className="text-primary-500" />
-        <h2 className="text-lg font-bold text-gray-800">Song History</h2>
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Song History</h2>
         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">
           {songHistory.length} songs
         </span>
@@ -75,7 +75,7 @@ export default function SongsPage() {
           <div key={i} className="card py-3 px-4 flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold text-gray-800">{song.title}</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{song.title}</span>
                 <span className="text-xs bg-primary-50 text-primary-600 px-1.5 py-0.5 rounded font-medium">
                   {song.section}
                 </span>
@@ -101,7 +101,7 @@ export default function SongsPage() {
               {song.dates.length > 1 && (
                 <div className="mt-1 flex flex-wrap gap-1">
                   {song.dates.slice(0, 6).map((d, di) => (
-                    <span key={di} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                    <span key={di} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded">
                       {formatDate(d)}
                     </span>
                   ))}

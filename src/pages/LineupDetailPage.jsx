@@ -180,7 +180,7 @@ export default function LineupDetailPage() {
         <button
           onClick={() => prevLineup && navigate(`/lineup/${prevLineup.id}`)}
           disabled={!prevLineup}
-          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 transition-colors ${prevLineup ? 'text-gray-600 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'}`}
+          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors ${prevLineup ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
         >
           <ChevronLeft size={14} />
           {prevLineup ? shortDate(prevLineup.date) : 'No prev'}
@@ -189,7 +189,7 @@ export default function LineupDetailPage() {
         <button
           onClick={() => nextLineup && navigate(`/lineup/${nextLineup.id}`)}
           disabled={!nextLineup}
-          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 transition-colors ${nextLineup ? 'text-gray-600 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'}`}
+          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors ${nextLineup ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
         >
           {nextLineup ? shortDate(nextLineup.date) : 'No next'}
           <ChevronRight size={14} />
@@ -197,14 +197,14 @@ export default function LineupDetailPage() {
       </div>
 
       {/* Main card */}
-      <div ref={cardRef} className="card border-l-4 border-l-primary-400 space-y-4">
+      <div ref={cardRef} className="card dark:bg-gray-800 dark:border-gray-700 border-l-4 border-l-primary-400 space-y-4">
 
         {/* Date + theme + practice date */}
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-bold text-gray-800">{formatDate(lineup.date)}</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{formatDate(lineup.date)}</h2>
             {lineup.isTeamA && (
-              <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Team A</span>
+              <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold px-2 py-0.5 rounded-full">Team A</span>
             )}
           </div>
           {lineup.theme && (
@@ -238,7 +238,7 @@ export default function LineupDetailPage() {
                     {showRole && (
                       <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
                     )}
-                    <span className="text-sm text-gray-800 font-medium">{member?.name || '—'}</span>
+                    <span className="text-sm text-gray-800 dark:text-gray-100 font-medium">{member?.name || '—'}</span>
                   </div>
                 );
               })}
@@ -276,20 +276,20 @@ export default function LineupDetailPage() {
                 .filter(Boolean)
                 .join(' / ');
               return (
-                <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
                   <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
-                    <p className="text-sm font-medium text-gray-800 truncate">{names || '—'}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{names || '—'}</p>
                   </div>
                 </div>
               );
             })}
-            <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
               <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
-                <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{se?.name || '—'}</p>
               </div>
             </div>
             {/* Extra instruments */}
@@ -300,11 +300,11 @@ export default function LineupDetailPage() {
                 .join(' / ');
               const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
               return (
-                <div key={ei} className="flex items-center gap-2 bg-purple-50 rounded-lg px-3 py-2">
+                <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
                   <span className="text-purple-400 flex-shrink-0">{icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
-                    <p className="text-sm font-medium text-gray-800 truncate">{names || '—'}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{names || '—'}</p>
                   </div>
                 </div>
               );
@@ -327,7 +327,7 @@ export default function LineupDetailPage() {
                     <div className="space-y-1">
                       {group.songs.map((song, si) => (
                         <div key={si} className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-sm text-gray-800 leading-tight">{song.title}</span>
+                          <span className="text-sm text-gray-800 dark:text-gray-100 leading-tight">{song.title}</span>
                           {song.key && (
                             <span className="flex-shrink-0 inline-flex items-center text-xs font-semibold text-primary-700 bg-primary-50 border border-primary-200 px-1.5 py-0.5 rounded">
                               {song.key}

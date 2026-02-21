@@ -70,7 +70,7 @@ function MemberForm({ initial, onSave, onCancel }) {
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                 form.roles.includes(role)
                   ? 'bg-primary-600 text-white border-primary-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-primary-400'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-primary-400'
               }`}>
               {role}
             </button>
@@ -166,7 +166,7 @@ export default function MembersPage() {
       <div className="card py-3 px-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-gray-800">{m.name}</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{m.name}</span>
             {m.nickname && m.nickname !== m.name && (
               <span className="text-xs text-gray-500">({m.nickname})</span>
             )}
