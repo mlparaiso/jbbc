@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { CalendarDays, Users, LogOut, ListMusic, Settings } from 'lucide-react';
+import DonateSection from './DonateSection';
 
 function ScrollToTop({ scrollRef }) {
   const { pathname } = useLocation();
@@ -80,8 +81,11 @@ export default function Layout() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-200">
-          {team?.name || 'Music Team'} © {new Date().getFullYear()}
+        <footer className="max-w-2xl mx-auto w-full px-4 pb-6 pt-2">
+          <DonateSection />
+          <p className="text-center text-xs text-gray-400 pt-4 mt-2 border-t border-gray-100">
+            {team?.name || 'Music Team'} © {new Date().getFullYear()}
+          </p>
         </footer>
       </div>
     </div>
