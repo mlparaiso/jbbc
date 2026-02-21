@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ROLE_CATEGORIES } from '../data/initialData';
-import { Users, Star, UserPlus, Search, UserX, Pencil, Trash2 } from 'lucide-react';
+import { Users, Star, UserPlus, Search, UserX, Pencil, Trash2, ShieldCheck, Shield, User } from 'lucide-react';
 
 const ALL_ROLES = Object.values(ROLE_CATEGORIES);
 
@@ -14,9 +14,24 @@ const ROLE_COLORS = {
   [ROLE_CATEGORIES.SOUND]: 'bg-gray-100 text-gray-700',
 };
 
+const TEAM_ROLE_CONFIG = {
+  main_admin: { label: 'Main Admin', icon: <ShieldCheck size={11} />, cls: 'bg-primary-100 text-primary-700 border-primary-200' },
+  co_admin:   { label: 'Co-Admin',   icon: <Shield size={11} />,      cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  member:     { label: 'Member',     icon: <User size={11} />,         cls: 'bg-gray-100 text-gray-500 border-gray-200' },
+};
+
+function TeamRoleBadge({ role }) {
+  const cfg = TEAM_ROLE_CONFIG[role] || TEAM_ROLE_CONFIG.member;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${cfg.cls}`}>
+      {cfg.icon} {cfg.label}
+    </span>
+  );
+}
+
 function MemberForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || {
-    name: '', nickname: '', roles: [], isTeamA: false,
+    name: '', nickname: '', email: '', roles: [], isTeamA: false,
   });
 
   const toggleRole = (role) => {
@@ -28,7 +43,7 @@ function MemberForm({ initial, onSave, onCancel }) {
 
   return (
     <div className="card border border-primary-200 bg-primary-50 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="label">Full Name *</label>
           <input className="input" value={form.name}
@@ -40,9 +55,14 @@ function MemberForm({ initial, onSave, onCancel }) {
             onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))} placeholder="e.g. Juan" />
         </div>
       </div>
+      <div>
+        <label className="label">Email (Google account) <span className="text-gray-400 font-normal">— for login matching</span></label>
+        <input className="input" type="email" value={form.email || ''}
+          onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="e.g. juan@gmail.com" />
+      </div>
 
       <div>
-        <span className="label">Roles (select all that apply)</span>
+        <span className="label">Instrument Roles (select all that apply)</span>
         <div className="flex flex-wrap gap-2">
           {ALL_ROLES.map(role => (
             <button key={role} type="button"
@@ -77,11 +97,12 @@ function MemberForm({ initial, onSave, onCancel }) {
 }
 
 export default function MembersPage() {
-  const { members, isAdmin, addMember, updateMember, deleteMember } = useApp();
+  const { members, isAdmin, canManageLineups, isMainAdmin, isCoAdmin, myRole, addMember, updateMember, deleteMember, updateMemberRole } = useApp();
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [roleChanging, setRoleChanging] = useState(null);
 
   const filtered = members.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -99,6 +120,28 @@ export default function MembersPage() {
     }
   };
 
+  const handleRoleChange = async (memberId, currentTeamRole, newRole) => {
+    if (newRole === currentTeamRole) return;
+    // Prevent co-admin from setting main_admin
+    if (isCoAdmin && newRole === 'main_admin') return;
+    setRoleChanging(memberId);
+    try {
+      await updateMemberRole(memberId, newRole);
+    } catch (e) {
+      alert(e.message || 'Failed to update role');
+    } finally {
+      setRoleChanging(null);
+    }
+  };
+
+  // What role options can the current user assign to others?
+  const assignableRoles = () => {
+    if (isMainAdmin) return ['main_admin', 'co_admin', 'member'];
+    if (isCoAdmin) return ['co_admin', 'member'];
+    return [];
+  };
+  const roleOptions = assignableRoles();
+
   function MemberCard({ m }) {
     if (editId === m.id) {
       return (
@@ -109,6 +152,16 @@ export default function MembersPage() {
         />
       );
     }
+
+    const teamRole = m.teamRole || 'member';
+    const canChangeThisRole = canManageLineups && (
+      // Main admin can change anyone except their own role (to protect themselves)
+      isMainAdmin
+        ? true
+        // Co-admin can only change 'member' → 'co_admin' or 'co_admin' → 'member', not main_admin
+        : isCoAdmin && teamRole !== 'main_admin'
+    );
+
     return (
       <div className="card py-3 px-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -128,8 +181,25 @@ export default function MembersPage() {
               </span>
             ))}
           </div>
+          {/* Team role badge / selector */}
+          <div className="mt-1.5 flex items-center gap-1.5">
+            {canChangeThisRole && roleOptions.length > 0 ? (
+              <select
+                value={teamRole}
+                disabled={roleChanging === m.id}
+                onChange={e => handleRoleChange(m.id, teamRole, e.target.value)}
+                className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+              >
+                {roleOptions.map(r => (
+                  <option key={r} value={r}>{TEAM_ROLE_CONFIG[r]?.label || r}</option>
+                ))}
+              </select>
+            ) : (
+              <TeamRoleBadge role={teamRole} />
+            )}
+          </div>
         </div>
-        {isAdmin && (
+        {canManageLineups && (
           <div className="flex gap-1 flex-shrink-0">
             <button onClick={() => setEditId(m.id)}
               className="text-primary-600 hover:text-primary-800 p-1" title="Edit">
@@ -151,18 +221,30 @@ export default function MembersPage() {
         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
           <Users size={20} className="text-primary-500" /> Team Members
         </h2>
-        {isAdmin && !showAdd && (
+        {canManageLineups && !showAdd && (
           <button onClick={() => setShowAdd(true)} className="btn-primary text-sm flex items-center gap-1.5">
             <UserPlus size={15} /> Add Member
           </button>
         )}
       </div>
 
+      {/* Role legend */}
+      {canManageLineups && (
+        <div className="mb-4 flex flex-wrap gap-2 text-xs text-gray-500">
+          <span className="font-medium text-gray-600">Access levels:</span>
+          {Object.entries(TEAM_ROLE_CONFIG).map(([key, cfg]) => (
+            <span key={key} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border ${cfg.cls}`}>
+              {cfg.icon} {cfg.label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Add form */}
-      {isAdmin && showAdd && (
+      {canManageLineups && showAdd && (
         <div className="mb-4">
           <MemberForm
-            onSave={(data) => { addMember(data); setShowAdd(false); }}
+            onSave={(data) => { addMember({ ...data, teamRole: 'member' }); setShowAdd(false); }}
             onCancel={() => setShowAdd(false)}
           />
         </div>

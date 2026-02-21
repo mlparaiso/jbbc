@@ -5,7 +5,7 @@ import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Use
 import TeamLogoUploader from '../components/TeamLogoUploader';
 
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -67,15 +67,26 @@ export default function TeamSetupPage() {
             <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Your Team</p>
             <h2 className="text-xl font-bold text-gray-800">{team.name}</h2>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">Invite Code — share this to add co-admins</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-lg font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
-              <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
-                {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-              </button>
+          {/* Invite code — only visible to Main Admin and Co-Admin */}
+          {canSeeInviteCode ? (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-1">
+                Invite Code — share with {isMainAdmin ? 'co-admins and members' : 'new members'}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
+                <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
+                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-500 text-center">
+                Contact your team admin to invite new members.
+              </p>
+            </div>
+          )}
 
           {/* Visibility toggle */}
           <div className="bg-gray-50 rounded-lg p-3">

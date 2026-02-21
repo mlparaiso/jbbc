@@ -19,6 +19,7 @@ export function AppProvider({ children }) {
 
   const [members, setMembers] = useState([]);
   const [lineups, setLineups] = useState([]);
+  const [myRole, setMyRole] = useState(null); // 'main_admin' | 'co_admin' | 'member' | null
 
   // For public (guest) viewing — loaded without auth
   const [publicTeamId, setPublicTeamId] = useState(null);
@@ -109,6 +110,28 @@ export function AppProvider({ children }) {
     return unsub;
   }, [teamId]);
 
+  // --- Derive myRole from team members list (match by email) ---
+  useEffect(() => {
+    if (!user || !teamId || !team) { setMyRole(null); return; }
+    // Team creator is always main_admin
+    if (team.createdBy === user.uid) {
+      setMyRole('main_admin');
+      return;
+    }
+    // Otherwise look up member by email and read their teamRole field
+    const match = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
+    if (match) {
+      setMyRole(match.teamRole || 'member');
+    } else {
+      // Fallback: if user is in adminUids, treat as co_admin
+      if (team.adminUids && team.adminUids.includes(user.uid)) {
+        setMyRole('co_admin');
+      } else {
+        setMyRole('member');
+      }
+    }
+  }, [user, teamId, team, members]);
+
   // --- Load members ---
   useEffect(() => {
     if (!teamId) { setMembers([]); return; }
@@ -141,6 +164,12 @@ export function AppProvider({ children }) {
 
   const isAdmin = !!user && !!teamId; // logged in + has a team = can edit
   const isPublic = team?.isPublic !== false; // default true if not set
+
+  // Convenience role helpers
+  const isMainAdmin = myRole === 'main_admin';
+  const isCoAdmin = myRole === 'co_admin';
+  const canManageLineups = myRole === 'main_admin' || myRole === 'co_admin';
+  const canSeeInviteCode = myRole === 'main_admin' || myRole === 'co_admin';
 
   // ==================== TEAM MANAGEMENT ====================
   function generateInviteCode() {
@@ -394,6 +423,41 @@ export function AppProvider({ children }) {
     });
   };
 
+  // ==================== ROLE MANAGEMENT ====================
+  /**
+   * Update a member's teamRole field.
+   * Main Admin can set any role; Co-Admin can only set 'co_admin' or 'member'.
+   */
+  const updateMemberRole = async (memberId, newRole) => {
+    if (!teamId) return;
+    if (!canManageLineups) throw new Error('Permission denied');
+    // Co-admins cannot assign main_admin
+    if (myRole === 'co_admin' && newRole === 'main_admin') throw new Error('Permission denied');
+    await updateDoc(doc(db, 'teams', teamId, 'members', memberId), { teamRole: newRole });
+  };
+
+  /**
+   * Transfer Main Admin to another member (only current main_admin can do this).
+   * Demotes current user to 'member', promotes target to 'main_admin', and updates team.createdBy.
+   */
+  const transferMainAdmin = async (newMainAdminMemberId) => {
+    if (!teamId || myRole !== 'main_admin') throw new Error('Permission denied');
+    const targetMember = members.find(m => m.id === newMainAdminMemberId);
+    if (!targetMember) throw new Error('Member not found');
+    // Update team's createdBy to the new admin's uid (if they have one stored)
+    // We store the new admin role on the member document; role is derived from email match
+    await updateDoc(doc(db, 'teams', teamId, 'members', newMainAdminMemberId), { teamRole: 'main_admin' });
+    // Also update team.createdBy if the target has a uid
+    if (targetMember.uid) {
+      await updateDoc(doc(db, 'teams', teamId), { createdBy: targetMember.uid });
+    }
+    // Demote current user's member record
+    const myMember = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
+    if (myMember) {
+      await updateDoc(doc(db, 'teams', teamId, 'members', myMember.id), { teamRole: 'member' });
+    }
+  };
+
   // ==================== TEAM LOGO ====================
   const updateTeamLogo = async (blob) => {
     if (!teamId || !user) throw new Error('Not logged in or no team');
@@ -414,6 +478,14 @@ export function AppProvider({ children }) {
         loginWithGoogle,
         logout,
         isAdmin,
+        // Roles
+        myRole,
+        isMainAdmin,
+        isCoAdmin,
+        canManageLineups,
+        canSeeInviteCode,
+        updateMemberRole,
+        transferMainAdmin,
         // Team
         team,
         teamId,

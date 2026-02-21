@@ -69,7 +69,7 @@ function groupSongs(songs) {
 export default function LineupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, getMemberById, isAdmin, deleteLineup, lineups } = useApp();
+  const { getLineupById, getMemberById, isAdmin, canManageLineups, deleteLineup, lineups } = useApp();
   const cardRef = useRef(null);
   const [sharing, setSharing] = useState(false);
 
@@ -162,7 +162,7 @@ export default function LineupDetailPage() {
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
             <Printer size={12} /> Print
           </button>
-          {isAdmin && (
+          {canManageLineups && (
             <>
               <button onClick={() => navigate(`/lineup/${lineup.id}/edit`)} className="btn-primary text-xs py-1 px-2 flex items-center gap-1">
                 <Pencil size={12} /> Edit

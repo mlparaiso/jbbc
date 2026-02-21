@@ -48,7 +48,7 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, getMemberById, updateLineup, addLineups } = useApp();
+  const { lineups, isAdmin, canManageLineups, getMemberById, updateLineup, addLineups } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -244,7 +244,7 @@ export default function SchedulePage() {
       </div>
 
       {/* Monthly Theme + Bible Verse */}
-      {(monthTheme || isAdmin) && (
+      {(monthTheme || canManageLineups) && (
         <div className="mb-4 bg-primary-50 border border-primary-100 rounded-xl px-4 py-3 print:hidden">
           {!editingTheme ? (
             <>
@@ -253,7 +253,7 @@ export default function SchedulePage() {
                   <BookOpen size={14} className="text-primary-500" />
                   <span className="text-xs font-bold text-primary-500 uppercase tracking-wide">Monthly Theme</span>
                 </div>
-                {isAdmin && (
+                {canManageLineups && (
                   <button
                     onClick={() => { setThemeInput(monthTheme); setVerseInput(monthBibleVerse); setEditingTheme(true); }}
                     className="text-primary-400 hover:text-primary-600 p-1 rounded"
@@ -394,7 +394,7 @@ export default function SchedulePage() {
         <div className="text-center py-10 text-gray-400 print:hidden">
           <CalendarDays size={40} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium mb-4">No lineups for this month yet.</p>
-          {isAdmin && !showCopyPanel && (
+          {canManageLineups && !showCopyPanel && (
             <div className="flex flex-col items-center gap-2">
               <button onClick={() => navigate(`/lineup/new?year=${year}&month=${month}`)} className="btn-primary flex items-center gap-1.5">
                 <Plus size={15} /> Add Service Slot
@@ -404,7 +404,7 @@ export default function SchedulePage() {
               </button>
             </div>
           )}
-          {isAdmin && showCopyPanel && (
+          {canManageLineups && showCopyPanel && (
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 text-left max-w-sm mx-auto space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-gray-800 mb-0.5">Copy lineup into {MONTHS[month - 1]} {year}</h3>
@@ -457,7 +457,7 @@ export default function SchedulePage() {
       )}
 
       {/* Admin: Add Lineup Button */}
-      {isAdmin && monthLineups.length > 0 && (
+      {canManageLineups && monthLineups.length > 0 && (
         <div className="mt-4 text-center print:hidden">
           <button onClick={() => navigate(`/lineup/new?year=${year}&month=${month}`)} className="btn-primary flex items-center gap-1.5 mx-auto text-sm">
             <Plus size={15} /> Add Service Slot
