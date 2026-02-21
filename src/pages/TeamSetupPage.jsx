@@ -88,31 +88,33 @@ export default function TeamSetupPage() {
             </div>
           )}
 
-          {/* Visibility toggle */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                {isPublic
-                  ? <Globe size={15} className="text-green-500" />
-                  : <Lock size={15} className="text-gray-400" />
-                }
-                <div>
-                  <p className="text-xs font-semibold text-gray-700">Schedule Visibility</p>
-                  <p className="text-xs text-gray-400">{isPublic ? 'Anyone can view your schedule' : 'Only team members can view'}</p>
+          {/* Visibility toggle — only for admin/co-admin */}
+          {canSeeInviteCode && (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {isPublic
+                    ? <Globe size={15} className="text-green-500" />
+                    : <Lock size={15} className="text-gray-400" />
+                  }
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700">Schedule Visibility</p>
+                    <p className="text-xs text-gray-400">{isPublic ? 'Anyone can view your schedule' : 'Only team members can view'}</p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => updateTeamVisibility(!isPublic)}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    isPublic ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                    isPublic ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
               </div>
-              <button
-                onClick={() => updateTeamVisibility(!isPublic)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                  isPublic ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
-                  isPublic ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
             </div>
-          </div>
+          )}
           <div className="flex gap-2 pt-2">
             <button onClick={() => navigate('/')} className="btn-primary flex-1">
               Go to Schedule →
