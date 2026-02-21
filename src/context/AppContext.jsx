@@ -114,7 +114,8 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!user || !teamId || !team) { setMyRole(null); return; }
     // Team creator is always main_admin
-    if (team.createdBy === user.uid) {
+    if (team.createdBy === user.uid ||
+        (team.createdByEmail && team.createdByEmail.toLowerCase() === user.email?.toLowerCase())) {
       setMyRole('main_admin');
       return;
     }
