@@ -40,8 +40,8 @@ html, body {
 
 /* Marquee scroll animation */
 @keyframes marquee {
-  0%   { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(-200%); }
 }
 .marquee-track {
   overflow: hidden;
@@ -51,7 +51,7 @@ html, body {
 .marquee-inner {
   display: inline-block;
   white-space: nowrap;
-  animation: marquee 22s linear infinite;
+  animation: marquee 28s linear infinite;
 }
 .marquee-inner:hover {
   animation-play-state: paused;
