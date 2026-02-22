@@ -39,9 +39,16 @@ html, body {
 }
 
 /* Marquee scroll animation */
-@keyframes marquee {
+/* First run: starts visible at 0%, scrolls left off screen.
+   Subsequent loops: slides in from the right (100%) and scrolls left off screen (-100%).
+   A 5s delay holds the text visible before the first scroll. */
+@keyframes marquee-first {
   0%   { transform: translateX(0%); }
-  100% { transform: translateX(-200%); }
+  100% { transform: translateX(-110%); }
+}
+@keyframes marquee-loop {
+  0%   { transform: translateX(110%); }
+  100% { transform: translateX(-110%); }
 }
 .marquee-track {
   overflow: hidden;
@@ -51,7 +58,9 @@ html, body {
 .marquee-inner {
   display: inline-block;
   white-space: nowrap;
-  animation: marquee 28s linear infinite;
+  animation:
+    marquee-first 20s linear 5s 1 both,
+    marquee-loop  28s linear 25s infinite;
 }
 .marquee-inner:hover {
   animation-play-state: paused;
