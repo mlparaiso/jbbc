@@ -100,6 +100,7 @@ export default function MembersPage() {
   const { members, isAdmin, canManageLineups, isMainAdmin, isCoAdmin, myRole, addMember, updateMember, deleteMember, updateMemberRole } = useApp();
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [filterAccess, setFilterAccess] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState(null);
   const [roleChanging, setRoleChanging] = useState(null);
@@ -108,7 +109,8 @@ export default function MembersPage() {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) ||
       (m.nickname || '').toLowerCase().includes(search.toLowerCase());
     const matchRole = !filterRole || m.roles.includes(filterRole);
-    return matchSearch && matchRole;
+    const matchAccess = !filterAccess || (m.teamRole || 'member') === filterAccess;
+    return matchSearch && matchRole && matchAccess;
   });
 
   const teamA = filtered.filter(m => m.isTeamA);
@@ -222,14 +224,32 @@ export default function MembersPage() {
         )}
       </div>
 
-      {/* Role legend */}
+      {/* Role legend — clickable access filter */}
       {canManageLineups && (
-        <div className="mb-4 flex flex-wrap gap-2 text-xs text-gray-500">
+        <div className="mb-3 flex flex-wrap gap-1.5 items-center text-xs text-gray-500">
           <span className="font-medium text-gray-600">Access levels:</span>
+          <button
+            onClick={() => setFilterAccess('')}
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border transition-colors cursor-pointer ${
+              filterAccess === ''
+                ? 'bg-gray-800 text-white border-gray-800'
+                : 'bg-gray-100 text-gray-500 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            All
+          </button>
           {Object.entries(TEAM_ROLE_CONFIG).map(([key, cfg]) => (
-            <span key={key} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border ${cfg.cls}`}>
+            <button
+              key={key}
+              onClick={() => setFilterAccess(filterAccess === key ? '' : key)}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                filterAccess === key
+                  ? 'ring-2 ring-offset-1 ring-gray-400 ' + cfg.cls
+                  : cfg.cls + ' opacity-70 hover:opacity-100'
+              }`}
+            >
               {cfg.icon} {cfg.label}
-            </span>
+            </button>
           ))}
         </div>
       )}
@@ -245,13 +265,21 @@ export default function MembersPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-3">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input className="input pl-8 w-full" placeholder="Search by name..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:border-primary-400"
+            placeholder="Search by name..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
-        <select className="input sm:max-w-[180px]" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+        <select
+          className="py-1.5 px-2 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-primary-400 sm:max-w-[160px]"
+          value={filterRole}
+          onChange={e => setFilterRole(e.target.value)}
+        >
           <option value="">All Roles</option>
           {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
