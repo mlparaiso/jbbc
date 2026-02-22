@@ -16,7 +16,7 @@ const MIN_YEAR = 2026;
 function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
   if (!name) return null;
   return (
-    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 rounded px-1.5 py-0.5 text-xs">
+    <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-1.5 py-0.5 text-xs">
       <span className={iconClass}>{icon}</span>
       {name}
     </span>

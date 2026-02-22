@@ -204,7 +204,7 @@ export default function PublicLineupDetailPage() {
               {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
                 const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
                 return (
-                  <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                  <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
                     <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
@@ -213,7 +213,7 @@ export default function PublicLineupDetailPage() {
                   </div>
                 );
               })}
-              <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
                 <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
@@ -225,7 +225,7 @@ export default function PublicLineupDetailPage() {
                 const names = (extra.memberIds || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
                 const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
                 return (
-                  <div key={ei} className="flex items-center gap-2 bg-purple-50 rounded-lg px-3 py-2">
+                  <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
                     <span className="text-purple-400 flex-shrink-0">{icon}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
