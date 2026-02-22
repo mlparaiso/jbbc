@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import TeamLogoUploader from '../components/TeamLogoUploader';
+import { DEFAULT_INSTRUMENT_ROLES, DEFAULT_SERVICE_TYPES } from '../data/initialData';
 
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, instrumentRoles, serviceTypes, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -16,6 +17,16 @@ export default function TeamSetupPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false); // show leave confirmation
+  const [showSettings, setShowSettings] = useState(false); // expand team settings panel
+  // Instrument roles edit state
+  const [editingRoles, setEditingRoles] = useState(false);
+  const [rolesInput, setRolesInput] = useState([]);
+  const [newRoleLabel, setNewRoleLabel] = useState('');
+  const [newRoleKey, setNewRoleKey] = useState('');
+  // Service types edit state
+  const [editingServiceTypes, setEditingServiceTypes] = useState(false);
+  const [serviceTypesInput, setServiceTypesInput] = useState([]);
+  const [newServiceType, setNewServiceType] = useState('');
 
   if (authLoading || teamLoading) {
     return (
@@ -27,8 +38,20 @@ export default function TeamSetupPage() {
 
   // Not logged in → go to login
   if (!user) {
-    navigate('/admin', { replace: true });
+    navigate('/login', { replace: true });
     return null;
+  }
+
+  // If the user has a team and they landed on /team-setup directly (initial page load or
+  // browser session restore), redirect to the Year Calendar instead of showing team settings.
+  // React Router sets window.history.state.key when navigating client-side (in-app nav).
+  // On a fresh page load at /team-setup, history.state is null or has no 'key'.
+  if (teamId && team) {
+    const isClientSideNav = !!(window.history.state && window.history.state.key);
+    if (!isClientSideNav) {
+      navigate('/', { replace: true });
+      return null;
+    }
   }
 
   // Already has a team → show team info / invite code
@@ -115,6 +138,31 @@ export default function TeamSetupPage() {
               </div>
             </div>
           )}
+          {/* Team A toggle — only for admins */}
+          {canManageLineups && (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Star size={15} className={hasTeamA ? 'text-amber-400' : 'text-gray-400'} />
+                  <div className="text-left">
+                    <p className="text-xs font-semibold text-gray-700">Team A Feature</p>
+                    <p className="text-xs text-gray-400">Show "Team A" badge for senior leaders</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateTeamSettings({ hasTeamA: !hasTeamA })}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    hasTeamA ? 'bg-amber-400' : 'bg-gray-300'
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                    hasTeamA ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
             <button onClick={() => navigate('/')} className="btn-primary flex-1">
               Go to Schedule →
