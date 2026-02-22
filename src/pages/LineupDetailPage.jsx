@@ -226,7 +226,7 @@ export default function LineupDetailPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
               <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
             </p>
-            <div className="space-y-1">
+            <div className={lineup.worshipLeaders.length > 1 ? "flex flex-wrap gap-3 items-center" : "space-y-1"}>
               {lineup.worshipLeaders.map((wl, i) => {
                 const member = getMemberById(wl.memberId);
                 const showRole = wl.role && wl.role !== 'Worship Leader';
@@ -235,7 +235,7 @@ export default function LineupDetailPage() {
                     {showRole && (
                       <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
                     )}
-                    <span className="text-sm text-gray-800 dark:text-gray-100 font-medium">{member?.name || '—'}</span>
+                    <span className={`text-sm text-gray-800 dark:text-gray-100 ${lineup.worshipLeaders.length > 1 ? 'font-bold' : 'font-medium'}`}>{member?.name || '—'}</span>
                   </div>
                 );
               })}
