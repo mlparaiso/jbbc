@@ -194,7 +194,7 @@ export default function Layout() {
 
           {/* Dark Mode toggle — in nav row, desktop */}
           <div className="ml-auto flex items-center gap-2 px-3 py-1 flex-shrink-0">
-            <span className="text-sm font-medium text-primary-100 whitespace-nowrap">Dark Mode</span>
+            <span className="text-xs font-medium text-primary-100 whitespace-nowrap">Dark Mode</span>
             <button
               onClick={() => setDark(d => !d)}
               title={dark ? 'Switch to light mode' : 'Switch to dark mode'}

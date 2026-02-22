@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Music2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
-  const { user, loginWithGoogle, authLoading } = useApp();
+  const { user, teamId, loginWithGoogle, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
-  if (authLoading) return null;
+  if (authLoading || (user && teamLoading)) return null;
 
-  // If already logged in, redirect to team setup or home
+  // If already logged in, go to schedule if they have a team, else team setup
   if (user) {
-    navigate('/team-setup', { replace: true });
+    navigate(teamId ? '/' : '/team-setup', { replace: true });
     return null;
   }
 
