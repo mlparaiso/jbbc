@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X, Moon, Sun } from 'lucide-react';
+import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X } from 'lucide-react';
 
 const DONATE_METHODS = [
   { key: 'gcash',   label: 'GCash',   color: 'bg-green-500 hover:bg-green-600',  qr: '/gcash-qr.png' },
@@ -57,7 +57,6 @@ export default function Layout() {
 
   const activeQr = DONATE_METHODS.find(m => m.key === qrMethod);
 
-  // Year calendar URL (home)
   const scheduleUrl = `/`;
 
   const navItems = [
@@ -110,15 +109,6 @@ export default function Layout() {
           </button>
 
           <div className="flex items-center gap-2">
-            {/* 🌙 Dark mode toggle */}
-            <button
-              onClick={() => setDark(d => !d)}
-              title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="flex items-center justify-center w-7 h-7 rounded-md text-primary-200 dark:text-yellow-300 hover:bg-primary-600 dark:hover:bg-gray-700 transition-colors"
-            >
-              {dark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-
             {/* ❤️ Donate button */}
             <div className="relative" ref={donateRef}>
               <button
@@ -181,7 +171,7 @@ export default function Layout() {
         </div>
 
         {/* Top Nav — desktop only (hidden on mobile, replaced by bottom nav) */}
-        <nav className="hidden sm:flex max-w-5xl mx-auto px-4 pb-2 gap-1 overflow-x-auto scrollbar-none">
+        <nav className="hidden sm:flex max-w-5xl mx-auto px-4 pb-2 gap-1 overflow-x-auto scrollbar-none items-center">
           {navItems.map(({ to, icon, label, matchesSchedule }) => {
             const isScheduleActive = matchesSchedule && (location.pathname === '/' || location.pathname === '/schedule');
             return (
@@ -201,6 +191,22 @@ export default function Layout() {
               </NavLink>
             );
           })}
+
+          {/* Dark Mode toggle — in nav row, desktop */}
+          <div className="ml-auto flex items-center gap-2 px-3 py-1 flex-shrink-0">
+            <span className="text-sm font-medium text-primary-100 whitespace-nowrap">Dark Mode</span>
+            <button
+              onClick={() => setDark(d => !d)}
+              title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                dark ? 'bg-primary-300' : 'bg-primary-500/50'
+              }`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
+                dark ? 'translate-x-4' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
         </nav>
       </header>
 
@@ -248,6 +254,21 @@ export default function Layout() {
             </NavLink>
           );
         })}
+
+        {/* Dark Mode toggle — in mobile nav row */}
+        <button
+          onClick={() => setDark(d => !d)}
+          className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-gray-400 dark:text-gray-500"
+        >
+          <div className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+            dark ? 'bg-primary-500' : 'bg-gray-300'
+          }`}>
+            <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ${
+              dark ? 'translate-x-3' : 'translate-x-0'
+            }`} />
+          </div>
+          Dark Mode
+        </button>
       </nav>
     </div>
   );
