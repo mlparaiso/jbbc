@@ -155,62 +155,56 @@ export default function MembersPage() {
 
     const teamRole = m.teamRole || 'member';
     const canChangeThisRole = canManageLineups && (
-      // Main admin can change anyone except their own role (to protect themselves)
-      isMainAdmin
-        ? true
-        // Co-admin can only change 'member' → 'co_admin' or 'co_admin' → 'member', not main_admin
-        : isCoAdmin && teamRole !== 'main_admin'
+      isMainAdmin ? true : isCoAdmin && teamRole !== 'main_admin'
     );
 
     return (
-      <div className="card py-3 px-4 flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{m.name}</span>
-            {m.nickname && m.nickname !== m.name && (
-              <span className="text-xs text-gray-500">({m.nickname})</span>
-            )}
-            {m.isTeamA && (
-              <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Team A</span>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {m.roles.map(role => (
-              <span key={role} className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[role] || 'bg-gray-100 text-gray-600'}`}>
-                {role}
-              </span>
-            ))}
-          </div>
-          {/* Team role badge / selector */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            {canChangeThisRole && roleOptions.length > 0 ? (
-              <select
-                value={teamRole}
-                disabled={roleChanging === m.id}
-                onChange={e => handleRoleChange(m.id, teamRole, e.target.value)}
-                className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700 focus:outline-none focus:border-primary-400 disabled:opacity-60"
-              >
-                {roleOptions.map(r => (
-                  <option key={r} value={r}>{TEAM_ROLE_CONFIG[r]?.label || r}</option>
-                ))}
-              </select>
-            ) : (
-              <TeamRoleBadge role={teamRole} />
-            )}
-          </div>
+      <div className="card py-2 px-3 flex items-center gap-2">
+        {/* Left: name + badges + roles — all in one line, wrapping gracefully */}
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 shrink-0">{m.name}</span>
+          {m.nickname && m.nickname !== m.name && (
+            <span className="text-xs text-gray-400 shrink-0">({m.nickname})</span>
+          )}
+          {m.isTeamA && (
+            <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold px-1.5 py-0.5 rounded-full shrink-0">Team A</span>
+          )}
+          {m.roles.map(role => (
+            <span key={role} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${ROLE_COLORS[role] || 'bg-gray-100 text-gray-600'}`}>
+              {role}
+            </span>
+          ))}
         </div>
-        {canManageLineups && (
-          <div className="flex gap-1 flex-shrink-0">
-            <button onClick={() => setEditId(m.id)}
-              className="text-primary-600 hover:text-primary-800 p-1" title="Edit">
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => handleDelete(m.id, m.name)}
-              className="text-red-400 hover:text-red-600 p-1" title="Remove">
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )}
+
+        {/* Right: role selector + action buttons */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {canChangeThisRole && roleOptions.length > 0 ? (
+            <select
+              value={teamRole}
+              disabled={roleChanging === m.id}
+              onChange={e => handleRoleChange(m.id, teamRole, e.target.value)}
+              className="text-[10px] border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+            >
+              {roleOptions.map(r => (
+                <option key={r} value={r}>{TEAM_ROLE_CONFIG[r]?.label || r}</option>
+              ))}
+            </select>
+          ) : (
+            <TeamRoleBadge role={teamRole} />
+          )}
+          {canManageLineups && (
+            <>
+              <button onClick={() => setEditId(m.id)}
+                className="text-primary-500 hover:text-primary-700 p-1" title="Edit">
+                <Pencil size={13} />
+              </button>
+              <button onClick={() => handleDelete(m.id, m.name)}
+                className="text-red-400 hover:text-red-600 p-1" title="Remove">
+                <Trash2 size={13} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     );
   }
