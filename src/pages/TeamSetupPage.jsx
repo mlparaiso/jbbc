@@ -180,7 +180,7 @@ export default function TeamSetupPage() {
     setLoading(true);
     try {
       await createTeam(teamName.trim());
-      navigate('/team-setup');
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {

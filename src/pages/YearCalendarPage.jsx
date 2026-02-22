@@ -165,7 +165,7 @@ export default function YearCalendarPage() {
           return (
             <button
               key={m}
-              onClick={() => navigate(`/?year=${year}&month=${m}`)}
+              onClick={() => navigate(`/schedule?year=${year}&month=${m}`)}
               className={`
                 group relative rounded-xl px-2 py-4 sm:px-4 sm:py-5 text-center transition-all border
                 hover:-translate-y-0.5 hover:shadow-md

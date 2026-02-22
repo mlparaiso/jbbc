@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X, Moon, Sun, CalendarRange } from 'lucide-react';
+import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X, Moon, Sun } from 'lucide-react';
 
 const DONATE_METHODS = [
   { key: 'gcash',   label: 'GCash',   color: 'bg-green-500 hover:bg-green-600',  qr: '/gcash-qr.png' },
@@ -34,6 +34,7 @@ function useDarkMode() {
 export default function Layout() {
   const { user, team, logout, authLoading } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollRef = useRef(null);
   const [dark, setDark] = useDarkMode();
 
@@ -56,15 +57,14 @@ export default function Layout() {
 
   const activeQr = DONATE_METHODS.find(m => m.key === qrMethod);
 
-  // Current month schedule URL
-  const now = new Date();
-  const scheduleUrl = `/?year=${now.getFullYear()}&month=${now.getMonth() + 1}`;
+  // Year calendar URL (home)
+  const scheduleUrl = `/`;
 
   const navItems = [
-    { to: scheduleUrl, matchPath: '/', icon: <CalendarDays size={18} />, label: 'Schedule' },
-    { to: '/members', matchPath: '/members', icon: <Users size={18} />, label: 'Members' },
-    { to: '/songs', matchPath: '/songs', icon: <ListMusic size={18} />, label: 'Songs' },
-    ...(user ? [{ to: '/team-setup', matchPath: '/team-setup', icon: <Settings size={18} />, label: 'Team' }] : []),
+    { to: scheduleUrl, icon: <CalendarDays size={18} />, label: 'Schedule', matchesSchedule: true },
+    { to: '/members', icon: <Users size={18} />, label: 'Members' },
+    { to: '/songs', icon: <ListMusic size={18} />, label: 'Songs' },
+    ...(user ? [{ to: '/team-setup', icon: <Settings size={18} />, label: 'Team' }] : []),
   ];
 
   return (
@@ -182,22 +182,25 @@ export default function Layout() {
 
         {/* Top Nav — desktop only (hidden on mobile, replaced by bottom nav) */}
         <nav className="hidden sm:flex max-w-5xl mx-auto px-4 pb-2 gap-1 overflow-x-auto scrollbar-none">
-          {navItems.map(({ to, matchPath, icon, label }) => (
-            <NavLink key={matchPath} to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                  isActive ? 'bg-white text-primary-700' : 'text-primary-100 hover:bg-primary-600 dark:hover:bg-gray-700'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {navItems.find(n => n.matchPath === matchPath)?.icon}
-                  {label}
-                </>
-              )}
-            </NavLink>
-          ))}
+          {navItems.map(({ to, icon, label, matchesSchedule }) => {
+            const isScheduleActive = matchesSchedule && (location.pathname === '/' || location.pathname === '/schedule');
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={!matchesSchedule}
+                className={({ isActive }) => {
+                  const active = matchesSchedule ? isScheduleActive : isActive;
+                  return `flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    active ? 'bg-white text-primary-700' : 'text-primary-100 hover:bg-primary-600 dark:hover:bg-gray-700'
+                  }`;
+                }}
+              >
+                {icon}
+                {label}
+              </NavLink>
+            );
+          })}
         </nav>
       </header>
 
@@ -215,28 +218,36 @@ export default function Layout() {
 
       {/* Mobile Bottom Navigation — visible on small screens only */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-stretch safe-area-pb">
-        {navItems.map(({ to, matchPath, icon, label }) => (
-          <NavLink
-            key={matchPath}
-            to={to}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
-                isActive
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span className={isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}>
-                  {icon}
-                </span>
-                {label}
-              </>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map(({ to, icon, label, matchesSchedule }) => {
+          const isScheduleActive = matchesSchedule && (location.pathname === '/' || location.pathname === '/schedule');
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={!matchesSchedule}
+              className={({ isActive }) => {
+                const active = matchesSchedule ? isScheduleActive : isActive;
+                return `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
+                  active
+                    ? 'text-primary-600 dark:text-primary-400'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                }`;
+              }}
+            >
+              {({ isActive }) => {
+                const active = matchesSchedule ? isScheduleActive : isActive;
+                return (
+                  <>
+                    <span className={active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}>
+                      {icon}
+                    </span>
+                    {label}
+                  </>
+                );
+              }}
+            </NavLink>
+          );
+        })}
       </nav>
     </div>
   );

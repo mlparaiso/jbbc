@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { generateLineupImage } from '../utils/generateLineupImage';
@@ -108,22 +108,19 @@ export default function LineupDetailPage() {
       <div className="flex flex-col gap-2 mb-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1 text-sm flex-wrap">
-          <button
-            onClick={() => navigate('/')}
+          <Link
+            to="/"
             className="text-primary-600 hover:underline font-medium"
           >
             {new Date(lineup.date + 'T00:00:00').getFullYear()}
-          </button>
+          </Link>
           <ChevronRight size={14} className="text-gray-400" />
-          <button
-            onClick={() => {
-              const d = new Date(lineup.date + 'T00:00:00');
-              navigate(`/?year=${d.getFullYear()}&month=${d.getMonth() + 1}`);
-            }}
+          <Link
+            to={`/?year=${new Date(lineup.date + 'T00:00:00').getFullYear()}&month=${new Date(lineup.date + 'T00:00:00').getMonth() + 1}`}
             className="text-primary-600 hover:underline font-medium"
           >
             {new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long' })}
-          </button>
+          </Link>
           <ChevronRight size={14} className="text-gray-400" />
           <span className="text-gray-500">
             {new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}

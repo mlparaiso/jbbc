@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
@@ -82,7 +82,7 @@ export default function SchedulePage() {
   const monthTheme = monthLineups.find(l => l.theme)?.theme || '';
   const monthBibleVerse = monthLineups.find(l => l.bibleVerse)?.bibleVerse || '';
 
-  const goToMonth = (y, m) => setSearchParams({ year: y, month: m });
+  const goToMonth = (y, m) => navigate(`/schedule?year=${y}&month=${m}`);
   const prevMonth = () => {
     if (atMin) return;
     if (month === 1) goToMonth(year - 1, 12);
@@ -151,9 +151,9 @@ export default function SchedulePage() {
     <div className="max-w-2xl mx-auto">
       {/* Top bar: All Months + Print (same row) */}
       <div className="flex items-center justify-between mb-3 print:hidden">
-        <button onClick={() => navigate('/')} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
+        <Link to="/" className="text-primary-600 hover:underline text-sm flex items-center gap-1">
           <ChevronLeft size={16} /> All Months
-        </button>
+        </Link>
         {monthLineups.length > 0 && (
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
             <Printer size={13} /> Print Month

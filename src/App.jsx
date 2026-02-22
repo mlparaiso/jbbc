@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
 import AuthGuard from './components/AuthGuard';
@@ -13,14 +13,6 @@ import SongsPage from './pages/SongsPage';
 import TeamSetupPage from './pages/TeamSetupPage';
 import PublicSchedulePage from './pages/PublicSchedulePage';
 import PublicLineupDetailPage from './pages/PublicLineupDetailPage';
-
-function HomeRouter() {
-  const [searchParams] = useSearchParams();
-  // If month param present, show schedule; otherwise redirect to current month schedule
-  if (searchParams.get('month')) return <SchedulePage />;
-  const now = new Date();
-  return <Navigate to={`/?year=${now.getFullYear()}&month=${now.getMonth() + 1}`} replace />;
-}
 
 export default function App() {
   return (
@@ -40,7 +32,9 @@ export default function App() {
           {/* Needs login + team */}
           <Route element={<AuthGuard />}>
             <Route path="/" element={<Layout />}>
-              <Route index element={<HomeRouter />} />
+              {/* Year Calendar is the default home; SchedulePage when ?month= is present */}
+              <Route index element={<YearCalendarPage />} />
+              <Route path="schedule" element={<SchedulePage />} />
               <Route path="lineup/new" element={<LineupFormPage />} />
               <Route path="lineup/:id" element={<LineupDetailPage />} />
               <Route path="lineup/:id/edit" element={<LineupFormPage />} />
