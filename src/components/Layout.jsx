@@ -60,7 +60,7 @@ export default function Layout() {
   const scheduleUrl = `/`;
 
   const navItems = [
-    { to: scheduleUrl, icon: <CalendarDays size={18} />, label: 'Schedule', matchesSchedule: true },
+    { to: scheduleUrl, icon: <CalendarDays size={18} />, label: 'Calendar', matchesSchedule: true },
     { to: '/members', icon: <Users size={18} />, label: 'Members' },
     { to: '/songs', icon: <ListMusic size={18} />, label: 'Songs' },
     ...(user ? [{ to: '/team-setup', icon: <Settings size={18} />, label: 'Team' }] : []),

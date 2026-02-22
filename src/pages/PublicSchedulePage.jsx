@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CalendarDays, ChevronLeft, ChevronRight, Music2, LogIn, Lock, Mic2, BookOpen, Quote, CalendarCheck } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, LogIn, Lock, Mic2, BookOpen, Quote, CalendarCheck } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
 import DonateSection from '../components/DonateSection';
 
@@ -200,8 +200,15 @@ export default function PublicSchedulePage() {
               </button>
               <div className="flex items-center justify-between">
                 <button
-                  onClick={() => setSelectedMonth(m => m === 1 ? 12 : m - 1)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  onClick={() => {
+                    if (selectedMonth === 1) {
+                      if (year > MIN_YEAR) { setYear(y => y - 1); setSelectedMonth(12); }
+                    } else {
+                      setSelectedMonth(m => m - 1);
+                    }
+                  }}
+                  disabled={selectedMonth === 1 && year <= MIN_YEAR}
+                  className={`p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 ${selectedMonth === 1 && year <= MIN_YEAR ? 'opacity-30 cursor-not-allowed' : ''}`}
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -210,7 +217,10 @@ export default function PublicSchedulePage() {
                   <p className="text-xs text-gray-400">{monthLineups.length} service{monthLineups.length !== 1 ? 's' : ''}</p>
                 </div>
                 <button
-                  onClick={() => setSelectedMonth(m => m === 12 ? 1 : m + 1)}
+                  onClick={() => {
+                    if (selectedMonth === 12) { setYear(y => y + 1); setSelectedMonth(1); }
+                    else setSelectedMonth(m => m + 1);
+                  }}
                   className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
                 >
                   <ChevronRight size={18} />

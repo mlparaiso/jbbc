@@ -57,6 +57,11 @@ html, body {
   animation-play-state: paused;
 }
 
+/* Safe area padding for iOS home indicator (mobile bottom nav) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Hide scrollbar utility */
 .scrollbar-none {
   -ms-overflow-style: none;
