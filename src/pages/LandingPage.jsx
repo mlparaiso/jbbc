@@ -15,6 +15,7 @@ export default function LandingPage() {
   const [codeLoading, setCodeLoading] = useState(false);
 
   useEffect(() => {
+    // Wait for BOTH auth and team data before deciding where to send the user
     if (authLoading || teamLoading) return;
     if (user && teamId) navigate('/', { replace: true });
     else if (user && !teamId) navigate('/team-setup', { replace: true });

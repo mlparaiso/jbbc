@@ -14,7 +14,7 @@ export function AppProvider({ children }) {
 
   const [teamId, setTeamId] = useState(null);       // current team doc ID
   const [team, setTeam] = useState(null);           // team metadata
-  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamLoading, setTeamLoading] = useState(true); // true until we know if user has a team
   const [userTeams, setUserTeams] = useState([]);   // all teams user has ever joined
 
   const [members, setMembers] = useState([]);
@@ -39,6 +39,7 @@ export function AppProvider({ children }) {
         setTeam(null);
         setMembers([]);
         setLineups([]);
+        setTeamLoading(false); // No user = no team to load
         return;
       }
       // Detect first-time sign-in: check Firestore for a 'welcomeSent' flag

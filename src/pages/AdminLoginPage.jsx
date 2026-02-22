@@ -6,7 +6,8 @@ export default function AdminLoginPage() {
   const { user, teamId, loginWithGoogle, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
-  if (authLoading || (user && teamLoading)) return null;
+  // Wait for both auth AND team data to load before deciding where to redirect
+  if (authLoading || teamLoading) return null;
 
   // If already logged in, go to schedule if they have a team, else team setup
   if (user) {
