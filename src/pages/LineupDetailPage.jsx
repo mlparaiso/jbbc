@@ -1,11 +1,10 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { generateLineupImage } from '../utils/generateLineupImage';
 import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
-  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Loader,
+  SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Check,
   Music2, AudioLines, Bell, Repeat2
 } from 'lucide-react';
 
@@ -69,9 +68,8 @@ function groupSongs(songs) {
 export default function LineupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, getMemberById, isAdmin, canManageLineups, deleteLineup, lineups } = useApp();
-  const cardRef = useRef(null);
-  const [sharing, setSharing] = useState(false);
+  const { getLineupById, getMemberById, isAdmin, canManageLineups, deleteLineup, lineups, teamId } = useApp();
+  const [copied, setCopied] = useState(false);
 
   const lineup = getLineupById(id);
 
@@ -128,33 +126,19 @@ export default function LineupDetailPage() {
         </nav>
         <div className="flex flex-wrap gap-2 print:hidden">
           <button
-            onClick={async () => {
-              if (sharing) return;
-              setSharing(true);
-              try {
-                const url = window.location.href;
-                const blob = await generateLineupImage({
-                  lineup, getMemberById, songGroups, url,
-                  formatDate, shortDate, INSTRUMENT_CONFIG,
-                });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `worship-lineup-${lineup.date}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-              } catch (err) {
-                console.error('Share error:', err);
-                alert('Share failed: ' + (err?.message || String(err)));
-              } finally {
-                setSharing(false);
-              }
+            onClick={() => {
+              const publicUrl = `${window.location.origin}/team/${teamId}/lineup/${lineup.id}`;
+              navigator.clipboard.writeText(publicUrl).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }).catch(() => {
+                prompt('Copy this public link:', publicUrl);
+              });
             }}
-            disabled={sharing}
             className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"
           >
-            {sharing ? <Loader size={12} className="animate-spin" /> : <Share2 size={12} />} Share
+            {copied ? <Check size={12} className="text-green-500" /> : <Share2 size={12} />}
+            {copied ? 'Copied!' : 'Share'}
           </button>
           <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
             <Printer size={12} /> Print
