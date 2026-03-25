@@ -171,15 +171,31 @@ function MultiSelect({ label, memberOptions, selected, onChange, placeholder }) 
 }
 
 function SingleSelect({ label, memberOptions, selected, onChange }) {
+  const toggle = (id) => {
+    onChange(selected === id ? null : id);
+  };
   return (
     <div>
       <label className="label">{label}</label>
-      <select className="input" value={selected || ''} onChange={e => onChange(e.target.value || null)}>
-        <option value="">— Select —</option>
+      <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-10 bg-white">
         {memberOptions.map(m => (
-          <option key={m.id} value={m.id}>{m.name}</option>
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => toggle(m.id)}
+            className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+              selected === m.id
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {m.name}
+          </button>
         ))}
-      </select>
+      </div>
+      {selected && (
+        <p className="text-xs text-gray-500 mt-1">Selected: {memberOptions.find(m => m.id === selected)?.name}</p>
+      )}
     </div>
   );
 }
@@ -187,7 +203,7 @@ function SingleSelect({ label, memberOptions, selected, onChange }) {
 export default function LineupFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, addLineup, updateLineup, members, isAdmin, lineups } = useApp();
+  const { getLineupById, addLineup, updateLineup, members, isAdmin, canManageLineups, lineups } = useApp();
 
   const isEdit = id && id !== 'new';
   const existing = isEdit ? getLineupById(id) : null;
@@ -283,7 +299,7 @@ export default function LineupFormPage() {
     }
   };
 
-  if (!isAdmin) {
+  if (!canManageLineups) {
     return (
       <div className="text-center py-16 text-gray-400">
         <div className="text-4xl mb-3">🔐</div>

@@ -112,21 +112,64 @@ export function AppProvider({ children }) {
   }, [teamId]);
 
   // --- Derive myRole from team members list (match by email) ---
+  // Also syncs uid onto the member doc and into adminUids so Firestore rules work correctly.
   useEffect(() => {
     if (!user || !teamId || !team) { setMyRole(null); return; }
-    // Team creator is always main_admin
-    if (team.createdBy === user.uid ||
-        (team.createdByEmail && team.createdByEmail.toLowerCase() === user.email?.toLowerCase())) {
+
+    const currentAdminUids = team.adminUids || [];
+
+    // Team creator is always main_admin — also ensure their uid is in adminUids
+    const isCreatorByUid = team.createdBy === user.uid;
+    const isCreatorByEmail = team.createdByEmail &&
+      team.createdByEmail.toLowerCase() === user.email?.toLowerCase();
+
+    if (isCreatorByUid || isCreatorByEmail) {
       setMyRole('main_admin');
+
+      // Build the update patch — always ensure uid is in adminUids
+      const patch = {};
+      if (!currentAdminUids.includes(user.uid)) {
+        patch.adminUids = [...currentAdminUids, user.uid];
+      }
+      // If createdBy was stored as email (old teams), fix it to uid
+      if (!isCreatorByUid) {
+        patch.createdBy = user.uid;
+      }
+      if (Object.keys(patch).length > 0) {
+        updateDoc(doc(db, 'teams', teamId), patch).catch(() => {});
+      }
       return;
     }
-    // Otherwise look up member by email and read their teamRole field
+
+    // Look up member by email and read their teamRole field
     const match = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
     if (match) {
-      setMyRole(match.teamRole || 'member');
+      const role = match.teamRole || 'member';
+      setMyRole(role);
+
+      // Backfill: store uid on the member doc if missing
+      if (!match.uid) {
+        updateDoc(doc(db, 'teams', teamId, 'members', match.id), { uid: user.uid }).catch(() => {});
+      }
+
+      // Sync adminUids on the team doc so Firestore write rules work for co_admin / main_admin
+      if (role === 'co_admin' || role === 'main_admin') {
+        if (!currentAdminUids.includes(user.uid)) {
+          updateDoc(doc(db, 'teams', teamId), {
+            adminUids: [...currentAdminUids, user.uid],
+          }).catch(() => {});
+        }
+      } else {
+        // If demoted to member, remove from adminUids if present
+        if (currentAdminUids.includes(user.uid)) {
+          updateDoc(doc(db, 'teams', teamId), {
+            adminUids: currentAdminUids.filter(uid => uid !== user.uid),
+          }).catch(() => {});
+        }
+      }
     } else {
       // Fallback: if user is in adminUids, treat as co_admin
-      if (team.adminUids && team.adminUids.includes(user.uid)) {
+      if (currentAdminUids.includes(user.uid)) {
         setMyRole('co_admin');
       } else {
         setMyRole('member');
@@ -435,7 +478,27 @@ export function AppProvider({ children }) {
     if (!canManageLineups) throw new Error('Permission denied');
     // Co-admins cannot assign main_admin
     if (myRole === 'co_admin' && newRole === 'main_admin') throw new Error('Permission denied');
+
+    // Update the member's teamRole field
     await updateDoc(doc(db, 'teams', teamId, 'members', memberId), { teamRole: newRole });
+
+    // Sync adminUids on the team document so Firestore rules stay accurate.
+    // We need the member's uid to add/remove from adminUids.
+    const targetMember = members.find(m => m.id === memberId);
+    if (targetMember?.uid) {
+      const currentAdminUids = team?.adminUids || [];
+      let updatedAdminUids;
+      if (newRole === 'main_admin' || newRole === 'co_admin') {
+        // Add uid to adminUids if not already present
+        updatedAdminUids = currentAdminUids.includes(targetMember.uid)
+          ? currentAdminUids
+          : [...currentAdminUids, targetMember.uid];
+      } else {
+        // Remove uid from adminUids (demoted to member or removed)
+        updatedAdminUids = currentAdminUids.filter(uid => uid !== targetMember.uid);
+      }
+      await updateDoc(doc(db, 'teams', teamId), { adminUids: updatedAdminUids });
+    }
   };
 
   /**

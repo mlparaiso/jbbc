@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ────────────────────────────────────────────────────
+
+    // Is the request from a signed-in user?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Does the signed-in user own this uid document?
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Read the team document (used in subcollection rules)
+    function getTeam(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data;
+    }
+
+    // Is the team marked public (default true if field absent)?
+    function isTeamPublic(teamId) {
+      let team = getTeam(teamId);
+      return !('isPublic' in team) || team.isPublic == true;
+    }
+
+    // Is the signed-in user the creator of the team?
+    // Checks both uid (new teams) and email (legacy teams where createdBy stored email).
+    function isTeamCreator(teamId) {
+      let team = getTeam(teamId);
+      return isSignedIn() && (
+        team.createdBy == request.auth.uid ||
+        (
+          ('createdByEmail' in team) &&
+          team.createdByEmail == request.auth.token.email
+        )
+      );
+    }
+
+    // Is the signed-in user listed in the team's adminUids array?
+    // Guards against missing/null adminUids field.
+    function isTeamAdmin(teamId) {
+      let team = getTeam(teamId);
+      return isSignedIn() &&
+        ('adminUids' in team) &&
+        team.adminUids != null &&
+        request.auth.uid in team.adminUids;
+    }
+
+    // Is the signed-in user a member of the team?
+    function isMemberOfTeam(teamId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == teamId;
+    }
+
+    // Can the user write to this team (creator OR in adminUids)?
+    function canWriteTeam(teamId) {
+      return isTeamCreator(teamId) || isTeamAdmin(teamId);
+    }
+
+    // ─── /users/{uid} ────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ─── /teams/{teamId} ─────────────────────────────────────────────────────
+    match /teams/{teamId} {
+      allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+      allow create: if isSignedIn();
+      allow update, delete: if canWriteTeam(teamId);
+
+      // ─── /teams/{teamId}/members ─────────────────────────────────────────
+      match /members/{memberId} {
+        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+        allow write: if canWriteTeam(teamId);
+      }
+
+      // ─── /teams/{teamId}/lineups ─────────────────────────────────────────
+      match /lineups/{lineupId} {
+        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+        allow write: if canWriteTeam(teamId);
+      }
+    }
+
+    // ─── Deny everything else ────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
