@@ -178,7 +178,7 @@ export default function LineupDetailPage() {
       </div>
 
       {/* Main card */}
-      <div ref={cardRef} className="card dark:bg-gray-800 dark:border-gray-700 border-l-4 border-l-primary-400 space-y-4">
+      <div className="card dark:bg-gray-800 dark:border-gray-700 border-l-4 border-l-primary-400 space-y-4">
 
         {/* Date + theme + practice date */}
         <div>
