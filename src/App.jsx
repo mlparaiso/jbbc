@@ -4,7 +4,9 @@ import Layout from './components/Layout';
 import AuthGuard from './components/AuthGuard';
 import LoginGuard from './components/LoginGuard';
 import LandingPage from './pages/LandingPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import YearCalendarPage from './pages/YearCalendarPage';
+import DashboardPage from './pages/DashboardPage';
 import SchedulePage from './pages/SchedulePage';
 import LineupDetailPage from './pages/LineupDetailPage';
 import LineupFormPage from './pages/LineupFormPage';
@@ -21,6 +23,7 @@ export default function App() {
         <Routes>
           {/* Public: login/landing */}
           <Route path="/login" element={<LandingPage />} />
+          <Route path="/admin" element={<AdminLoginPage />} />
 
           {/* Needs login but NOT a team yet */}
           <Route element={<LoginGuard />}>
@@ -38,6 +41,7 @@ export default function App() {
               <Route path="lineup/new" element={<LineupFormPage />} />
               <Route path="lineup/:id" element={<LineupDetailPage />} />
               <Route path="lineup/:id/edit" element={<LineupFormPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
               <Route path="members" element={<MembersPage />} />
               <Route path="songs" element={<SongsPage />} />
             </Route>

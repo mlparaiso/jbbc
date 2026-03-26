@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, ChevronDown, ChevronUp, LayoutTemplate } from 'lucide-react';
 import TeamLogoUploader from '../components/TeamLogoUploader';
-import { DEFAULT_INSTRUMENT_ROLES, DEFAULT_SERVICE_TYPES } from '../data/initialData';
-
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, instrumentRoles, serviceTypes, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, instrumentRoles, serviceTypes, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -27,6 +25,8 @@ export default function TeamSetupPage() {
   const [editingServiceTypes, setEditingServiceTypes] = useState(false);
   const [serviceTypesInput, setServiceTypesInput] = useState([]);
   const [newServiceType, setNewServiceType] = useState('');
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+  const [templateForm, setTemplateForm] = useState({ name: '', description: '' });
 
   if (authLoading || teamLoading) {
     return (
@@ -69,6 +69,33 @@ export default function TeamSetupPage() {
     const handleConfirmLeave = async () => {
       await leaveTeam();
       setConfirmLeave(false);
+    };
+
+    const handleEditTemplate = (template) => {
+      setEditingTemplateId(template.id);
+      setTemplateForm({
+        name: template.name || '',
+        description: template.description || '',
+      });
+    };
+
+    const handleSaveTemplateEdit = async () => {
+      if (!templateForm.name.trim()) return;
+      await updateTemplate(editingTemplateId, {
+        name: templateForm.name.trim(),
+        description: templateForm.description.trim(),
+      });
+      setEditingTemplateId(null);
+      setTemplateForm({ name: '', description: '' });
+    };
+
+    const handleDeleteTemplate = async (templateId) => {
+      if (!window.confirm('Delete this lineup template?')) return;
+      await deleteTemplate(templateId);
+      if (editingTemplateId === templateId) {
+        setEditingTemplateId(null);
+        setTemplateForm({ name: '', description: '' });
+      }
     };
 
     return (
@@ -163,6 +190,94 @@ export default function TeamSetupPage() {
             </div>
           )}
 
+          {canManageLineups && (
+            <div className="bg-gray-50 rounded-lg p-3 space-y-3 text-left">
+              <div className="flex items-center gap-2">
+                <LayoutTemplate size={15} className="text-primary-500" />
+                <div>
+                  <p className="text-xs font-semibold text-gray-700">Lineup Templates</p>
+                  <p className="text-xs text-gray-400">Manage saved lineup structures for quick reuse.</p>
+                </div>
+              </div>
+
+              {templates.length === 0 ? (
+                <p className="text-xs text-gray-400">No templates yet. Save a template from the lineup form.</p>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map(template => (
+                    <div key={template.id} className="border border-gray-200 rounded-lg bg-white p-3 space-y-3">
+                      {editingTemplateId === template.id ? (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="label">Template Name *</label>
+                            <input
+                              type="text"
+                              className="input"
+                              value={templateForm.name}
+                              onChange={e => setTemplateForm(form => ({ ...form, name: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Description</label>
+                            <input
+                              type="text"
+                              className="input"
+                              value={templateForm.description}
+                              onChange={e => setTemplateForm(form => ({ ...form, description: e.target.value }))}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleSaveTemplateEdit}
+                              disabled={!templateForm.name.trim()}
+                              className="btn-primary flex-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingTemplateId(null);
+                                setTemplateForm({ name: '', description: '' });
+                              }}
+                              className="btn-secondary"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">{template.name}</p>
+                            <p className="text-xs text-gray-400 mt-1">{template.description || 'No description'}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEditTemplate(template)}
+                              className="btn-secondary flex-1"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              className="btn-danger flex-1"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
             <button onClick={() => navigate('/')} className="btn-primary flex-1">
               Go to Schedule →
@@ -179,7 +294,7 @@ export default function TeamSetupPage() {
                 Switch / Leave Team
               </button>
               <button
-                onClick={async () => { await logout(); navigate('/'); }}
+                onClick={async () => { await logout(); navigate('/login'); }}
                 className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 flex-1 justify-center"
               >
                 <LogOut size={12} /> Sign Out
@@ -322,7 +437,7 @@ export default function TeamSetupPage() {
             className="btn-secondary flex items-center justify-center gap-2">
             <LogIn size={16} /> Join with invite code
           </button>
-          <button onClick={async () => { await logout(); navigate('/'); }}
+          <button onClick={async () => { await logout(); navigate('/login'); }}
             className="text-xs text-gray-400 hover:text-red-500 text-center mt-2 flex items-center justify-center gap-1">
             <LogOut size={12} /> Sign out
           </button>

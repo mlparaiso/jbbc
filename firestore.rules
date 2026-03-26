@@ -68,7 +68,11 @@ service cloud.firestore {
 
     // ─── /teams/{teamId} ─────────────────────────────────────────────────────
     match /teams/{teamId} {
-      allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+      // Allow anyone to read the team document so that isTeamPublic() can be
+      // evaluated for subcollection rules without a circular-read denial.
+      // Sensitive fields (inviteCode, adminUids) are only useful to logged-in
+      // admins, but the document itself must be readable to support public links.
+      allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if canWriteTeam(teamId);
 
@@ -80,6 +84,18 @@ service cloud.firestore {
 
       // ─── /teams/{teamId}/lineups ─────────────────────────────────────────
       match /lineups/{lineupId} {
+        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+        allow write: if canWriteTeam(teamId);
+      }
+
+      // ─── /teams/{teamId}/songs ───────────────────────────────────────────
+      match /songs/{songId} {
+        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
+        allow write: if canWriteTeam(teamId);
+      }
+
+      // ─── /teams/{teamId}/templates ───────────────────────────────────────
+      match /templates/{templateId} {
         allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
         allow write: if canWriteTeam(teamId);
       }

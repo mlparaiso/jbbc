@@ -2,7 +2,14 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2 } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2, LayoutTemplate, Save } from 'lucide-react';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Extra instrument catalogue (label → icon component)
 export const EXTRA_INSTRUMENTS = [
@@ -32,13 +39,6 @@ export const EXTRA_INSTRUMENTS = [
   { label: 'Synth / Pads',      icon: 'Piano' },
   { label: 'Loop Station',      icon: 'Repeat2' },
 ];
-import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
 const SONG_KEYS = ['', 'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -74,10 +74,18 @@ function SongAutocomplete({ value, onChange, songLibrary, inputClass }) {
           {matches.map((s, i) => (
             <button key={i} type="button"
               className="w-full text-left px-3 py-1.5 hover:bg-primary-50 text-xs flex items-center justify-between"
-              onMouseDown={() => { onChange({ title: s.title, youtubeUrl: s.youtubeUrl, section: s.section }); setOpen(false); }}
+              onMouseDown={() => {
+                onChange({
+                  title: s.title,
+                  youtubeUrl: s.youtubeUrl,
+                  section: s.section,
+                  ...(s.defaultKey ? { key: s.defaultKey } : {}),
+                });
+                setOpen(false);
+              }}
             >
               <span className="font-medium text-gray-800 truncate">{s.title}</span>
-              <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{s.section} · {s.count}×</span>
+              <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{s.section}{s.count > 0 ? ` · ${s.count}×` : ''}</span>
             </button>
           ))}
         </div>
@@ -203,7 +211,7 @@ function SingleSelect({ label, memberOptions, selected, onChange }) {
 export default function LineupFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, addLineup, updateLineup, members, isAdmin, canManageLineups, lineups } = useApp();
+  const { getLineupById, addLineup, updateLineup, addTemplate, members, canManageLineups, lineups, songs, templates } = useApp();
 
   const isEdit = id && id !== 'new';
   const existing = isEdit ? getLineupById(id) : null;
@@ -235,25 +243,66 @@ export default function LineupFormPage() {
 
   const [form, setForm] = useState(existing || emptyForm);
   const [saved, setSaved] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateApplied, setTemplateApplied] = useState(false);
+  const [showSaveTemplatePanel, setShowSaveTemplatePanel] = useState(false);
+  const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
+  const [templateDraft, setTemplateDraft] = useState({ name: '', description: '' });
 
   useEffect(() => {
     if (existing) setForm(existing);
   }, [id]);
 
-  // Song library: all unique songs from past lineups (for autocomplete)
+  // Song library: canonical songs first, then unique songs from past lineups
   const songLibrary = useMemo(() => {
-    const map = {};
+    const canonicalMap = {};
+    for (const song of songs) {
+      const key = song.title?.trim().toLowerCase();
+      if (!key) continue;
+      canonicalMap[key] = {
+        title: song.title.trim(),
+        section: song.tags?.[0] || 'Other',
+        youtubeUrl: song.youtubeUrl || '',
+        defaultKey: song.defaultKey || '',
+        count: 0,
+        isCanonical: true,
+      };
+    }
+
+    const historyMap = {};
     for (const l of lineups) {
       for (const s of l.songs || []) {
         const key = s.title.trim().toLowerCase();
         if (!key) continue;
-        if (!map[key]) map[key] = { title: s.title.trim(), section: s.section, youtubeUrl: s.youtubeUrl || '', count: 0 };
-        map[key].count++;
-        if (s.youtubeUrl) map[key].youtubeUrl = s.youtubeUrl;
+
+        if (canonicalMap[key]) {
+          canonicalMap[key].count++;
+          if (s.youtubeUrl && !canonicalMap[key].youtubeUrl) canonicalMap[key].youtubeUrl = s.youtubeUrl;
+          if (s.section && canonicalMap[key].section === 'Other') canonicalMap[key].section = s.section;
+          continue;
+        }
+
+        if (!historyMap[key]) {
+          historyMap[key] = {
+            title: s.title.trim(),
+            section: s.section,
+            youtubeUrl: s.youtubeUrl || '',
+            defaultKey: s.key || '',
+            count: 0,
+            isCanonical: false,
+          };
+        }
+        historyMap[key].count++;
+        if (s.youtubeUrl) historyMap[key].youtubeUrl = s.youtubeUrl;
+        if (s.key && !historyMap[key].defaultKey) historyMap[key].defaultKey = s.key;
       }
     }
-    return Object.values(map).sort((a, b) => b.count - a.count);
-  }, [lineups]);
+
+    return [
+      ...Object.values(canonicalMap).sort((a, b) => a.title.localeCompare(b.title)),
+      ...Object.values(historyMap).sort((a, b) => b.count - a.count),
+    ];
+  }, [lineups, songs]);
 
   // Duplicate detection: is there already a lineup on this date (excluding current edit)?
   const duplicateLineup = !isEdit && form.date
@@ -280,6 +329,66 @@ export default function LineupFormPage() {
       .filter(Boolean);
     return names.length > 0 ? names.join(' & ') : null;
   }, [form.date, lineups, members]);
+
+  // Conflict detection & validation warnings
+  const validationWarnings = useMemo(() => {
+    const warnings = [];
+
+    // --- 1. Duplicate member assignment detection ---
+    // Build a map: memberId → list of role labels they appear in
+    const roleMap = {}; // memberId → string[]
+
+    const addToMap = (memberId, roleLabel) => {
+      if (!memberId) return;
+      if (!roleMap[memberId]) roleMap[memberId] = [];
+      roleMap[memberId].push(roleLabel);
+    };
+
+    // Worship leaders
+    (form.worshipLeaders || []).forEach(wl => {
+      if (wl.memberId) addToMap(wl.memberId, 'Worship Leader');
+    });
+
+    // Back-up vocalists
+    (form.backUps || []).forEach(id => addToMap(id, 'Back Up'));
+
+    // Standard instrument slots
+    const stdSlots = [
+      { key: 'k1',            label: 'K1' },
+      { key: 'k2',            label: 'K2' },
+      { key: 'bass',          label: 'Bass' },
+      { key: 'leadGuitar',    label: 'Lead Guitar' },
+      { key: 'acousticGuitar',label: 'Acoustic Guitar' },
+      { key: 'drums',         label: 'Drums' },
+    ];
+    stdSlots.forEach(({ key, label }) => {
+      ((form.instruments || {})[key] || []).forEach(id => addToMap(id, label));
+    });
+
+    // Extra instruments
+    ((form.instruments || {}).extras || []).forEach(extra => {
+      (extra.memberIds || []).forEach(id => addToMap(id, extra.label || 'Extra Instrument'));
+    });
+
+    // Sound engineer
+    if (form.soundEngineer) addToMap(form.soundEngineer, 'Sound Engineer');
+
+    // Emit a warning for every member assigned to 2+ roles
+    Object.entries(roleMap).forEach(([memberId, roles]) => {
+      if (roles.length > 1) {
+        const name = members.find(m => m.id === memberId)?.name || memberId;
+        warnings.push(`${name} is assigned to multiple roles: ${roles.join(', ')}`);
+      }
+    });
+
+    // --- 2. Missing critical roles ---
+    const hasWL = (form.worshipLeaders || []).some(wl => wl.memberId);
+    if (!hasWL) warnings.push('No worship leader selected');
+
+    if (!form.soundEngineer) warnings.push('No sound engineer selected');
+
+    return warnings;
+  }, [form, members]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -309,13 +418,13 @@ export default function LineupFormPage() {
     );
   }
 
-  // Filtered member lists by role
-  const vocalists = members.filter(m => m.roles.includes(ROLE_CATEGORIES.VOCALIST));
-  const keyboardists = members.filter(m => m.roles.includes(ROLE_CATEGORIES.KEYBOARD));
-  const bassists = members.filter(m => m.roles.includes(ROLE_CATEGORIES.BASS));
-  const guitarists = members.filter(m => m.roles.includes(ROLE_CATEGORIES.GUITAR));
-  const drummers = members.filter(m => m.roles.includes(ROLE_CATEGORIES.DRUMS));
-  const soundEngineers = members.filter(m => m.roles.includes(ROLE_CATEGORIES.SOUND));
+  // Filtered member lists by role (guard against members with no roles array)
+  const vocalists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.VOCALIST));
+  const keyboardists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.KEYBOARD));
+  const bassists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.BASS));
+  const guitarists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.GUITAR));
+  const drummers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.DRUMS));
+  const soundEngineers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.SOUND));
 
   const updateInstrument = (key, value) => {
     setForm(f => ({ ...f, instruments: { ...f.instruments, [key]: value } }));
@@ -338,6 +447,40 @@ export default function LineupFormPage() {
     worshipLeaders: f.worshipLeaders.filter((_, idx) => idx !== i),
   }));
 
+  const handleApplyTemplate = () => {
+    const selectedTemplate = templates.find(template => template.id === selectedTemplateId);
+    if (!selectedTemplate) return;
+
+    setForm(f => ({
+      ...f,
+      worshipLeaders: selectedTemplate.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }],
+      backUps: selectedTemplate.backUps || [],
+      instruments: selectedTemplate.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
+      soundEngineer: selectedTemplate.soundEngineer || '',
+      notes: selectedTemplate.notes || '',
+    }));
+    setTemplateApplied(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateDraft.name.trim()) return;
+
+    await addTemplate({
+      name: templateDraft.name.trim(),
+      description: templateDraft.description.trim(),
+      isTeamA: form.isTeamA,
+      worshipLeaders: form.worshipLeaders,
+      backUps: form.backUps,
+      instruments: form.instruments,
+      soundEngineer: form.soundEngineer,
+      notes: form.notes,
+    });
+
+    setTemplateSaveSuccess(true);
+    setShowSaveTemplatePanel(false);
+    setTemplateDraft({ name: '', description: '' });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.date) return alert('Please select a date.');
@@ -350,7 +493,6 @@ export default function LineupFormPage() {
       const newId = await addLineup(form);
       setSaved(true);
       // After creating, go to the new lineup's detail page
-      const d = new Date(form.date + 'T00:00:00');
       const targetId = newId || `lineup-${form.date}`;
       setTimeout(() => navigate(`/lineup/${targetId}`), 500);
     }
@@ -369,6 +511,37 @@ export default function LineupFormPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {!isEdit && templates.length > 0 && (
+          <div className="card space-y-3">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <LayoutTemplate size={14} className="text-primary-500" /> Apply a Template
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <select
+                className="input flex-1"
+                value={selectedTemplateId}
+                onChange={e => setSelectedTemplateId(e.target.value)}
+              >
+                <option value="">— Select Template —</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>{template.name}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleApplyTemplate}
+                disabled={!selectedTemplateId}
+                className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Apply
+              </button>
+            </div>
+            {templateApplied && (
+              <p className="text-xs text-green-600 font-medium">✅ Template applied — fill in the date and songs</p>
+            )}
+          </div>
+        )}
 
       {/* Basic Info */}
         <div className="card space-y-4">
@@ -671,6 +844,101 @@ export default function LineupFormPage() {
           <textarea className="input" rows={2} placeholder="Any other special notes..."
             value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
         </div>
+
+        {/* Validation Summary Panel */}
+        {validationWarnings.length > 0 && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 uppercase tracking-wide">
+                <AlertTriangle size={13} className="text-amber-500" /> Lineup Warnings
+              </span>
+              <span className="inline-flex items-center justify-center rounded-full bg-amber-200 text-amber-800 text-xs font-bold px-2 py-0.5 leading-none">
+                {validationWarnings.length} {validationWarnings.length === 1 ? 'issue' : 'issues'} found
+              </span>
+            </div>
+            <ul className="space-y-1">
+              {validationWarnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-xs text-amber-800">
+                  <AlertTriangle size={11} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-amber-600 italic">You can still save — these are advisory warnings only.</p>
+          </div>
+        )}
+
+        {canManageLineups && (
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                  <Save size={14} className="text-primary-500" /> Save as Template
+                </h3>
+                {templateSaveSuccess && (
+                  <p className="text-xs text-green-600 font-medium mt-2">✅ Template saved!</p>
+                )}
+              </div>
+              {!showSaveTemplatePanel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSaveTemplatePanel(true);
+                    setTemplateSaveSuccess(false);
+                  }}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Save size={14} /> Save as Template
+                </button>
+              )}
+            </div>
+
+            {showSaveTemplatePanel && (
+              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-3">
+                <div>
+                  <label className="label">Template Name *</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={templateDraft.name}
+                    onChange={e => setTemplateDraft(draft => ({ ...draft, name: e.target.value }))}
+                    placeholder="e.g. Sunday AM Service"
+                  />
+                </div>
+                <div>
+                  <label className="label">Description</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={templateDraft.description}
+                    onChange={e => setTemplateDraft(draft => ({ ...draft, description: e.target.value }))}
+                    placeholder="Optional short description"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSaveTemplate}
+                    disabled={!templateDraft.name.trim()}
+                    className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Save Template
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSaveTemplatePanel(false);
+                      setTemplateDraft({ name: '', description: '' });
+                    }}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Submit */}
         <div className="flex gap-3">

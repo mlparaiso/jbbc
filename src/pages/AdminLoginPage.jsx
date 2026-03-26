@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { Music2 } from 'lucide-react';
@@ -6,14 +7,17 @@ export default function AdminLoginPage() {
   const { user, teamId, loginWithGoogle, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
-  // Wait for both auth AND team data to load before deciding where to redirect
-  if (authLoading || teamLoading) return null;
+  // Wait for both auth AND team data to load before deciding where to redirect.
+  // Navigate inside useEffect to avoid calling navigate() during render (React 18 warning).
+  useEffect(() => {
+    if (authLoading || teamLoading) return;
+    if (user) {
+      navigate(teamId ? '/' : '/team-setup', { replace: true });
+    }
+  }, [user, teamId, authLoading, teamLoading, navigate]);
 
-  // If already logged in, go to schedule if they have a team, else team setup
-  if (user) {
-    navigate(teamId ? '/' : '/team-setup', { replace: true });
-    return null;
-  }
+  // Show nothing while loading or while redirecting
+  if (authLoading || teamLoading || user) return null;
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 py-16">

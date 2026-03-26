@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Copy
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
 
@@ -48,7 +48,7 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, canManageLineups, getMemberById, updateLineup, addLineups } = useApp();
+  const { lineups, isAdmin, canManageLineups, getMemberById, updateLineup, addLineups, templates } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -58,12 +58,16 @@ export default function SchedulePage() {
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState('');
   const [verseInput, setVerseInput] = useState('');
-  // Copy-from state — used only on empty months
-  const [showCopyPanel, setShowCopyPanel] = useState(false);
+  // Generate panel state — used only on empty months
+  const [showGeneratePanel, setShowGeneratePanel] = useState(false);
+  const [generateMode, setGenerateMode] = useState('copy'); // 'copy' | 'template' | 'blank'
   const [copySourceYear, setCopySourceYear] = useState(now.getFullYear());
   const [copySourceMonth, setCopySourceMonth] = useState(now.getMonth() === 0 ? 12 : now.getMonth());
-  const [copyDoing, setCopyDoing] = useState(false);
-  const [copyDone, setCopyDone] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [copySongs, setCopySongs] = useState(false);
+  const [copyMembers, setCopyMembers] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [generateDone, setGenerateDone] = useState(false);
 
   const MIN_YEAR = 2026;
   const MIN_MONTH = 1;
@@ -93,57 +97,106 @@ export default function SchedulePage() {
     else goToMonth(year, month + 1);
   };
 
-  const handleCopyFrom = () => {
-    if (copyDoing || copyDone) return;
-    setCopyDoing(true);
-    // Source lineups from the selected month
-    const sourceLineups = lineups
-      .filter(l => {
-        const d = new Date(l.date + 'T00:00:00');
-        return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
+  const handleGenerate = () => {
+    if (generating || generateDone) return;
+    setGenerating(true);
 
-    // Target Sundays for the current (empty) month
     const targetSundays = getSundaysInMonth(year, month);
-    const targetCount = targetSundays.length;
-    const sourceCount = sourceLineups.length;
-
     const toAdd = [];
-    const copyCount = Math.min(sourceCount, targetCount);
-    for (let i = 0; i < copyCount; i++) {
-      toAdd.push({
-        ...sourceLineups[i],
-        id: undefined,
-        date: targetSundays[i],
-        practiceDate: '',
-        nextWL: '',
-        songs: sourceLineups[i].songs || [],
-        notes: sourceLineups[i].notes || '',
-      });
+
+    if (generateMode === 'copy') {
+      const sourceLineups = lineups
+        .filter(l => {
+          const d = new Date(l.date + 'T00:00:00');
+          return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const copyCount = Math.min(sourceLineups.length, targetSundays.length);
+      for (let i = 0; i < copyCount; i++) {
+        const src = sourceLineups[i];
+        toAdd.push({
+          ...src,
+          id: undefined,
+          date: targetSundays[i],
+          theme: src.theme || '',
+          bibleVerse: src.bibleVerse || '',
+          practiceDate: '',
+          nextWL: '',
+          worshipLeaders: copyMembers
+            ? (src.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }])
+            : [{ memberId: '', role: 'Worship Leader' }],
+          backUps: copyMembers ? (src.backUps || []) : [],
+          instruments: copyMembers
+            ? (src.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] })
+            : { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
+          soundEngineer: copyMembers ? (src.soundEngineer || '') : '',
+          songs: copySongs ? (src.songs || []) : [],
+          notes: src.notes || '',
+        });
+      }
+      // Fill remaining target Sundays with blank slots
+      for (let i = copyCount; i < targetSundays.length; i++) {
+        toAdd.push({
+          date: targetSundays[i],
+          isTeamA: false,
+          theme: '',
+          bibleVerse: '',
+          worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
+          backUps: [],
+          instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
+          soundEngineer: '',
+          practiceDate: '',
+          nextWL: '',
+          songs: [],
+          notes: '',
+        });
+      }
+    } else if (generateMode === 'template') {
+      const template = templates.find(t => t.id === selectedTemplateId);
+      if (!template) { setGenerating(false); return; }
+      for (const sunday of targetSundays) {
+        toAdd.push({
+          date: sunday,
+          isTeamA: template.isTeamA || false,
+          theme: '',
+          bibleVerse: '',
+          worshipLeaders: template.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }],
+          backUps: template.backUps || [],
+          instruments: template.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
+          soundEngineer: template.soundEngineer || '',
+          practiceDate: '',
+          nextWL: '',
+          songs: [],
+          notes: template.notes || '',
+        });
+      }
+    } else {
+      // blank
+      for (const sunday of targetSundays) {
+        toAdd.push({
+          date: sunday,
+          isTeamA: false,
+          theme: '',
+          bibleVerse: '',
+          worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
+          backUps: [],
+          instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
+          soundEngineer: '',
+          practiceDate: '',
+          nextWL: '',
+          songs: [],
+          notes: '',
+        });
+      }
     }
-    for (let i = copyCount; i < targetCount; i++) {
-      toAdd.push({
-        date: targetSundays[i],
-        isTeamA: false,
-        theme: '',
-        bibleVerse: '',
-        worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
-        backUps: [],
-        instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [] },
-        soundEngineer: '',
-        practiceDate: '',
-        nextWL: '',
-        songs: [],
-        notes: '',
-      });
-    }
+
     addLineups(toAdd);
-    setCopyDoing(false);
-    setCopyDone(true);
+    setGenerating(false);
+    setGenerateDone(true);
     setTimeout(() => {
-      setShowCopyPanel(false);
-      setCopyDone(false);
+      setShowGeneratePanel(false);
+      setGenerateDone(false);
     }, 1000);
   };
 
@@ -401,62 +454,199 @@ export default function SchedulePage() {
         <div className="text-center py-10 text-gray-400 print:hidden">
           <CalendarDays size={40} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium mb-4">No lineups for this month yet.</p>
-          {canManageLineups && !showCopyPanel && (
+          {canManageLineups && !showGeneratePanel && (
             <div className="flex flex-col items-center gap-2">
               <button onClick={() => navigate(`/lineup/new?year=${year}&month=${month}`)} className="btn-primary flex items-center gap-1.5">
                 <Plus size={15} /> Add Service Slot
               </button>
-              <button onClick={() => { setShowCopyPanel(true); setCopyDone(false); }} className="btn-secondary text-sm flex items-center gap-1.5">
-                <Copy size={13} /> Copy from Another Month
+              <button
+                onClick={() => { setShowGeneratePanel(true); setGenerateDone(false); }}
+                className="btn-secondary text-sm flex items-center gap-1.5"
+              >
+                <Wand2 size={13} /> Generate Month Schedule
               </button>
             </div>
           )}
-          {canManageLineups && showCopyPanel && (
+          {canManageLineups && showGeneratePanel && (
             <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 text-left max-w-sm mx-auto space-y-4">
+              {/* Header */}
               <div>
-                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0.5">Copy lineup into {MONTHS[month - 1]} {year}</h3>
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0.5 flex items-center gap-1.5">
+                  <Wand2 size={14} className="text-primary-500" />
+                  Generate Schedule for {MONTHS[month - 1]} {year}
+                </h3>
                 <p className="text-xs text-gray-400">
-                  {MONTHS[month - 1]} {year} has <strong>{getSundaysInMonth(year, month).length} Sundays</strong>: {getSundaysInMonth(year, month).map(d => printDate(d)).join(', ')}
+                  {getSundaysInMonth(year, month).length} Sundays: {getSundaysInMonth(year, month).map(d => printDate(d)).join(', ')}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Copy from Month</label>
-                  <select className="input" value={copySourceMonth} onChange={e => setCopySourceMonth(Number(e.target.value))}>
-                    {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Year</label>
-                  <select className="input" value={copySourceYear} onChange={e => setCopySourceYear(Number(e.target.value))}>
-                    {[2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
+
+              {/* Mode tabs */}
+              <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden text-xs font-medium">
+                {[
+                  { key: 'copy', label: 'Copy', fullLabel: 'Copy from Month' },
+                  { key: 'template', label: 'Template', fullLabel: 'From Template' },
+                  { key: 'blank', label: 'Blank', fullLabel: 'Blank Sundays' },
+                ].map(({ key, label, fullLabel }) => (
+                  <button
+                    key={key}
+                    onClick={() => setGenerateMode(key)}
+                    title={fullLabel}
+                    className={`flex-1 py-1.5 px-1 transition-colors ${
+                      generateMode === key
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="hidden sm:inline">{fullLabel}</span>
+                    <span className="sm:hidden">{label}</span>
+                  </button>
+                ))}
               </div>
-              {(() => {
-                const src = lineups.filter(l => {
-                  const d = new Date(l.date + 'T00:00:00');
-                  return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
-                });
-                const tgt = getSundaysInMonth(year, month);
-                const extra = tgt.length - src.length;
+
+              {/* Mode: Copy from Month */}
+              {generateMode === 'copy' && (() => {
+                const srcLineups = lineups
+                  .filter(l => {
+                    const d = new Date(l.date + 'T00:00:00');
+                    return d.getFullYear() === copySourceYear && d.getMonth() + 1 === copySourceMonth;
+                  })
+                  .sort((a, b) => a.date.localeCompare(b.date));
+                const tgtSundays = getSundaysInMonth(year, month);
+                const extra = tgtSundays.length - srcLineups.length;
                 return (
-                  <div className="text-xs text-gray-500 space-y-0.5">
-                    <p>Source: <strong>{src.length} lineup{src.length !== 1 ? 's' : ''}</strong> in {MONTHS[copySourceMonth - 1]} {copySourceYear}</p>
-                    {extra > 0 && <p className="text-amber-600">⚠️ {extra} extra Sunday{extra !== 1 ? 's' : ''} will be created as unassigned.</p>}
-                    {extra < 0 && <p className="text-blue-600">ℹ️ Only the first {tgt.length} lineups will be copied.</p>}
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="label">Source Month</label>
+                        <select className="input" value={copySourceMonth} onChange={e => setCopySourceMonth(Number(e.target.value))}>
+                          {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">Year</label>
+                        <select className="input" value={copySourceYear} onChange={e => setCopySourceYear(Number(e.target.value))}>
+                          {[2025, 2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    {/* Options */}
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={copyMembers}
+                          onChange={e => setCopyMembers(e.target.checked)}
+                          className="rounded"
+                        />
+                        Copy member assignments
+                      </label>
+                      <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={copySongs}
+                          onChange={e => setCopySongs(e.target.checked)}
+                          className="rounded"
+                        />
+                        Also copy song lists
+                      </label>
+                    </div>
+                    {/* Source info */}
+                    <div className="text-xs text-gray-500 space-y-0.5">
+                      <p>Source: <strong>{srcLineups.length} lineup{srcLineups.length !== 1 ? 's' : ''}</strong> in {MONTHS[copySourceMonth - 1]} {copySourceYear}</p>
+                      {extra > 0 && <p className="text-amber-600">⚠️ {extra} extra Sunday{extra !== 1 ? 's' : ''} will be created as blank.</p>}
+                      {extra < 0 && <p className="text-blue-600">ℹ️ Only the first {tgtSundays.length} source lineups will be used.</p>}
+                    </div>
+                    {/* Preview */}
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Preview</p>
+                      {tgtSundays.map((sunday, i) => {
+                        const src = srcLineups[i];
+                        return (
+                          <div key={sunday} className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
+                            <span className="font-medium">{printDate(sunday)} (Sun)</span>
+                            {src
+                              ? <span className="text-gray-400">← copied from {printDate(src.date)}</span>
+                              : <span className="text-amber-500">← blank slot</span>
+                            }
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })()}
-              <div className="flex gap-2">
+
+              {/* Mode: From Template */}
+              {generateMode === 'template' && (
+                <div className="space-y-3">
+                  {templates.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic">No templates saved yet. Save a template first from the lineup form.</p>
+                  ) : (
+                    <div>
+                      <label className="label">Select Template</label>
+                      <select
+                        className="input"
+                        value={selectedTemplateId}
+                        onChange={e => setSelectedTemplateId(e.target.value)}
+                      >
+                        <option value="">— choose a template —</option>
+                        {templates.map(t => (
+                          <option key={t.id} value={t.id}>{t.name || `Template ${t.id.slice(0, 6)}`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {/* Preview */}
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-1">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Preview</p>
+                    {getSundaysInMonth(year, month).map(sunday => (
+                      <div key={sunday} className="text-xs text-gray-600 dark:text-gray-300">
+                        <span className="font-medium">{printDate(sunday)} (Sun)</span>
+                        {selectedTemplateId && (
+                          <span className="text-gray-400 ml-1.5">← from template</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mode: Blank Sundays */}
+              {generateMode === 'blank' && (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500">Creates one empty lineup slot per Sunday. All fields will be blank except the date.</p>
+                  {/* Preview */}
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-1">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Preview</p>
+                    {getSundaysInMonth(year, month).map(sunday => (
+                      <div key={sunday} className="text-xs text-gray-600 dark:text-gray-300">
+                        <span className="font-medium">{printDate(sunday)} (Sun)</span>
+                        <span className="text-gray-400 ml-1.5">← blank slot</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2 pt-1">
                 <button
-                  onClick={handleCopyFrom}
-                  disabled={copyDoing || copyDone}
-                  className={`btn-primary flex-1 text-sm ${copyDone ? 'opacity-70' : ''}`}
+                  onClick={handleGenerate}
+                  disabled={
+                    generating ||
+                    generateDone ||
+                    (generateMode === 'template' && (templates.length === 0 || !selectedTemplateId))
+                  }
+                  className={`btn-primary flex-1 text-sm flex items-center justify-center gap-1.5 ${generateDone ? 'opacity-70' : ''}`}
                 >
-                  {copyDone ? '✅ Copied!' : copyDoing ? 'Copying…' : 'Copy Lineups'}
+                  {generateDone ? '✅ Done!' : generating ? 'Generating…' : <><Wand2 size={13} /> Generate</>}
                 </button>
-                <button onClick={() => setShowCopyPanel(false)} className="btn-secondary text-sm">Cancel</button>
+                <button
+                  onClick={() => setShowGeneratePanel(false)}
+                  className="btn-secondary text-sm"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}

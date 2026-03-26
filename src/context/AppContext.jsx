@@ -19,6 +19,8 @@ export function AppProvider({ children }) {
 
   const [members, setMembers] = useState([]);
   const [lineups, setLineups] = useState([]);
+  const [songs, setSongs] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [myRole, setMyRole] = useState(null); // 'main_admin' | 'co_admin' | 'member' | null
 
   // For public (guest) viewing — loaded without auth
@@ -39,6 +41,8 @@ export function AppProvider({ children }) {
         setTeam(null);
         setMembers([]);
         setLineups([]);
+        setSongs([]);
+        setTemplates([]);
         setTeamLoading(false); // No user = no team to load
         return;
       }
@@ -182,7 +186,7 @@ export function AppProvider({ children }) {
     if (!teamId) { setMembers([]); return; }
     const unsub = onSnapshot(collection(db, 'teams', teamId, 'members'), (snap) => {
       setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => a.name.localeCompare(b.name)));
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '')));
     });
     return unsub;
   }, [teamId]);
@@ -192,7 +196,27 @@ export function AppProvider({ children }) {
     if (!teamId) { setLineups([]); return; }
     const unsub = onSnapshot(collection(db, 'teams', teamId, 'lineups'), (snap) => {
       setLineups(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => a.date.localeCompare(b.date)));
+        .sort((a, b) => (a.date || '').localeCompare(b.date || '')));
+    });
+    return unsub;
+  }, [teamId]);
+
+  // --- Load songs ---
+  useEffect(() => {
+    if (!teamId) { setSongs([]); return; }
+    const unsub = onSnapshot(collection(db, 'teams', teamId, 'songs'), (snap) => {
+      setSongs(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.title || '').localeCompare(b.title || '')));
+    });
+    return unsub;
+  }, [teamId]);
+
+  // --- Load templates ---
+  useEffect(() => {
+    if (!teamId) { setTemplates([]); return; }
+    const unsub = onSnapshot(collection(db, 'teams', teamId, 'templates'), (snap) => {
+      setTemplates(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '')));
     });
     return unsub;
   }, [teamId]);
@@ -461,6 +485,44 @@ export function AppProvider({ children }) {
 
   const getLineupById = (id) => lineups.find((l) => l.id === id);
 
+  // ==================== SONGS ====================
+  const addSong = async (song) => {
+    if (!teamId) return;
+    const ref = doc(collection(db, 'teams', teamId, 'songs'));
+    const now = new Date().toISOString();
+    await setDoc(ref, { ...song, id: ref.id, createdAt: now, updatedAt: now });
+    return ref.id;
+  };
+
+  const updateSong = async (id, updates) => {
+    if (!teamId) return;
+    await updateDoc(doc(db, 'teams', teamId, 'songs', id), { ...updates, updatedAt: new Date().toISOString() });
+  };
+
+  const deleteSong = async (id) => {
+    if (!teamId) return;
+    await deleteDoc(doc(db, 'teams', teamId, 'songs', id));
+  };
+
+  // ==================== TEMPLATES ====================
+  const addTemplate = async (template) => {
+    if (!teamId) return;
+    const ref = doc(collection(db, 'teams', teamId, 'templates'));
+    const now = new Date().toISOString();
+    await setDoc(ref, { ...template, id: ref.id, createdAt: now, updatedAt: now });
+    return ref.id;
+  };
+
+  const updateTemplate = async (id, updates) => {
+    if (!teamId) return;
+    await updateDoc(doc(db, 'teams', teamId, 'templates', id), { ...updates, updatedAt: new Date().toISOString() });
+  };
+
+  const deleteTemplate = async (id) => {
+    if (!teamId) return;
+    await deleteDoc(doc(db, 'teams', teamId, 'templates', id));
+  };
+
   const getLineupsByMonth = (year, month) => {
     return lineups.filter((l) => {
       const d = new Date(l.date + 'T00:00:00');
@@ -575,6 +637,8 @@ export function AppProvider({ children }) {
         // Data
         members,
         lineups,
+        songs,
+        templates,
         addMember,
         updateMember,
         deleteMember,
@@ -585,6 +649,12 @@ export function AppProvider({ children }) {
         deleteLineup,
         getLineupById,
         getLineupsByMonth,
+        addSong,
+        updateSong,
+        deleteSong,
+        addTemplate,
+        updateTemplate,
+        deleteTemplate,
       }}
     >
       {children}

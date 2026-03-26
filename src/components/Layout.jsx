@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { CalendarDays, Users, LogOut, ListMusic, Settings, Heart, X } from 'lucide-react';
+import { CalendarDays, Users, LogOut, Library, Settings, Heart, X, LayoutDashboard } from 'lucide-react';
 
 const DONATE_METHODS = [
   { key: 'gcash',   label: 'GCash',   color: 'bg-green-500 hover:bg-green-600',  qr: '/gcash-qr.png' },
@@ -60,10 +60,11 @@ export default function Layout() {
   const scheduleUrl = `/`;
 
   const navItems = [
-    { to: scheduleUrl, icon: <CalendarDays size={18} />, label: 'Calendar', matchesSchedule: true },
-    { to: '/members', icon: <Users size={18} />, label: 'Members' },
-    { to: '/songs', icon: <ListMusic size={18} />, label: 'Songs' },
-    ...(user ? [{ to: '/team-setup', icon: <Settings size={18} />, label: 'Team' }] : []),
+    { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard', mobileLabel: 'Dash' },
+    { to: scheduleUrl, icon: <CalendarDays size={18} />, label: 'Calendar', mobileLabel: 'Calendar', matchesSchedule: true },
+    { to: '/members', icon: <Users size={18} />, label: 'Members', mobileLabel: 'Members' },
+    { to: '/songs', icon: <Library size={18} />, label: 'Song Library', mobileLabel: 'Songs' },
+    { to: '/team-setup', icon: <Settings size={18} />, label: 'Team', mobileLabel: 'Team' },
   ];
 
   return (
@@ -224,7 +225,7 @@ export default function Layout() {
 
       {/* Mobile Bottom Navigation — visible on small screens only */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-stretch safe-area-pb">
-        {navItems.map(({ to, icon, label, matchesSchedule }) => {
+        {navItems.map(({ to, icon, label, mobileLabel, matchesSchedule }) => {
           const isScheduleActive = matchesSchedule && (location.pathname === '/' || location.pathname === '/schedule');
           return (
             <NavLink
@@ -247,7 +248,7 @@ export default function Layout() {
                     <span className={active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}>
                       {icon}
                     </span>
-                    {label}
+                    {mobileLabel || label}
                   </>
                 );
               }}
