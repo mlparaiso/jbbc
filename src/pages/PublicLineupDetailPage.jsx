@@ -200,7 +200,7 @@ export default function PublicLineupDetailPage() {
           {/* Instruments */}
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
                 const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
                 return (
