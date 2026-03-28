@@ -122,6 +122,7 @@ export default function SchedulePage() {
           theme: src.theme || '',
           bibleVerse: src.bibleVerse || '',
           practiceDate: '',
+          practiceTiming: 'after',
           nextWL: '',
           worshipLeaders: copyMembers
             ? (src.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }])
@@ -147,6 +148,7 @@ export default function SchedulePage() {
           instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
           soundEngineer: '',
           practiceDate: '',
+          practiceTiming: 'after',
           nextWL: '',
           songs: [],
           notes: '',
@@ -166,6 +168,7 @@ export default function SchedulePage() {
           instruments: template.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
           soundEngineer: template.soundEngineer || '',
           practiceDate: '',
+          practiceTiming: 'after',
           nextWL: '',
           songs: [],
           notes: template.notes || '',
@@ -184,6 +187,7 @@ export default function SchedulePage() {
           instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
           soundEngineer: '',
           practiceDate: '',
+          practiceTiming: 'after',
           nextWL: '',
           songs: [],
           notes: '',

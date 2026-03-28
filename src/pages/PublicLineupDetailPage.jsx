@@ -23,6 +23,18 @@ function shortDate(dateStr) {
   return d.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+function getPracticeTimingLabel(practiceTiming) {
+  switch (practiceTiming) {
+    case 'before':
+      return 'before the Service';
+    case 'none':
+      return null;
+    case 'after':
+    default:
+      return 'after the Service';
+  }
+}
+
 const INSTRUMENT_CONFIG = [
   { key: 'k1',             icon: <Piano size={14} />,  label: 'Keyboard 1',      iconClass: 'text-primary-500' },
   { key: 'k2',             icon: <Piano size={14} />,  label: 'Keyboard 2',      iconClass: 'text-amber-500' },
@@ -156,7 +168,7 @@ export default function PublicLineupDetailPage() {
             )}
             {lineup.practiceDate && (
               <div className="mt-2 inline-flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg px-3 py-1.5 text-xs font-semibold">
-                <CalendarCheck size={13} /> Practice: {shortDate(lineup.practiceDate)}, after the Service
+                <CalendarCheck size={13} /> Practice: {shortDate(lineup.practiceDate)}{getPracticeTimingLabel(lineup.practiceTiming) ? `, ${getPracticeTimingLabel(lineup.practiceTiming)}` : ''}
               </div>
             )}
           </div>

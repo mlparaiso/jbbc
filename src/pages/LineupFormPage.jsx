@@ -42,6 +42,11 @@ export const EXTRA_INSTRUMENTS = [
 
 const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
 const SONG_KEYS = ['', 'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const PRACTICE_TIMING_OPTIONS = [
+  { value: 'after', label: 'After the service' },
+  { value: 'before', label: 'Before the service' },
+  { value: 'none', label: 'None' },
+];
 const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
 
 // Autocomplete input for song titles
@@ -235,6 +240,7 @@ export default function LineupFormPage() {
     instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
     soundEngineer: '',
     practiceDate: '',
+    practiceTiming: 'after',
     nextWL: '',
     bibleVerse: '',
     songs: [],
@@ -560,10 +566,24 @@ export default function LineupFormPage() {
                 </p>
               )}
             </div>
-            <div>
-              <label className="label">Practice Date</label>
-              <input type="date" className="input" value={form.practiceDate}
-                onChange={e => setForm(f => ({ ...f, practiceDate: e.target.value }))} />
+            <div className="space-y-2">
+              <div>
+                <label className="label">Practice Date</label>
+                <input type="date" className="input" value={form.practiceDate}
+                  onChange={e => setForm(f => ({ ...f, practiceDate: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Practice Timing</label>
+                <select
+                  className="input"
+                  value={form.practiceTiming || 'after'}
+                  onChange={e => setForm(f => ({ ...f, practiceTiming: e.target.value }))}
+                >
+                  {PRACTICE_TIMING_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
