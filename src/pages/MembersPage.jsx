@@ -7,11 +7,12 @@ const ALL_ROLES = Object.values(ROLE_CATEGORIES);
 
 const ROLE_COLORS = {
   [ROLE_CATEGORIES.VOCALIST]: 'bg-purple-100 text-purple-700',
+  [ROLE_CATEGORIES.BACK_UP]:  'bg-pink-100 text-pink-700',
   [ROLE_CATEGORIES.KEYBOARD]: 'bg-blue-100 text-blue-700',
-  [ROLE_CATEGORIES.GUITAR]: 'bg-green-100 text-green-700',
-  [ROLE_CATEGORIES.BASS]: 'bg-orange-100 text-orange-700',
-  [ROLE_CATEGORIES.DRUMS]: 'bg-red-100 text-red-700',
-  [ROLE_CATEGORIES.SOUND]: 'bg-gray-100 text-gray-700',
+  [ROLE_CATEGORIES.GUITAR]:   'bg-green-100 text-green-700',
+  [ROLE_CATEGORIES.BASS]:     'bg-orange-100 text-orange-700',
+  [ROLE_CATEGORIES.DRUMS]:    'bg-red-100 text-red-700',
+  [ROLE_CATEGORIES.SOUND]:    'bg-gray-100 text-gray-700',
 };
 
 const TEAM_ROLE_CONFIG = {

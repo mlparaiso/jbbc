@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, ChevronDown, ChevronUp, LayoutTemplate } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, LayoutTemplate } from 'lucide-react';
 import TeamLogoUploader from '../components/TeamLogoUploader';
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, instrumentRoles, serviceTypes, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -15,16 +15,6 @@ export default function TeamSetupPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false); // show leave confirmation
-  const [showSettings, setShowSettings] = useState(false); // expand team settings panel
-  // Instrument roles edit state
-  const [editingRoles, setEditingRoles] = useState(false);
-  const [rolesInput, setRolesInput] = useState([]);
-  const [newRoleLabel, setNewRoleLabel] = useState('');
-  const [newRoleKey, setNewRoleKey] = useState('');
-  // Service types edit state
-  const [editingServiceTypes, setEditingServiceTypes] = useState(false);
-  const [serviceTypesInput, setServiceTypesInput] = useState([]);
-  const [newServiceType, setNewServiceType] = useState('');
   const [editingTemplateId, setEditingTemplateId] = useState(null);
   const [templateForm, setTemplateForm] = useState({ name: '', description: '' });
 

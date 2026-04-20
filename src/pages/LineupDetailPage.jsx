@@ -126,7 +126,7 @@ export default function LineupDetailPage() {
           </Link>
           <ChevronRight size={14} className="text-gray-400" />
           <Link
-            to={`/?year=${new Date(lineup.date + 'T00:00:00').getFullYear()}&month=${new Date(lineup.date + 'T00:00:00').getMonth() + 1}`}
+            to={`/schedule?year=${new Date(lineup.date + 'T00:00:00').getFullYear()}&month=${new Date(lineup.date + 'T00:00:00').getMonth() + 1}`}
             className="text-primary-600 hover:underline font-medium"
           >
             {new Date(lineup.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long' })}

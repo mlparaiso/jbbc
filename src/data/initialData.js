@@ -1,6 +1,7 @@
 // Role categories
 export const ROLE_CATEGORIES = {
   VOCALIST: 'Vocalist',
+  BACK_UP: 'Back Up',
   KEYBOARD: 'Keyboard',
   GUITAR: 'Guitar',
   BASS: 'Bass',

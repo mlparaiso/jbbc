@@ -240,6 +240,9 @@ export function AppProvider({ children }) {
   const canManageLineups = myRole === 'main_admin' || myRole === 'co_admin';
   const canSeeInviteCode = myRole === 'main_admin' || myRole === 'co_admin';
 
+  // Team feature flags derived from team doc
+  const hasTeamA = team?.hasTeamA === true;
+
   // ==================== TEAM MANAGEMENT ====================
   function generateInviteCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -251,6 +254,12 @@ export function AppProvider({ children }) {
   const updateTeamVisibility = async (isPublicValue) => {
     if (!teamId) return;
     await updateDoc(doc(db, 'teams', teamId), { isPublic: isPublicValue });
+  };
+
+  // Generic team settings updater — merges any fields into the team doc
+  const updateTeamSettings = async (patch) => {
+    if (!teamId) return;
+    await updateDoc(doc(db, 'teams', teamId), patch);
   };
 
   // Load a team's public data without being logged in
@@ -618,11 +627,13 @@ export function AppProvider({ children }) {
         teamId,
         userTeams,
         isPublic,
+        hasTeamA,
         createTeam,
         joinTeam,
         leaveTeam,
         switchToTeam,
         updateTeamVisibility,
+        updateTeamSettings,
         updateTeamLogo,
         // Public (guest) access
         loadPublicTeam,

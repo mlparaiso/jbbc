@@ -426,6 +426,10 @@ export default function LineupFormPage() {
 
   // Filtered member lists by role (guard against members with no roles array)
   const vocalists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.VOCALIST));
+  // Back-up vocalists: members tagged as Back Up OR Vocalist
+  const backUpVocalists = members.filter(m => Array.isArray(m.roles) && (
+    m.roles.includes(ROLE_CATEGORIES.BACK_UP) || m.roles.includes(ROLE_CATEGORIES.VOCALIST)
+  ));
   const keyboardists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.KEYBOARD));
   const bassists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.BASS));
   const guitarists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.GUITAR));
@@ -649,7 +653,7 @@ export default function LineupFormPage() {
         <div className="card">
           <MultiSelect
             label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><Music4 size={14} className="text-primary-500" /> Back Ups</span>}
-            memberOptions={vocalists}
+            memberOptions={backUpVocalists}
             selected={form.backUps}
             onChange={val => setForm(f => ({ ...f, backUps: val }))}
           />
