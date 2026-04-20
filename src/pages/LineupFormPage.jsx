@@ -152,29 +152,37 @@ function SortableSongRow({ song, index, songLibrary, onChange, onRemove }) {
   );
 }
 
-function MultiSelect({ label, memberOptions, selected, onChange, placeholder }) {
+function MultiSelect({ label, memberOptions, selected, onChange, disabledIds = [] }) {
   const toggle = (id) => {
     if (selected.includes(id)) onChange(selected.filter(x => x !== id));
-    else onChange([...selected, id]);
+    else if (!disabledIds.includes(id)) onChange([...selected, id]);
   };
   return (
     <div>
       <span className="label">{label}</span>
       <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-10 bg-white">
-        {memberOptions.map(m => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => toggle(m.id)}
-            className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-              selected.includes(m.id)
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {m.name}
-          </button>
-        ))}
+        {memberOptions.map(m => {
+          const isSelected = selected.includes(m.id);
+          const isDisabled = !isSelected && disabledIds.includes(m.id);
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => toggle(m.id)}
+              disabled={isDisabled}
+              title={isDisabled ? 'Already assigned elsewhere' : undefined}
+              className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                isSelected
+                  ? 'bg-primary-600 text-white'
+                  : isDisabled
+                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed line-through'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {m.name}
+            </button>
+          );
+        })}
       </div>
       {selected.length > 0 && (
         <p className="text-xs text-gray-500 mt-1">Selected: {selected.map(id => memberOptions.find(m => m.id === id)?.name).filter(Boolean).join(', ')}</p>
@@ -183,28 +191,37 @@ function MultiSelect({ label, memberOptions, selected, onChange, placeholder }) 
   );
 }
 
-function SingleSelect({ label, memberOptions, selected, onChange }) {
+function SingleSelect({ label, memberOptions, selected, onChange, disabledIds = [] }) {
   const toggle = (id) => {
-    onChange(selected === id ? null : id);
+    if (selected === id) onChange(null);
+    else if (!disabledIds.includes(id)) onChange(id);
   };
   return (
     <div>
       <label className="label">{label}</label>
       <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-10 bg-white">
-        {memberOptions.map(m => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => toggle(m.id)}
-            className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-              selected === m.id
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {m.name}
-          </button>
-        ))}
+        {memberOptions.map(m => {
+          const isSelected = selected === m.id;
+          const isDisabled = !isSelected && disabledIds.includes(m.id);
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => toggle(m.id)}
+              disabled={isDisabled}
+              title={isDisabled ? 'Already assigned elsewhere' : undefined}
+              className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                isSelected
+                  ? 'bg-primary-600 text-white'
+                  : isDisabled
+                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed line-through'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {m.name}
+            </button>
+          );
+        })}
       </div>
       {selected && (
         <p className="text-xs text-gray-500 mt-1">Selected: {memberOptions.find(m => m.id === selected)?.name}</p>
@@ -436,6 +453,27 @@ export default function LineupFormPage() {
   const drummers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.DRUMS));
   const soundEngineers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.SOUND));
 
+  // Build the full set of all currently assigned member IDs across every slot.
+  // Used to disable already-assigned members in other selectors.
+  const allAssignedIds = new Set([
+    ...(form.worshipLeaders || []).map(wl => wl.memberId).filter(Boolean),
+    ...(form.backUps || []),
+    ...(form.instruments?.k1 || []),
+    ...(form.instruments?.k2 || []),
+    ...(form.instruments?.bass || []),
+    ...(form.instruments?.leadGuitar || []),
+    ...(form.instruments?.acousticGuitar || []),
+    ...(form.instruments?.drums || []),
+    ...((form.instruments?.extras || []).flatMap(e => e.memberIds || [])),
+    ...(form.soundEngineer ? [form.soundEngineer] : []),
+  ]);
+  // Helper: returns disabled IDs for a given slot's own current selection(s)
+  // so that a member's own slot never disables itself.
+  const disabledFor = (ownIds) => {
+    const own = new Set(Array.isArray(ownIds) ? ownIds : (ownIds ? [ownIds] : []));
+    return [...allAssignedIds].filter(id => !own.has(id));
+  };
+
   const updateInstrument = (key, value) => {
     setForm(f => ({ ...f, instruments: { ...f.instruments, [key]: value } }));
   };
@@ -624,7 +662,14 @@ export default function LineupFormPage() {
                 <select className="input" value={wl.memberId}
                   onChange={e => updateWL(i, 'memberId', e.target.value)}>
                   <option value="">— Select Member —</option>
-                  {vocalists.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  {vocalists.map(m => {
+                    const isDisabled = m.id !== wl.memberId && allAssignedIds.has(m.id);
+                    return (
+                      <option key={m.id} value={m.id} disabled={isDisabled}>
+                        {m.name}{isDisabled ? ' (assigned)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="flex gap-2 items-center flex-1">
@@ -656,6 +701,7 @@ export default function LineupFormPage() {
             memberOptions={backUpVocalists}
             selected={form.backUps}
             onChange={val => setForm(f => ({ ...f, backUps: val }))}
+            disabledIds={disabledFor(form.backUps)}
           />
         </div>
 
@@ -677,30 +723,37 @@ export default function LineupFormPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SingleSelect label="Keyboard 1 (K1)" memberOptions={keyboardists}
-              selected={form.instruments.k1[0] || ''} onChange={v => updateInstrument('k1', v ? [v] : [])} />
+              selected={form.instruments.k1[0] || ''} onChange={v => updateInstrument('k1', v ? [v] : [])}
+              disabledIds={disabledFor(form.instruments.k1[0] || null)} />
             <SingleSelect label="Keyboard 2 (K2)" memberOptions={keyboardists}
-              selected={form.instruments.k2[0] || ''} onChange={v => updateInstrument('k2', v ? [v] : [])} />
+              selected={form.instruments.k2[0] || ''} onChange={v => updateInstrument('k2', v ? [v] : [])}
+              disabledIds={disabledFor(form.instruments.k2[0] || null)} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MultiSelect label="Bass (B)" memberOptions={bassists}
-              selected={form.instruments.bass} onChange={v => updateInstrument('bass', v)} />
+              selected={form.instruments.bass} onChange={v => updateInstrument('bass', v)}
+              disabledIds={disabledFor(form.instruments.bass)} />
             <MultiSelect label="Lead Guitar (LG)" memberOptions={guitarists}
-              selected={form.instruments.leadGuitar} onChange={v => updateInstrument('leadGuitar', v)} />
+              selected={form.instruments.leadGuitar} onChange={v => updateInstrument('leadGuitar', v)}
+              disabledIds={disabledFor(form.instruments.leadGuitar)} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MultiSelect label="Acoustic Guitar (AG)" memberOptions={guitarists}
-              selected={form.instruments.acousticGuitar} onChange={v => updateInstrument('acousticGuitar', v)} />
+              selected={form.instruments.acousticGuitar} onChange={v => updateInstrument('acousticGuitar', v)}
+              disabledIds={disabledFor(form.instruments.acousticGuitar)} />
             <MultiSelect label="Drums (D)" memberOptions={drummers}
-              selected={form.instruments.drums} onChange={v => updateInstrument('drums', v)} />
+              selected={form.instruments.drums} onChange={v => updateInstrument('drums', v)}
+              disabledIds={disabledFor(form.instruments.drums)} />
           </div>
         </div>
 
         {/* Sound Engineer */}
         <div className="card">
           <SingleSelect label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> Sound Engineer</span>} memberOptions={soundEngineers}
-            selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))} />
+            selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))}
+            disabledIds={disabledFor(form.soundEngineer || null)} />
         </div>
 
         {/* Additional Instruments */}
