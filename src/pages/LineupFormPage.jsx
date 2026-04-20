@@ -548,17 +548,25 @@ export default function LineupFormPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={() => navigate(-1)} className="text-primary-600 hover:underline text-sm flex items-center gap-1">
+      {/* Sticky header: Back | Title | Save */}
+      <div className="sticky top-0 z-30 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 py-3 mb-5 flex items-center justify-between gap-2">
+        <button onClick={() => navigate(-1)} className="text-primary-600 hover:underline text-sm flex items-center gap-1 flex-shrink-0">
           <ChevronLeft size={16} /> Back
         </button>
-        <h2 className="text-lg font-bold text-gray-800">
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 truncate">
           {isEdit ? 'Edit Lineup' : 'New Lineup'}
         </h2>
-        <div className="w-16" />
+        <button
+          type="submit"
+          form="lineup-form"
+          disabled={saved}
+          className={`btn-primary text-sm py-1.5 px-4 flex-shrink-0 ${saved ? 'opacity-70' : ''}`}
+        >
+          {saved ? '✅ Saved!' : isEdit ? 'Save' : 'Create'}
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="lineup-form" onSubmit={handleSubmit} className="space-y-6">
 
         {!isEdit && templates.length > 0 && (
           <div className="card space-y-3">
@@ -860,7 +868,7 @@ export default function LineupFormPage() {
             </h3>
             <button type="button" onClick={() => setForm(f => ({
               ...f,
-              songs: [...(f.songs || []), { section: 'Praise and Worship', title: '', youtubeUrl: '' }]
+              songs: [{ section: 'Praise and Worship', title: '', youtubeUrl: '' }, ...(f.songs || [])]
             }))} className="text-primary-600 hover:underline text-xs flex items-center gap-1">
               <Plus size={13} /> Add Song
             </button>
