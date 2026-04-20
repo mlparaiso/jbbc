@@ -272,9 +272,13 @@ export default function LineupFormPage() {
   const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
   const [templateDraft, setTemplateDraft] = useState({ name: '', description: '' });
 
+  // Re-apply existing lineup data when lineups load from Firestore after mount
+  // (e.g. page refreshed directly on /lineup/:id/edit before snapshot arrives).
+  // Guard with existing?.date so we only trigger when the lineup actually loads,
+  // not on every render, and don't overwrite user edits once the form is populated.
   useEffect(() => {
     if (existing) setForm(existing);
-  }, [id]);
+  }, [id, existing?.date]);
 
   // Song library: canonical songs first, then unique songs from past lineups
   const songLibrary = useMemo(() => {

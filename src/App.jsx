@@ -25,11 +25,9 @@ export default function App() {
           <Route path="/login" element={<LandingPage />} />
           <Route path="/admin" element={<AdminLoginPage />} />
 
-          {/* Needs login but NOT a team yet */}
+          {/* Needs login but NOT a team yet — team-setup without Layout nav */}
           <Route element={<LoginGuard />}>
-            <Route path="/team-setup" element={<Layout />}>
-              <Route index element={<TeamSetupPage />} />
-            </Route>
+            <Route path="/team-setup" element={<TeamSetupPage />} />
           </Route>
 
           {/* Needs login + team */}
@@ -44,6 +42,8 @@ export default function App() {
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="members" element={<MembersPage />} />
               <Route path="songs" element={<SongsPage />} />
+              {/* team-setup also accessible inside Layout when user already has a team */}
+              <Route path="team-setup" element={<TeamSetupPage />} />
             </Route>
           </Route>
 

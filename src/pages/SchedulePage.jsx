@@ -48,7 +48,7 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, isAdmin, canManageLineups, getMemberById, updateLineup, addLineups, templates } = useApp();
+  const { lineups, canManageLineups, getMemberById, updateLineup, addLineups, templates } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 

@@ -80,7 +80,7 @@ function groupSongs(songs) {
 export default function LineupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, getMemberById, isAdmin, canManageLineups, deleteLineup, lineups, teamId } = useApp();
+  const { getLineupById, getMemberById, canManageLineups, deleteLineup, lineups, teamId } = useApp();
   const [copied, setCopied] = useState(false);
 
   const lineup = getLineupById(id);
@@ -217,13 +217,13 @@ export default function LineupDetailPage() {
         <hr className="border-gray-100" />
 
         {/* Worship Leaders + Backups */}
-        <div className={`grid gap-4 ${lineup.backUps.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+        <div className={`grid gap-4 ${(lineup.backUps || []).length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
-              <Mic2 size={12} /> Worship Leader{lineup.worshipLeaders.length > 1 ? 's' : ''}
+              <Mic2 size={12} /> Worship Leader{(lineup.worshipLeaders || []).length > 1 ? 's' : ''}
             </p>
-            <div className={lineup.worshipLeaders.length > 1 ? "flex flex-wrap gap-3 items-center" : "space-y-1"}>
-              {lineup.worshipLeaders.map((wl, i) => {
+            <div className={(lineup.worshipLeaders || []).length > 1 ? "flex flex-wrap gap-3 items-center" : "space-y-1"}>
+              {(lineup.worshipLeaders || []).map((wl, i) => {
                 const member = getMemberById(wl.memberId);
                 const showRole = wl.role && wl.role !== 'Worship Leader';
                 return (
@@ -231,20 +231,20 @@ export default function LineupDetailPage() {
                     {showRole && (
                       <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>
                     )}
-                    <span className={`text-sm text-gray-800 dark:text-gray-100 ${lineup.worshipLeaders.length > 1 ? 'font-bold' : 'font-medium'}`}>{member?.name || '—'}</span>
+                    <span className={`text-sm text-gray-800 dark:text-gray-100 ${(lineup.worshipLeaders || []).length > 1 ? 'font-bold' : 'font-medium'}`}>{member?.name || '—'}</span>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {lineup.backUps.length > 0 && (
+          {(lineup.backUps || []).length > 0 && (
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1.5">
                 <Music4 size={12} /> Back Ups
               </p>
               <div className="flex flex-wrap gap-1">
-                {lineup.backUps.map((bid) => {
+                {(lineup.backUps || []).map((bid) => {
                   const member = getMemberById(bid);
                   return (
                     <span key={bid} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">
@@ -264,7 +264,7 @@ export default function LineupDetailPage() {
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
-              const names = (lineup.instruments[key] || [])
+              const names = ((lineup.instruments || {})[key] || [])
                 .map(id => getMemberById(id)?.name)
                 .filter(Boolean)
                 .join(' / ');
@@ -286,7 +286,7 @@ export default function LineupDetailPage() {
               </div>
             </div>
             {/* Extra instruments */}
-            {(lineup.instruments.extras || []).map((extra, ei) => {
+            {((lineup.instruments || {}).extras || []).map((extra, ei) => {
               const names = (extra.memberIds || [])
                 .map(id => getMemberById(id)?.name)
                 .filter(Boolean)

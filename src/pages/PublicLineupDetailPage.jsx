@@ -116,7 +116,7 @@ export default function PublicLineupDetailPage() {
   if (!lineup) return null;
 
   const getMember = (id) => publicMembers.find(m => m.id === id);
-  const getMemberName = (id) => { const m = getMember(id); return m ? m.name : '—'; };
+  const getMemberName = (id) => { const m = getMember(id); return m ? m.name : null; };
   const se = getMember(lineup.soundEngineer);
   const songs = lineup.songs || [];
   const songGroups = groupSongs(songs);
@@ -187,7 +187,7 @@ export default function PublicLineupDetailPage() {
                   return (
                     <div key={i} className="flex items-center gap-1.5">
                       {showRole && <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">{wl.role}</span>}
-                      <span className={`text-sm text-gray-800 ${(lineup.worshipLeaders || []).length > 1 ? 'font-bold' : 'font-medium'}`}>{getMemberName(wl.memberId)}</span>
+                      <span className={`text-sm text-gray-800 ${(lineup.worshipLeaders || []).length > 1 ? 'font-bold' : 'font-medium'}`}>{getMemberName(wl.memberId) || '—'}</span>
                     </div>
                   );
                 })}
@@ -200,7 +200,7 @@ export default function PublicLineupDetailPage() {
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {lineup.backUps.map(bid => (
-                    <span key={bid} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">{getMemberName(bid)}</span>
+                    <span key={bid} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs">{getMemberName(bid) || '—'}</span>
                   ))}
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function PublicLineupDetailPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
-                const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
+                const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
                 return (
                   <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
                     <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
@@ -234,7 +234,7 @@ export default function PublicLineupDetailPage() {
               </div>
               {/* Extra instruments */}
               {((lineup.instruments || {}).extras || []).map((extra, ei) => {
-                const names = (extra.memberIds || []).map(id => getMemberName(id)).filter(n => n !== '—').join(' / ') || '—';
+                const names = (extra.memberIds || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
                 const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
                 return (
                   <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">

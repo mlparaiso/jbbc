@@ -26,24 +26,6 @@ export default function TeamSetupPage() {
     );
   }
 
-  // Not logged in → go to login
-  if (!user) {
-    navigate('/login', { replace: true });
-    return null;
-  }
-
-  // If the user has a team and they landed on /team-setup directly (initial page load or
-  // browser session restore), redirect to the Year Calendar instead of showing team settings.
-  // React Router sets window.history.state.key when navigating client-side (in-app nav).
-  // On a fresh page load at /team-setup, history.state is null or has no 'key'.
-  if (teamId && team) {
-    const isClientSideNav = !!(window.history.state && window.history.state.key);
-    if (!isClientSideNav) {
-      navigate('/', { replace: true });
-      return null;
-    }
-  }
-
   // Already has a team → show team info / invite code
   if (teamId && team) {
     const copyCode = () => {
