@@ -262,6 +262,7 @@ export default function LineupDetailPage() {
         {/* Instruments grid */}
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
+          {/* 3-col grid: K1, K2, LG, AG, Bass, Drums */}
           <div className="grid grid-cols-3 gap-2">
             {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
               const names = ((lineup.instruments || {})[key] || [])
@@ -278,13 +279,6 @@ export default function LineupDetailPage() {
                 </div>
               );
             })}
-            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
-              <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{se?.name || '—'}</p>
-              </div>
-            </div>
             {/* Extra instruments */}
             {((lineup.instruments || {}).extras || []).map((extra, ei) => {
               const names = (extra.memberIds || [])
@@ -302,8 +296,18 @@ export default function LineupDetailPage() {
                 </div>
               );
             })}
-            {/* Set List */}
-            {lineup.setListUrl && (
+          </div>
+
+          {/* 2-col row: Sound Engineer + Set List (50/50) */}
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
+              <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{se?.name || '—'}</p>
+              </div>
+            </div>
+            {lineup.setListUrl ? (
               <a
                 href={lineup.setListUrl}
                 target="_blank"
@@ -316,6 +320,14 @@ export default function LineupDetailPage() {
                   <p className="text-sm font-medium text-green-700 dark:text-green-300 truncate">Open ↗</p>
                 </div>
               </a>
+            ) : (
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2 opacity-40">
+                <span className="text-gray-400 flex-shrink-0"><ExternalLink size={14} /></span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-400 leading-none">Set List</p>
+                  <p className="text-sm font-medium text-gray-400 truncate">—</p>
+                </div>
+              </div>
             )}
           </div>
         </div>
