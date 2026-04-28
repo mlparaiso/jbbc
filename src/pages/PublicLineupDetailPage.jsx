@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, LogIn, Lock, Mic2, Music4, BookOpen, CalendarCheck, SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, AlertCircle, ChevronLeft, ChevronRight, Music2, AudioLines, Bell, Repeat2 } from 'lucide-react';
+import { ArrowLeft, LogIn, Lock, Mic2, Music4, BookOpen, CalendarCheck, SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, AlertCircle, ChevronLeft, ChevronRight, Music2, AudioLines, Bell, Repeat2, ExternalLink } from 'lucide-react';
 import DonateSection from '../components/DonateSection';
 
 const EXTRA_ICON_MAP = {
@@ -212,11 +212,12 @@ export default function PublicLineupDetailPage() {
           {/* Instruments */}
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {/* 3-col grid: K1, K2, LG, AG, Bass, Drums + extras */}
+            <div className="grid grid-cols-3 gap-2">
               {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
                 const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
                 return (
-                  <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
+                  <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-2">
                     <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
@@ -225,19 +226,12 @@ export default function PublicLineupDetailPage() {
                   </div>
                 );
               })}
-              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
-                <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
-                  <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
-                </div>
-              </div>
               {/* Extra instruments */}
               {((lineup.instruments || {}).extras || []).map((extra, ei) => {
                 const names = (extra.memberIds || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
                 const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
                 return (
-                  <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
+                  <div key={ei} className="flex items-center gap-2 bg-purple-50 rounded-lg px-2 py-2">
                     <span className="text-purple-400 flex-shrink-0">{icon}</span>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
@@ -246,6 +240,39 @@ export default function PublicLineupDetailPage() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* 2-col row: Sound Engineer + Set List (50/50) */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-2 py-2">
+                <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
+                </div>
+              </div>
+              {lineup.setListUrl ? (
+                <a
+                  href={lineup.setListUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-green-50 rounded-lg px-2 py-2 hover:bg-green-100 transition-colors"
+                >
+                  <span className="text-green-500 flex-shrink-0"><ExternalLink size={14} /></span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-400 leading-none">Set List</p>
+                    <p className="text-sm font-medium text-green-700 truncate">Open ↗</p>
+                  </div>
+                </a>
+              ) : (
+                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-2 opacity-40">
+                  <span className="text-gray-400 flex-shrink-0"><ExternalLink size={14} /></span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-400 leading-none">Set List</p>
+                    <p className="text-sm font-medium text-gray-400 truncate">—</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -258,11 +285,15 @@ export default function PublicLineupDetailPage() {
                   <BookOpen size={12} /> Songs
                 </p>
                 <div className="space-y-3">
-                  {songGroups.map((group, gi) => (
-                    <div key={gi}>
-                      <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{group.section}</p>
+                  {(() => {
+                    const openingIdx = songGroups.findIndex(g => g.section === 'Opening');
+                    const welcomeIdx = songGroups.findIndex(g => g.section === 'Welcome');
+                    const paired = openingIdx !== -1 && welcomeIdx !== -1;
+                    const pairedIndices = new Set(paired ? [openingIdx, welcomeIdx] : []);
+
+                    const renderSongList = (songs) => (
                       <div className="space-y-1">
-                        {group.songs.map((song, si) => (
+                        {songs.map((song, si) => (
                           <div key={si} className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-sm text-gray-800 leading-tight">{song.title}</span>
                             {song.key && (
@@ -284,8 +315,41 @@ export default function PublicLineupDetailPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
-                  ))}
+                    );
+
+                    const rows = [];
+                    if (paired) {
+                      const insertAt = Math.min(openingIdx, welcomeIdx);
+                      rows.push({ type: 'paired', insertAt, opening: songGroups[openingIdx], welcome: songGroups[welcomeIdx] });
+                    }
+                    songGroups.forEach((group, gi) => {
+                      if (!pairedIndices.has(gi)) rows.push({ type: 'single', insertAt: gi, group });
+                    });
+                    rows.sort((a, b) => a.insertAt - b.insertAt);
+
+                    return rows.map((row, ri) => {
+                      if (row.type === 'paired') {
+                        return (
+                          <div key={ri} className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.opening.section}</p>
+                              {renderSongList(row.opening.songs)}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.welcome.section}</p>
+                              {renderSongList(row.welcome.songs)}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={ri}>
+                          <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.group.section}</p>
+                          {renderSongList(row.group.songs)}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </>

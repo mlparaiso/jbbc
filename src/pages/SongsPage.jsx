@@ -322,6 +322,11 @@ export default function SongsPage() {
                     {song.defaultKey && <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full font-medium">{song.defaultKey}</span>}
                     {song.tempo && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">{song.tempo}</span>}
                     {song.language && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">{song.language}</span>}
+                    {song.tags?.map((tag) => (
+                      <span key={tag} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
+                        {tag}
+                      </span>
+                    ))}
                     {song.youtubeUrl && (
                       <a
                         href={song.youtubeUrl}
@@ -333,16 +338,6 @@ export default function SongsPage() {
                       </a>
                     )}
                   </div>
-
-                  {!!song.tags?.length && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {song.tags.map((tag) => (
-                        <span key={tag} className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
 
                   {song.notes && (
                     <p className="text-sm text-gray-500 truncate">{song.notes}</p>

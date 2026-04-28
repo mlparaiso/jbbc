@@ -466,3 +466,149 @@ To learn about active projects for the CLI, visit https://firebase.google.com/do
 [info] +  Deploy complete! 
 [info] 
 [info] Project Console: https://console.firebase.google.com/project/music-team-organizer/overview
+[debug] [2026-03-25T14:36:31.167Z] ----------------------------------------------------------------------
+[debug] [2026-03-25T14:36:31.169Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\GJEJMAM\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules
+[debug] [2026-03-25T14:36:31.170Z] CLI Version:   15.10.1
+[debug] [2026-03-25T14:36:31.170Z] Platform:      win32
+[debug] [2026-03-25T14:36:31.170Z] Node Version:  v24.11.1
+[debug] [2026-03-25T14:36:31.170Z] Time:          Wed Mar 25 2026 22:36:31 GMT+0800 (Philippine Standard Time)
+[debug] [2026-03-25T14:36:31.170Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-25T14:36:32.757Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-25T14:36:32.758Z] > authorizing via signed-in user (mlparaiso@gmail.com)
+[debug] [2026-03-25T14:36:32.758Z] [iam] checking project music-team-organizer for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-03-25T14:36:32.759Z] Checked if tokens are valid: false, expires at: 1774449168811
+[debug] [2026-03-25T14:36:32.759Z] Checked if tokens are valid: false, expires at: 1774449168811
+[debug] [2026-03-25T14:36:32.759Z] > refreshing access token with scopes: []
+[debug] [2026-03-25T14:36:32.761Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-03-25T14:36:32.761Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-25T14:36:34.470Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-03-25T14:36:34.470Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-25T14:36:34.477Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions [none]
+[debug] [2026-03-25T14:36:34.477Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions  x-goog-user-project=music-team-organizer
+[debug] [2026-03-25T14:36:34.477Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-03-25T14:36:37.255Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions 200
+[debug] [2026-03-25T14:36:37.255Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'music-team-organizer'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-03-25T14:36:37.258Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:37.258Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:37.258Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) [none]
+[debug] [2026-03-25T14:36:37.941Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) 200
+[debug] [2026-03-25T14:36:37.941Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) {"name":"projects/music-team-organizer/databases/(default)","uid":"79e66220-8dec-4b54-880c-2ba945f3330f","createTime":"2026-02-19T23:04:02.442056Z","updateTime":"2026-02-19T23:04:02.442056Z","locationId":"asia-southeast1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-03-25T13:36:38.171279Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"zas","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"II2Hs5Cju5MDMMbOwIXW5pID"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-03-25T14:36:37.943Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:37.943Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:37.943Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test [none]
+[debug] [2026-03-25T14:36:37.943Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test [omitted]
+[debug] [2026-03-25T14:36:39.498Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test 200
+[debug] [2026-03-25T14:36:39.498Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-03-25T14:36:39.499Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:39.499Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:39.499Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases pageSize=10&pageToken=
+[debug] [2026-03-25T14:36:40.541Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases 200
+[debug] [2026-03-25T14:36:40.541Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases {"releases":[{"name":"projects/music-team-organizer/releases/cloud.firestore","rulesetName":"projects/music-team-organizer/rulesets/0744c086-4c59-4b02-9715-1b8440ca4eb2","createTime":"2026-02-19T23:04:13.252145Z","updateTime":"2026-03-25T14:05:17.294037Z"},{"name":"projects/music-team-organizer/releases/firebase.storage/music-team-organizer.firebasestorage.app","rulesetName":"projects/music-team-organizer/rulesets/67fe32d0-b34e-47b5-aaff-c904be05a118","createTime":"2026-02-21T14:07:48.587597Z","updateTime":"2026-03-25T13:40:59.718640Z"}]}
+[debug] [2026-03-25T14:36:40.548Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:40.548Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:40.548Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/0744c086-4c59-4b02-9715-1b8440ca4eb2 [none]
+[debug] [2026-03-25T14:36:41.577Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/0744c086-4c59-4b02-9715-1b8440ca4eb2 200
+[debug] [2026-03-25T14:36:41.577Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/0744c086-4c59-4b02-9715-1b8440ca4eb2 [omitted]
+[info] i  firestore: uploading rules firestore.rules... 
+[debug] [2026-03-25T14:36:41.578Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:41.578Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:41.578Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets [none]
+[debug] [2026-03-25T14:36:41.578Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets [omitted]
+[debug] [2026-03-25T14:36:42.646Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets 200
+[debug] [2026-03-25T14:36:42.646Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets {"name":"projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e","source":{"files":[{"content":"rules_version = '2';\r\n\r\nservice cloud.firestore {\r\n  match /databases/{database}/documents {\r\n\r\n    // ─── Helper functions ────────────────────────────────────────────────────\r\n\r\n    // Is the request from a signed-in user?\r\n    function isSignedIn() {\r\n      return request.auth != null;\r\n    }\r\n\r\n    // Does the signed-in user own this uid document?\r\n    function isOwner(uid) {\r\n      return isSignedIn() && request.auth.uid == uid;\r\n    }\r\n\r\n    // Read the team document (used in subcollection rules)\r\n    function getTeam(teamId) {\r\n      return get(/databases/$(database)/documents/teams/$(teamId)).data;\r\n    }\r\n\r\n    // Is the team marked public (default true if field absent)?\r\n    function isTeamPublic(teamId) {\r\n      let team = getTeam(teamId);\r\n      return !('isPublic' in team) || team.isPublic == true;\r\n    }\r\n\r\n    // Is the signed-in user the creator of the team?\r\n    // Checks both uid (new teams) and email (legacy teams where createdBy stored email).\r\n    function isTeamCreator(teamId) {\r\n      let team = getTeam(teamId);\r\n      return isSignedIn() && (\r\n        team.createdBy == request.auth.uid ||\r\n        (\r\n          ('createdByEmail' in team) &&\r\n          team.createdByEmail == request.auth.token.email\r\n        )\r\n      );\r\n    }\r\n\r\n    // Is the signed-in user listed in the team's adminUids array?\r\n    // Guards against missing/null adminUids field.\r\n    function isTeamAdmin(teamId) {\r\n      let team = getTeam(teamId);\r\n      return isSignedIn() &&\r\n        ('adminUids' in team) &&\r\n        team.adminUids != null &&\r\n        request.auth.uid in team.adminUids;\r\n    }\r\n\r\n    // Is the signed-in user a member of the team?\r\n    function isMemberOfTeam(teamId) {\r\n      return isSignedIn() &&\r\n        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&\r\n        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == teamId;\r\n    }\r\n\r\n    // Can the user write to this team (creator OR in adminUids)?\r\n    function canWriteTeam(teamId) {\r\n      return isTeamCreator(teamId) || isTeamAdmin(teamId);\r\n    }\r\n\r\n    // ─── /users/{uid} ────────────────────────────────────────────────────────\r\n    match /users/{uid} {\r\n      allow read, write: if isOwner(uid);\r\n    }\r\n\r\n    // ─── /teams/{teamId} ─────────────────────────────────────────────────────\r\n    match /teams/{teamId} {\r\n      // Allow anyone to read the team document so that isTeamPublic() can be\r\n      // evaluated for subcollection rules without a circular-read denial.\r\n      // Sensitive fields (inviteCode, adminUids) are only useful to logged-in\r\n      // admins, but the document itself must be readable to support public links.\r\n      allow read: if true;\r\n      allow create: if isSignedIn();\r\n      allow update, delete: if canWriteTeam(teamId);\r\n\r\n      // ─── /teams/{teamId}/members ─────────────────────────────────────────\r\n      match /members/{memberId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n\r\n      // ─── /teams/{teamId}/lineups ─────────────────────────────────────────\r\n      match /lineups/{lineupId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n    }\r\n\r\n    // ─── Deny everything else ────────────────────────────────────────────────\r\n    match /{document=**} {\r\n      allow read, write: if false;\r\n    }\r\n  }\r\n}\r\n","name":"firestore.rules"}]},"createTime":"2026-03-25T14:36:42.774159Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-03-25T14:36:42.646Z] [rules] created ruleset projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e
+[debug] [2026-03-25T14:36:42.646Z] [rules] releasing cloud.firestore/(default) with ruleset projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e
+[debug] [2026-03-25T14:36:42.646Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:42.647Z] Checked if tokens are valid: true, expires at: 1774452993470
+[debug] [2026-03-25T14:36:42.647Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) [none]
+[debug] [2026-03-25T14:36:42.647Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) {"release":{"name":"projects/music-team-organizer/releases/cloud.firestore/(default)","rulesetName":"projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e"}}
+[debug] [2026-03-25T14:36:43.918Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) 200
+[debug] [2026-03-25T14:36:43.918Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) {"name":"projects/music-team-organizer/releases/cloud.firestore","rulesetName":"projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e","createTime":"2026-02-19T23:04:13.252145Z","updateTime":"2026-03-25T14:36:43.983437Z"}
+[debug] [2026-03-25T14:36:43.918Z] [rules] updated release projects/music-team-organizer/releases/cloud.firestore
+[info] +  firestore: released rules firestore.rules to cloud.firestore 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/music-team-organizer/overview
+[debug] [2026-04-28T00:44:35.119Z] ----------------------------------------------------------------------
+[debug] [2026-04-28T00:44:35.121Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\GJEJMAM\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules
+[debug] [2026-04-28T00:44:35.122Z] CLI Version:   15.10.1
+[debug] [2026-04-28T00:44:35.122Z] Platform:      win32
+[debug] [2026-04-28T00:44:35.122Z] Node Version:  v24.11.1
+[debug] [2026-04-28T00:44:35.122Z] Time:          Tue Apr 28 2026 08:44:35 GMT+0800 (Philippine Standard Time)
+[debug] [2026-04-28T00:44:35.122Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-28T00:44:35.124Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-04-28T00:44:37.467Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-28T00:44:37.467Z] > authorizing via signed-in user (mlparaiso@gmail.com)
+[debug] [2026-04-28T00:44:37.467Z] [iam] checking project music-team-organizer for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-04-28T00:44:37.468Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:37.468Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:37.468Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions [none]
+[debug] [2026-04-28T00:44:37.468Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions  x-goog-user-project=music-team-organizer
+[debug] [2026-04-28T00:44:37.469Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-04-28T00:44:38.052Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-04-28T00:44:38.052Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-04-28T00:44:38.452Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions 200
+[debug] [2026-04-28T00:44:38.452Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/music-team-organizer:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'music-team-organizer'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-04-28T00:44:38.455Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:38.455Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:38.455Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) [none]
+[debug] [2026-04-28T00:44:38.824Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) 200
+[debug] [2026-04-28T00:44:38.824Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/music-team-organizer/databases/(default) {"name":"projects/music-team-organizer/databases/(default)","uid":"79e66220-8dec-4b54-880c-2ba945f3330f","createTime":"2026-02-19T23:04:02.442056Z","updateTime":"2026-02-19T23:04:02.442056Z","locationId":"asia-southeast1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-04-27T23:44:38.971490Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"zas","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"ILXy88moj5QDMMbOwIXW5pID"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-04-28T00:44:38.825Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:38.826Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:38.826Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test [none]
+[debug] [2026-04-28T00:44:38.826Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test [omitted]
+[debug] [2026-04-28T00:44:40.370Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test 200
+[debug] [2026-04-28T00:44:40.370Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-04-28T00:44:40.371Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:40.371Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:40.371Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases pageSize=10&pageToken=
+[debug] [2026-04-28T00:44:41.767Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases 200
+[debug] [2026-04-28T00:44:41.767Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases {"releases":[{"name":"projects/music-team-organizer/releases/cloud.firestore","rulesetName":"projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e","createTime":"2026-02-19T23:04:13.252145Z","updateTime":"2026-03-25T14:36:43.983437Z"},{"name":"projects/music-team-organizer/releases/firebase.storage/music-team-organizer.firebasestorage.app","rulesetName":"projects/music-team-organizer/rulesets/67fe32d0-b34e-47b5-aaff-c904be05a118","createTime":"2026-02-21T14:07:48.587597Z","updateTime":"2026-03-25T13:40:59.718640Z"}]}
+[debug] [2026-04-28T00:44:41.775Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:41.775Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:41.775Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e [none]
+[debug] [2026-04-28T00:44:43.228Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e 200
+[debug] [2026-04-28T00:44:43.228Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets/d3c3ff60-3e0a-46a2-9561-86515d552a6e [omitted]
+[info] i  firestore: uploading rules firestore.rules... 
+[debug] [2026-04-28T00:44:43.229Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:43.229Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:43.229Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets [none]
+[debug] [2026-04-28T00:44:43.229Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets [omitted]
+[debug] [2026-04-28T00:44:44.707Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets 200
+[debug] [2026-04-28T00:44:44.707Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/music-team-organizer/rulesets {"name":"projects/music-team-organizer/rulesets/03cb1c0e-601d-4ce0-bd71-c31e5c0a2a3c","source":{"files":[{"content":"rules_version = '2';\r\n\r\nservice cloud.firestore {\r\n  match /databases/{database}/documents {\r\n\r\n    // ─── Helper functions ────────────────────────────────────────────────────\r\n\r\n    // Is the request from a signed-in user?\r\n    function isSignedIn() {\r\n      return request.auth != null;\r\n    }\r\n\r\n    // Does the signed-in user own this uid document?\r\n    function isOwner(uid) {\r\n      return isSignedIn() && request.auth.uid == uid;\r\n    }\r\n\r\n    // Read the team document (used in subcollection rules)\r\n    function getTeam(teamId) {\r\n      return get(/databases/$(database)/documents/teams/$(teamId)).data;\r\n    }\r\n\r\n    // Is the team marked public (default true if field absent)?\r\n    function isTeamPublic(teamId) {\r\n      let team = getTeam(teamId);\r\n      return !('isPublic' in team) || team.isPublic == true;\r\n    }\r\n\r\n    // Is the signed-in user the creator of the team?\r\n    // Checks both uid (new teams) and email (legacy teams where createdBy stored email).\r\n    function isTeamCreator(teamId) {\r\n      let team = getTeam(teamId);\r\n      return isSignedIn() && (\r\n        team.createdBy == request.auth.uid ||\r\n        (\r\n          ('createdByEmail' in team) &&\r\n          team.createdByEmail == request.auth.token.email\r\n        )\r\n      );\r\n    }\r\n\r\n    // Is the signed-in user listed in the team's adminUids array?\r\n    // Guards against missing/null adminUids field.\r\n    function isTeamAdmin(teamId) {\r\n      let team = getTeam(teamId);\r\n      return isSignedIn() &&\r\n        ('adminUids' in team) &&\r\n        team.adminUids != null &&\r\n        request.auth.uid in team.adminUids;\r\n    }\r\n\r\n    // Is the signed-in user a member of the team?\r\n    function isMemberOfTeam(teamId) {\r\n      return isSignedIn() &&\r\n        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&\r\n        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId == teamId;\r\n    }\r\n\r\n    // Can the user write to this team (creator OR in adminUids)?\r\n    function canWriteTeam(teamId) {\r\n      return isTeamCreator(teamId) || isTeamAdmin(teamId);\r\n    }\r\n\r\n    // ─── /users/{uid} ────────────────────────────────────────────────────────\r\n    match /users/{uid} {\r\n      allow read, write: if isOwner(uid);\r\n    }\r\n\r\n    // ─── /teams/{teamId} ─────────────────────────────────────────────────────\r\n    match /teams/{teamId} {\r\n      // Allow anyone to read the team document so that isTeamPublic() can be\r\n      // evaluated for subcollection rules without a circular-read denial.\r\n      // Sensitive fields (inviteCode, adminUids) are only useful to logged-in\r\n      // admins, but the document itself must be readable to support public links.\r\n      allow read: if true;\r\n      allow create: if isSignedIn();\r\n      allow update, delete: if canWriteTeam(teamId);\r\n\r\n      // ─── /teams/{teamId}/members ─────────────────────────────────────────\r\n      match /members/{memberId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n\r\n      // ─── /teams/{teamId}/lineups ─────────────────────────────────────────\r\n      match /lineups/{lineupId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n\r\n      // ─── /teams/{teamId}/songs ───────────────────────────────────────────\r\n      match /songs/{songId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n\r\n      // ─── /teams/{teamId}/templates ───────────────────────────────────────\r\n      match /templates/{templateId} {\r\n        allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);\r\n        allow write: if canWriteTeam(teamId);\r\n      }\r\n    }\r\n\r\n    // ─── Deny everything else ────────────────────────────────────────────────\r\n    match /{document=**} {\r\n      allow read, write: if false;\r\n    }\r\n  }\r\n}\r\n","name":"firestore.rules"}]},"createTime":"2026-04-28T00:44:44.732399Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-04-28T00:44:44.707Z] [rules] created ruleset projects/music-team-organizer/rulesets/03cb1c0e-601d-4ce0-bd71-c31e5c0a2a3c
+[debug] [2026-04-28T00:44:44.708Z] [rules] releasing cloud.firestore/(default) with ruleset projects/music-team-organizer/rulesets/03cb1c0e-601d-4ce0-bd71-c31e5c0a2a3c
+[debug] [2026-04-28T00:44:44.708Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:44.708Z] Checked if tokens are valid: true, expires at: 1777338881895
+[debug] [2026-04-28T00:44:44.708Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) [none]
+[debug] [2026-04-28T00:44:44.708Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) {"release":{"name":"projects/music-team-organizer/releases/cloud.firestore/(default)","rulesetName":"projects/music-team-organizer/rulesets/03cb1c0e-601d-4ce0-bd71-c31e5c0a2a3c"}}
+[debug] [2026-04-28T00:44:46.138Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) 200
+[debug] [2026-04-28T00:44:46.138Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/music-team-organizer/releases/cloud.firestore/(default) {"name":"projects/music-team-organizer/releases/cloud.firestore","rulesetName":"projects/music-team-organizer/rulesets/03cb1c0e-601d-4ce0-bd71-c31e5c0a2a3c","createTime":"2026-02-19T23:04:13.252145Z","updateTime":"2026-04-28T00:44:46.164249Z"}
+[debug] [2026-04-28T00:44:46.138Z] [rules] updated release projects/music-team-organizer/releases/cloud.firestore
+[info] +  firestore: released rules firestore.rules to cloud.firestore 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/music-team-organizer/overview

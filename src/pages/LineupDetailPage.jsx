@@ -270,7 +270,7 @@ export default function LineupDetailPage() {
                 .filter(Boolean)
                 .join(' / ');
               return (
-                <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
+                <div key={key} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2">
                   <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
@@ -287,7 +287,7 @@ export default function LineupDetailPage() {
                 .join(' / ');
               const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
               return (
-                <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
+                <div key={ei} className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg px-2 py-2">
                   <span className="text-purple-400 flex-shrink-0">{icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
@@ -300,7 +300,7 @@ export default function LineupDetailPage() {
 
           {/* 2-col row: Sound Engineer + Set List (50/50) */}
           <div className="grid grid-cols-2 gap-2 mt-2">
-            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-2 py-2">
               <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
@@ -312,7 +312,7 @@ export default function LineupDetailPage() {
                 href={lineup.setListUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
+                className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 rounded-lg px-2 py-2 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
               >
                 <span className="text-green-500 flex-shrink-0"><ExternalLink size={14} /></span>
                 <div className="min-w-0">
@@ -321,7 +321,7 @@ export default function LineupDetailPage() {
                 </div>
               </a>
             ) : (
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2 opacity-40">
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2 opacity-40">
                 <span className="text-gray-400 flex-shrink-0"><ExternalLink size={14} /></span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-gray-400 leading-none">Set List</p>
@@ -341,11 +341,16 @@ export default function LineupDetailPage() {
                 <BookOpen size={12} /> Songs
               </p>
               <div className="space-y-3">
-                {songGroups.map((group, gi) => (
-                  <div key={gi}>
-                    <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{group.section}</p>
+                {(() => {
+                  // Pair Opening + Welcome side-by-side; everything else renders normally
+                  const openingIdx = songGroups.findIndex(g => g.section === 'Opening');
+                  const welcomeIdx = songGroups.findIndex(g => g.section === 'Welcome');
+                  const paired = openingIdx !== -1 && welcomeIdx !== -1;
+                  const pairedIndices = new Set(paired ? [openingIdx, welcomeIdx] : []);
+
+                  const renderSongList = (songs) => (
                     <div className="space-y-1">
-                      {group.songs.map((song, si) => (
+                      {songs.map((song, si) => (
                         <div key={si} className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-sm text-gray-800 dark:text-gray-100 leading-tight">{song.title}</span>
                           {song.key && (
@@ -372,8 +377,48 @@ export default function LineupDetailPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                ))}
+                  );
+
+                  const rows = [];
+
+                  // Insert paired Opening + Welcome row first (at the position of whichever comes first)
+                  if (paired) {
+                    const insertAt = Math.min(openingIdx, welcomeIdx);
+                    rows.push({ type: 'paired', insertAt, opening: songGroups[openingIdx], welcome: songGroups[welcomeIdx] });
+                  }
+
+                  songGroups.forEach((group, gi) => {
+                    if (!pairedIndices.has(gi)) {
+                      rows.push({ type: 'single', insertAt: gi, group });
+                    }
+                  });
+
+                  // Sort by original index so order is preserved
+                  rows.sort((a, b) => a.insertAt - b.insertAt);
+
+                  return rows.map((row, ri) => {
+                    if (row.type === 'paired') {
+                      return (
+                        <div key={ri} className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.opening.section}</p>
+                            {renderSongList(row.opening.songs)}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.welcome.section}</p>
+                            {renderSongList(row.welcome.songs)}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={ri}>
+                        <p className="text-xs font-bold text-primary-500 uppercase tracking-wide mb-1">{row.group.section}</p>
+                        {renderSongList(row.group.songs)}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </>
