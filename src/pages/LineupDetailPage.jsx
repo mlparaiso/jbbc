@@ -5,7 +5,7 @@ import {
   Mic2, Music4, BookOpen, CalendarCheck,
   Printer, Pencil, Trash2, ChevronLeft, ChevronRight, AlertCircle,
   SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, Share2, Check,
-  Music2, AudioLines, Bell, Repeat2
+  Music2, AudioLines, Bell, Repeat2, ExternalLink
 } from 'lucide-react';
 
 // Map icon string names → actual Lucide components (for extra instruments)
@@ -302,6 +302,21 @@ export default function LineupDetailPage() {
                 </div>
               );
             })}
+            {/* Set List */}
+            {lineup.setListUrl && (
+              <a
+                href={lineup.setListUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2 hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors"
+              >
+                <span className="text-green-500 flex-shrink-0"><ExternalLink size={14} /></span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-400 leading-none">Set List</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300 truncate">Open ↗</p>
+                </div>
+              </a>
+            )}
           </div>
         </div>
 
