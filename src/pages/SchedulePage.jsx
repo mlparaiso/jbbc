@@ -446,23 +446,19 @@ export default function SchedulePage() {
                       if (!names) return null;
                       return <InstrumentPill key={ei} icon={<Music2 size={10} />} name={`${extra.label}: ${names}`} iconClass="text-purple-400" />;
                     })}
-                  </div>
-
-                  {/* Set List card */}
-                  {lineup.setListUrl && (
-                    <div className="px-4 pb-3">
+                    {lineup.setListUrl && (
                       <a
                         href={lineup.setListUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 text-xs font-semibold hover:bg-primary-100 dark:hover:bg-primary-800/40 transition-colors"
+                        className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"
                       >
-                        <ExternalLink size={11} />
+                        <ExternalLink size={10} className="text-green-500" />
                         Set List
                       </a>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                 </div>
               </div>
