@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2, LayoutTemplate, Save } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2, LayoutTemplate, Save, Link } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -256,6 +256,7 @@ export default function LineupFormPage() {
     backUps: [],
     instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
     soundEngineer: '',
+    setListUrl: '',
     practiceDate: '',
     practiceTiming: 'after',
     nextWL: '',
@@ -758,6 +759,19 @@ export default function LineupFormPage() {
             <MultiSelect label="Drums (D)" memberOptions={drummers}
               selected={form.instruments.drums} onChange={v => updateInstrument('drums', v)}
               disabledIds={disabledFor(form.instruments.drums)} />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+              <Link size={14} className="text-primary-500" /> Set List URL (optional)
+            </label>
+            <input
+              type="url"
+              className="input"
+              placeholder="https://docs.google.com/... or any set list link"
+              value={form.setListUrl || ''}
+              onChange={e => setForm(f => ({ ...f, setListUrl: e.target.value }))}
+            />
           </div>
         </div>
 

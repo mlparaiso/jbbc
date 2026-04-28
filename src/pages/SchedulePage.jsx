@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2, ExternalLink
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
 
@@ -447,6 +447,22 @@ export default function SchedulePage() {
                       return <InstrumentPill key={ei} icon={<Music2 size={10} />} name={`${extra.label}: ${names}`} iconClass="text-purple-400" />;
                     })}
                   </div>
+
+                  {/* Set List card */}
+                  {lineup.setListUrl && (
+                    <div className="px-4 pb-3">
+                      <a
+                        href={lineup.setListUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 text-xs font-semibold hover:bg-primary-100 dark:hover:bg-primary-800/40 transition-colors"
+                      >
+                        <ExternalLink size={11} />
+                        Set List
+                      </a>
+                    </div>
+                  )}
 
                 </div>
               </div>
