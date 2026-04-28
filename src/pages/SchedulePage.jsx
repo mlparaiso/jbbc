@@ -40,7 +40,7 @@ function getSundaysInMonth(year, month) {
 function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
   if (!name) return null;
   return (
-    <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-1.5 py-0.5 text-xs">
+    <span className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-1.5 py-px text-xs">
       <span className={iconClass}>{icon}</span>
       {name}
     </span>
@@ -452,7 +452,7 @@ export default function SchedulePage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"
+                        className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded px-1.5 py-px text-xs font-semibold hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"
                       >
                         <ExternalLink size={10} className="text-green-500" />
                         Set List
