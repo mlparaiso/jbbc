@@ -404,6 +404,8 @@ export default function LineupFormPage() {
     // Emit a warning for every member assigned to 2+ roles
     Object.entries(roleMap).forEach(([memberId, roles]) => {
       if (roles.length > 1) {
+        // Team A allows the same person to hold multiple worship leader slots
+        if (form.isTeamA && roles.every(r => r === 'Worship Leader')) return;
         const name = members.find(m => m.id === memberId)?.name || memberId;
         warnings.push(`${name} is assigned to multiple roles: ${roles.join(', ')}`);
       }
@@ -460,8 +462,7 @@ export default function LineupFormPage() {
 
   // Build the full set of all currently assigned member IDs across every slot.
   // Used to disable already-assigned members in other selectors.
-  const allAssignedIds = new Set([
-    ...(form.worshipLeaders || []).map(wl => wl.memberId).filter(Boolean),
+  const nonWlAssignedIds = new Set([
     ...(form.backUps || []),
     ...(form.instruments?.k1 || []),
     ...(form.instruments?.k2 || []),
@@ -471,6 +472,10 @@ export default function LineupFormPage() {
     ...(form.instruments?.drums || []),
     ...((form.instruments?.extras || []).flatMap(e => e.memberIds || [])),
     ...(form.soundEngineer ? [form.soundEngineer] : []),
+  ]);
+  const allAssignedIds = new Set([
+    ...(form.worshipLeaders || []).map(wl => wl.memberId).filter(Boolean),
+    ...nonWlAssignedIds,
   ]);
   // Helper: returns disabled IDs for a given slot's own current selection(s)
   // so that a member's own slot never disables itself.
@@ -676,7 +681,7 @@ export default function LineupFormPage() {
                   onChange={e => updateWL(i, 'memberId', e.target.value)}>
                   <option value="">— Select Member —</option>
                   {vocalists.map(m => {
-                    const isDisabled = m.id !== wl.memberId && allAssignedIds.has(m.id);
+                    const isDisabled = m.id !== wl.memberId && (form.isTeamA ? nonWlAssignedIds.has(m.id) : allAssignedIds.has(m.id));
                     return (
                       <option key={m.id} value={m.id} disabled={isDisabled}>
                         {m.name}{isDisabled ? ' (assigned)' : ''}
