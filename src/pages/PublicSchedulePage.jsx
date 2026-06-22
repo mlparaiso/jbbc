@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CalendarDays, ChevronLeft, ChevronRight, LogIn, Lock, Mic2, BookOpen, Quote, CalendarCheck } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
@@ -26,12 +26,15 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 export default function PublicSchedulePage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { loadPublicTeam, publicTeam, publicLineups, publicMembers, publicLoading, publicError } = useApp();
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  // null = year view; number = month detail view
-  const [selectedMonth, setSelectedMonth] = useState(null);
+  const paramYear = parseInt(searchParams.get('year'));
+  const paramMonth = parseInt(searchParams.get('month'));
+  const [year, setYear] = useState(paramYear || now.getFullYear());
+  // null = year view; number = month detail view; pre-select from URL param if present
+  const [selectedMonth, setSelectedMonth] = useState((paramMonth >= 1 && paramMonth <= 12) ? paramMonth : null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {

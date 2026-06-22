@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
-  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2, ExternalLink
+  CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2, ExternalLink, Share2
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
 
@@ -48,13 +48,14 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, canManageLineups, getMemberById, updateLineup, addLineups, templates } = useApp();
+  const { lineups, canManageLineups, getMemberById, updateLineup, addLineups, templates, teamId } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const now = new Date();
   const year = parseInt(searchParams.get('year') || now.getFullYear());
   const month = parseInt(searchParams.get('month') || (now.getMonth() + 1));
+  const [copiedShare, setCopiedShare] = useState(false);
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState('');
   const [verseInput, setVerseInput] = useState('');
@@ -211,11 +212,30 @@ export default function SchedulePage() {
         <Link to="/" className="text-primary-600 hover:underline text-sm flex items-center gap-1">
           <ChevronLeft size={16} /> All Months
         </Link>
-        {monthLineups.length > 0 && (
-          <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
-            <Printer size={13} /> Print Month
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {teamId && (
+            <button
+              onClick={() => {
+                const publicUrl = `${window.location.origin}/team/${teamId}?year=${year}&month=${month}`;
+                navigator.clipboard.writeText(publicUrl).then(() => {
+                  setCopiedShare(true);
+                  setTimeout(() => setCopiedShare(false), 2000);
+                }).catch(() => {
+                  prompt('Copy this public link:', publicUrl);
+                });
+              }}
+              className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"
+            >
+              {copiedShare ? <Check size={12} className="text-green-500" /> : <Share2 size={12} />}
+              {copiedShare ? 'Copied!' : 'Share'}
+            </button>
+          )}
+          {monthLineups.length > 0 && (
+            <button onClick={() => window.print()} className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 whitespace-nowrap">
+              <Printer size={13} /> Print Month
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Month Navigation */}
