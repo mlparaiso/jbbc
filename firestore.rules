@@ -61,6 +61,24 @@ service cloud.firestore {
       return isTeamCreator(teamId) || isTeamAdmin(teamId);
     }
 
+    // Resolves the signed-in user's current team id (or null), by reading
+    // their /users/{uid} document. Used only for the global config path below,
+    // which isn't nested under a specific team.
+    function myTeamId() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId
+        : null;
+    }
+
+    // Can the signed-in user write the global app config? Any admin
+    // (main_admin or co_admin, via canWriteTeam) of their own current team —
+    // this is intentionally a single shared config across all teams, not
+    // scoped per team.
+    function canWriteAppConfig() {
+      let teamId = myTeamId();
+      return teamId != null && canWriteTeam(teamId);
+    }
+
     // ─── /users/{uid} ────────────────────────────────────────────────────────
     match /users/{uid} {
       allow read, write: if isOwner(uid);
@@ -99,6 +117,16 @@ service cloud.firestore {
         allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
         allow write: if canWriteTeam(teamId);
       }
+    }
+
+    // ─── /config/appConfig ───────────────────────────────────────────────────
+    // Global (not team-scoped) config: worship-leader role labels and
+    // instrument slot definitions, editable from Team Setup → Roles & Instruments.
+    // Readable by anyone — including unauthenticated visitors of a public
+    // shared-lineup link — writable only by an admin of the writer's own team.
+    match /config/appConfig {
+      allow read: if true;
+      allow write: if canWriteAppConfig();
     }
 
     // ─── Deny everything else ────────────────────────────────────────────────
