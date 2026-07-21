@@ -176,10 +176,10 @@ export default function RolesInstrumentsSettings() {
               ) : (
                 <>
                   <span className="flex-1 text-sm text-gray-700">{role}</span>
-                  <button type="button" onClick={() => reorderRole(i, -1)} disabled={i === 0} className="text-gray-300 hover:text-gray-500 disabled:opacity-30"><ArrowUp size={13} /></button>
-                  <button type="button" onClick={() => reorderRole(i, 1)} disabled={i === worshipLeaderRoles.length - 1} className="text-gray-300 hover:text-gray-500 disabled:opacity-30"><ArrowDown size={13} /></button>
-                  <button type="button" onClick={() => startEditRole(i)} className="text-gray-400 hover:text-primary-600"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => deleteRole(i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => reorderRole(i, -1)} disabled={i === 0 || editingRoleIndex !== null} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowUp size={13} /></button>
+                  <button type="button" onClick={() => reorderRole(i, 1)} disabled={i === worshipLeaderRoles.length - 1 || editingRoleIndex !== null} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowDown size={13} /></button>
+                  <button type="button" onClick={() => startEditRole(i)} disabled={editingRoleIndex !== null} className="text-gray-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed"><Pencil size={13} /></button>
+                  <button type="button" onClick={() => deleteRole(i)} disabled={editingRoleIndex !== null} className="text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"><Trash2 size={13} /></button>
                 </>
               )}
             </div>
