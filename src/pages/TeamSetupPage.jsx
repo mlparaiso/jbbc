@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, LayoutTemplate } from 'lucide-react';
+import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Users, Globe, Lock, Star, Trash2, LayoutTemplate, ListMusic } from 'lucide-react';
 import TeamLogoUploader from '../components/TeamLogoUploader';
+import RolesInstrumentsSettings from '../components/RolesInstrumentsSettings';
 export default function TeamSetupPage() {
   const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
@@ -247,6 +248,19 @@ export default function TeamSetupPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {canManageLineups && (
+            <div className="bg-gray-50 rounded-lg p-3 space-y-3 text-left">
+              <div className="flex items-center gap-2">
+                <ListMusic size={15} className="text-primary-500" />
+                <div>
+                  <p className="text-xs font-semibold text-gray-700">Roles & Instruments</p>
+                  <p className="text-xs text-gray-400">Manage the worship-leader roles and instrument slots used on every lineup.</p>
+                </div>
+              </div>
+              <RolesInstrumentsSettings />
             </div>
           )}
 
