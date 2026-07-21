@@ -6,6 +6,7 @@ import {
   CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2, ExternalLink, Share2
 } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
+import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -48,7 +49,7 @@ function InstrumentPill({ icon, name, iconClass = 'text-primary-400' }) {
 }
 
 export default function SchedulePage() {
-  const { lineups, canManageLineups, getMemberById, updateLineup, addLineups, templates, teamId } = useApp();
+  const { lineups, canManageLineups, getMemberById, updateLineup, addLineups, templates, teamId, instrumentSlots } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -286,13 +287,14 @@ export default function SchedulePage() {
             {monthLineups.map((l, i) => {
               const wl = l.worshipLeaders.map(w => getMemberById(w.memberId)?.name || '—').join(', ');
               const bu = l.backUps.map(id => getMemberById(id)?.name).filter(Boolean).join(', ') || '—';
-              const k1p = (l.instruments.k1 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const k2p = (l.instruments.k2 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const bp = (l.instruments.bass || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const lgp = (l.instruments.leadGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const agp = (l.instruments.acousticGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const dp = (l.instruments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
-              const sep = getMemberById(l.soundEngineer)?.name || '—';
+              const lAssignments = normalizeLineupInstruments(l, instrumentSlots);
+              const k1p = (lAssignments.k1 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const k2p = (lAssignments.k2 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const bp = (lAssignments.bass || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const lgp = (lAssignments.leadGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const agp = (lAssignments.acousticGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const dp = (lAssignments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '—';
+              const sep = getMemberById(lAssignments.soundEngineer?.[0])?.name || '—';
               return (
                 <tr key={l.id} style={{backgroundColor: i % 2 === 0 ? '#f5f3ff' : '#ffffff', borderBottom: '1px solid #e5e7eb'}}>
                   <td className="py-2 px-2 font-semibold text-gray-800 whitespace-nowrap">{printDate(l.date)}</td>
@@ -407,13 +409,14 @@ export default function SchedulePage() {
             }).join(', ');
 
             const backupNames = lineup.backUps.map(id => getMemberById(id)?.name).filter(Boolean).join(', ');
-            const k1 = lineup.instruments.k1?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const k2 = lineup.instruments.k2?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const bass = lineup.instruments.bass?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const lg = lineup.instruments.leadGuitar?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const ag = lineup.instruments.acousticGuitar?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const drums = lineup.instruments.drums?.map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const se = getMemberById(lineup.soundEngineer);
+            const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+            const k1 = (assignments.k1 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const k2 = (assignments.k2 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const bass = (assignments.bass || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const lg = (assignments.leadGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const ag = (assignments.acousticGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const drums = (assignments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
+            const se = getMemberById(assignments.soundEngineer?.[0]);
 
             return (
               <div key={lineup.id}>
@@ -461,10 +464,9 @@ export default function SchedulePage() {
                     {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass="text-primary-400" />}
                     {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass="text-primary-400" />}
                     {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
-                    {(lineup.instruments.extras || []).map((extra, ei) => {
-                      const names = (extra.memberIds || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/');
-                      if (!names) return null;
-                      return <InstrumentPill key={ei} icon={<Music2 size={10} />} name={`${extra.label}: ${names}`} iconClass="text-purple-400" />;
+                    {instrumentSlots.filter(s => !s.core && (assignments[s.id]?.length > 0)).map(slot => {
+                      const names = (assignments[slot.id] || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/');
+                      return <InstrumentPill key={slot.id} icon={<Music2 size={10} />} name={`${slot.label}: ${names}`} iconClass="text-purple-400" />;
                     })}
                     {lineup.setListUrl && (
                       <a
