@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { INSTRUMENT_ROLES, ROLE_CATEGORIES } from '../data/initialData';
-import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, AudioLines, Bell, Repeat2, LayoutTemplate, Save, Link } from 'lucide-react';
+import { ROLE_CATEGORIES } from '../data/initialData';
+import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
+import { Plus, Trash2, ChevronLeft, ClipboardList, Mic2, Music4, Guitar, SlidersHorizontal, BookOpen, FileText, GripVertical, Copy, AlertTriangle, Music2, LayoutTemplate, Save, Link } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -11,35 +12,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// Extra instrument catalogue (label → icon component)
-export const EXTRA_INSTRUMENTS = [
-  { label: 'Violin',            icon: 'Music2' },
-  { label: 'Viola',             icon: 'Music2' },
-  { label: 'Cello',             icon: 'Music2' },
-  { label: 'Violin Section',    icon: 'Music2' },
-  { label: 'Trumpet',           icon: 'AudioLines' },
-  { label: 'Flugelhorn',        icon: 'AudioLines' },
-  { label: 'Trombone',          icon: 'AudioLines' },
-  { label: 'French Horn',       icon: 'AudioLines' },
-  { label: 'Tuba',              icon: 'AudioLines' },
-  { label: 'Flute',             icon: 'AudioLines' },
-  { label: 'Piccolo',           icon: 'AudioLines' },
-  { label: 'Clarinet',          icon: 'AudioLines' },
-  { label: 'Alto Saxophone',    icon: 'AudioLines' },
-  { label: 'Tenor Saxophone',   icon: 'AudioLines' },
-  { label: 'Oboe',              icon: 'AudioLines' },
-  { label: 'Cajon',             icon: 'Drum' },
-  { label: 'Djembe',            icon: 'Drum' },
-  { label: 'Tambourine',        icon: 'Drum' },
-  { label: 'Shaker',            icon: 'Drum' },
-  { label: 'Hand Bells',        icon: 'Bell' },
-  { label: 'Ukulele',           icon: 'Guitar' },
-  { label: 'Banjo',             icon: 'Guitar' },
-  { label: 'Mandolin',          icon: 'Guitar' },
-  { label: 'Synth / Pads',      icon: 'Piano' },
-  { label: 'Loop Station',      icon: 'Repeat2' },
-];
-
 const SONG_SECTIONS = ['Opening', 'Opening/Welcome', 'Welcome', 'Praise and Worship', "Lord's Table", 'Special Number', 'Other'];
 const SONG_KEYS = ['', 'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 const PRACTICE_TIMING_OPTIONS = [
@@ -47,7 +19,27 @@ const PRACTICE_TIMING_OPTIONS = [
   { value: 'before', label: 'Before the service' },
   { value: 'none', label: 'None' },
 ];
-const TEAM_A_ROLES = ["Opening/Welcome", "Praise", "Worship", "Lord's Table", "Opening", "Other"];
+
+// Which non-core instrument slot ids currently have a visible "Additional
+// Instruments" row, derived from whatever keys are present in the assignments
+// map (anything that isn't a known core slot, including orphaned "legacy-*"
+// keys from normalizeLineupInstruments).
+function deriveActiveExtraSlotIds(assignments, instrumentSlots) {
+  return Object.keys(assignments).filter(id => {
+    const slot = instrumentSlots.find(s => s.id === id);
+    return slot ? !slot.core : true;
+  });
+}
+
+// Converts a saved lineup (old or new field shape) into the form's working shape.
+function buildFormFromLineup(lineup, instrumentSlots) {
+  const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+  return {
+    ...lineup,
+    instrumentAssignments: assignments,
+    activeExtraSlotIds: deriveActiveExtraSlotIds(assignments, instrumentSlots),
+  };
+}
 
 // Autocomplete input for song titles
 function SongAutocomplete({ value, onChange, songLibrary, inputClass }) {
@@ -233,11 +225,18 @@ function SingleSelect({ label, memberOptions, selected, onChange, disabledIds = 
 export default function LineupFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getLineupById, addLineup, updateLineup, addTemplate, members, canManageLineups, lineups, songs, templates } = useApp();
+  const {
+    getLineupById, addLineup, updateLineup, addTemplate, members, canManageLineups,
+    lineups, songs, templates, instrumentSlots, worshipLeaderRoles,
+  } = useApp();
 
   const isEdit = id && id !== 'new';
   const existing = isEdit ? getLineupById(id) : null;
   const [searchParams] = useSearchParams();
+
+  const coreInstrumentSlots = instrumentSlots.filter(s => s.core && s.id !== 'soundEngineer');
+  const nonCoreSlots = instrumentSlots.filter(s => !s.core);
+  const soundEngineerSlot = instrumentSlots.find(s => s.id === 'soundEngineer');
 
   // Pre-fill date from ?year=&month= when creating a new lineup
   const prefillDate = (() => {
@@ -254,8 +253,8 @@ export default function LineupFormPage() {
     theme: '',
     worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
     backUps: [],
-    instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-    soundEngineer: '',
+    instrumentAssignments: {},
+    activeExtraSlotIds: [],
     setListUrl: '',
     practiceDate: '',
     practiceTiming: 'after',
@@ -265,7 +264,7 @@ export default function LineupFormPage() {
     notes: '',
   };
 
-  const [form, setForm] = useState(existing || emptyForm);
+  const [form, setForm] = useState(existing ? buildFormFromLineup(existing, instrumentSlots) : emptyForm);
   const [saved, setSaved] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -278,7 +277,7 @@ export default function LineupFormPage() {
   // Guard with existing?.date so we only trigger when the lineup actually loads,
   // not on every render, and don't overwrite user edits once the form is populated.
   useEffect(() => {
-    if (existing) setForm(existing);
+    if (existing) setForm(buildFormFromLineup(existing, instrumentSlots));
   }, [id, existing?.date]);
 
   // Song library: canonical songs first, then unique songs from past lineups
@@ -380,26 +379,10 @@ export default function LineupFormPage() {
     // Back-up vocalists
     (form.backUps || []).forEach(id => addToMap(id, 'Back Up'));
 
-    // Standard instrument slots
-    const stdSlots = [
-      { key: 'k1',            label: 'K1' },
-      { key: 'k2',            label: 'K2' },
-      { key: 'bass',          label: 'Bass' },
-      { key: 'leadGuitar',    label: 'Lead Guitar' },
-      { key: 'acousticGuitar',label: 'Acoustic Guitar' },
-      { key: 'drums',         label: 'Drums' },
-    ];
-    stdSlots.forEach(({ key, label }) => {
-      ((form.instruments || {})[key] || []).forEach(id => addToMap(id, label));
+    // Every instrument slot (core + any active extras)
+    instrumentSlots.forEach(slot => {
+      (form.instrumentAssignments[slot.id] || []).forEach(id => addToMap(id, slot.label));
     });
-
-    // Extra instruments
-    ((form.instruments || {}).extras || []).forEach(extra => {
-      (extra.memberIds || []).forEach(id => addToMap(id, extra.label || 'Extra Instrument'));
-    });
-
-    // Sound engineer
-    if (form.soundEngineer) addToMap(form.soundEngineer, 'Sound Engineer');
 
     // Emit a warning for every member assigned to 2+ roles
     Object.entries(roleMap).forEach(([memberId, roles]) => {
@@ -415,10 +398,13 @@ export default function LineupFormPage() {
     const hasWL = (form.worshipLeaders || []).some(wl => wl.memberId);
     if (!hasWL) warnings.push('No worship leader selected');
 
-    if (!form.soundEngineer) warnings.push('No sound engineer selected');
+    const hasSoundEngineer = (form.instrumentAssignments.soundEngineer || []).length > 0;
+    if (instrumentSlots.some(s => s.id === 'soundEngineer') && !hasSoundEngineer) {
+      warnings.push('No sound engineer selected');
+    }
 
     return warnings;
-  }, [form, members]);
+  }, [form, members, instrumentSlots]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -454,24 +440,12 @@ export default function LineupFormPage() {
   const backUpVocalists = members.filter(m => Array.isArray(m.roles) && (
     m.roles.includes(ROLE_CATEGORIES.BACK_UP) || m.roles.includes(ROLE_CATEGORIES.VOCALIST)
   ));
-  const keyboardists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.KEYBOARD));
-  const bassists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.BASS));
-  const guitarists = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.GUITAR));
-  const drummers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.DRUMS));
-  const soundEngineers = members.filter(m => Array.isArray(m.roles) && m.roles.includes(ROLE_CATEGORIES.SOUND));
 
   // Build the full set of all currently assigned member IDs across every slot.
   // Used to disable already-assigned members in other selectors.
   const nonWlAssignedIds = new Set([
     ...(form.backUps || []),
-    ...(form.instruments?.k1 || []),
-    ...(form.instruments?.k2 || []),
-    ...(form.instruments?.bass || []),
-    ...(form.instruments?.leadGuitar || []),
-    ...(form.instruments?.acousticGuitar || []),
-    ...(form.instruments?.drums || []),
-    ...((form.instruments?.extras || []).flatMap(e => e.memberIds || [])),
-    ...(form.soundEngineer ? [form.soundEngineer] : []),
+    ...Object.values(form.instrumentAssignments || {}).flat(),
   ]);
   const allAssignedIds = new Set([
     ...(form.worshipLeaders || []).map(wl => wl.memberId).filter(Boolean),
@@ -484,8 +458,54 @@ export default function LineupFormPage() {
     return [...allAssignedIds].filter(id => !own.has(id));
   };
 
-  const updateInstrument = (key, value) => {
-    setForm(f => ({ ...f, instruments: { ...f.instruments, [key]: value } }));
+  const updateInstrumentSlot = (slotId, value) => {
+    setForm(f => ({ ...f, instrumentAssignments: { ...f.instrumentAssignments, [slotId]: value } }));
+  };
+
+  const availableExtraSlots = nonCoreSlots.filter(s => !form.activeExtraSlotIds.includes(s.id));
+
+  const getSlotDisplay = (slotId) => {
+    const slot = instrumentSlots.find(s => s.id === slotId);
+    if (slot) return { label: slot.label };
+    return { label: slotId.startsWith('legacy-') ? slotId.slice(7) : slotId };
+  };
+
+  const addExtraRow = () => {
+    const next = availableExtraSlots[0];
+    if (!next) return;
+    setForm(f => ({
+      ...f,
+      activeExtraSlotIds: [...f.activeExtraSlotIds, next.id],
+      instrumentAssignments: { ...f.instrumentAssignments, [next.id]: [] },
+    }));
+  };
+
+  const removeExtraRow = (rowIndex) => {
+    setForm(f => {
+      const slotId = f.activeExtraSlotIds[rowIndex];
+      const newAssignments = { ...f.instrumentAssignments };
+      delete newAssignments[slotId];
+      return {
+        ...f,
+        activeExtraSlotIds: f.activeExtraSlotIds.filter((_, i) => i !== rowIndex),
+        instrumentAssignments: newAssignments,
+      };
+    });
+  };
+
+  const updateExtraRowSlot = (rowIndex, newSlotId) => {
+    setForm(f => {
+      const oldSlotId = f.activeExtraSlotIds[rowIndex];
+      const movedMemberIds = f.instrumentAssignments[oldSlotId] || [];
+      const newAssignments = { ...f.instrumentAssignments };
+      delete newAssignments[oldSlotId];
+      newAssignments[newSlotId] = movedMemberIds;
+      return {
+        ...f,
+        activeExtraSlotIds: f.activeExtraSlotIds.map((id, i) => i === rowIndex ? newSlotId : id),
+        instrumentAssignments: newAssignments,
+      };
+    });
   };
 
   const addWL = () => setForm(f => ({
@@ -509,12 +529,13 @@ export default function LineupFormPage() {
     const selectedTemplate = templates.find(template => template.id === selectedTemplateId);
     if (!selectedTemplate) return;
 
+    const assignments = normalizeLineupInstruments(selectedTemplate, instrumentSlots);
     setForm(f => ({
       ...f,
       worshipLeaders: selectedTemplate.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }],
       backUps: selectedTemplate.backUps || [],
-      instruments: selectedTemplate.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-      soundEngineer: selectedTemplate.soundEngineer || '',
+      instrumentAssignments: assignments,
+      activeExtraSlotIds: deriveActiveExtraSlotIds(assignments, instrumentSlots),
       notes: selectedTemplate.notes || '',
     }));
     setTemplateApplied(true);
@@ -529,8 +550,7 @@ export default function LineupFormPage() {
       isTeamA: form.isTeamA,
       worshipLeaders: form.worshipLeaders,
       backUps: form.backUps,
-      instruments: form.instruments,
-      soundEngineer: form.soundEngineer,
+      instrumentAssignments: form.instrumentAssignments,
       notes: form.notes,
     });
 
@@ -694,7 +714,7 @@ export default function LineupFormPage() {
                 {form.isTeamA ? (
                   <select className="input flex-1" value={wl.role}
                     onChange={e => updateWL(i, 'role', e.target.value)}>
-                    {TEAM_A_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    {worshipLeaderRoles.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 ) : (
                   <input type="text" className="input flex-1" placeholder="Role (optional)"
@@ -731,7 +751,14 @@ export default function LineupFormPage() {
             </h3>
             {prevLineup && (
               <button type="button"
-                onClick={() => setForm(f => ({ ...f, instruments: prevLineup.instruments, soundEngineer: prevLineup.soundEngineer }))}
+                onClick={() => {
+                  const assignments = normalizeLineupInstruments(prevLineup, instrumentSlots);
+                  setForm(f => ({
+                    ...f,
+                    instrumentAssignments: assignments,
+                    activeExtraSlotIds: deriveActiveExtraSlotIds(assignments, instrumentSlots),
+                  }));
+                }}
                 className="flex items-center gap-1 text-xs text-primary-600 hover:underline"
               >
                 <Copy size={12} /> Copy from {prevLineup.date}
@@ -740,30 +767,21 @@ export default function LineupFormPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SingleSelect label="Keyboard 1 (K1)" memberOptions={keyboardists}
-              selected={form.instruments.k1[0] || ''} onChange={v => updateInstrument('k1', v ? [v] : [])}
-              disabledIds={disabledFor(form.instruments.k1[0] || null)} />
-            <SingleSelect label="Keyboard 2 (K2)" memberOptions={keyboardists}
-              selected={form.instruments.k2[0] || ''} onChange={v => updateInstrument('k2', v ? [v] : [])}
-              disabledIds={disabledFor(form.instruments.k2[0] || null)} />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MultiSelect label="Bass (B)" memberOptions={bassists}
-              selected={form.instruments.bass} onChange={v => updateInstrument('bass', v)}
-              disabledIds={disabledFor(form.instruments.bass)} />
-            <MultiSelect label="Lead Guitar (LG)" memberOptions={guitarists}
-              selected={form.instruments.leadGuitar} onChange={v => updateInstrument('leadGuitar', v)}
-              disabledIds={disabledFor(form.instruments.leadGuitar)} />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MultiSelect label="Acoustic Guitar (AG)" memberOptions={guitarists}
-              selected={form.instruments.acousticGuitar} onChange={v => updateInstrument('acousticGuitar', v)}
-              disabledIds={disabledFor(form.instruments.acousticGuitar)} />
-            <MultiSelect label="Drums (D)" memberOptions={drummers}
-              selected={form.instruments.drums} onChange={v => updateInstrument('drums', v)}
-              disabledIds={disabledFor(form.instruments.drums)} />
+            {coreInstrumentSlots.map(slot => {
+              const selected = form.instrumentAssignments[slot.id] || [];
+              const eligibleMembers = slot.category
+                ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(slot.category))
+                : members;
+              return slot.multiSelect ? (
+                <MultiSelect key={slot.id} label={slot.label} memberOptions={eligibleMembers}
+                  selected={selected} onChange={v => updateInstrumentSlot(slot.id, v)}
+                  disabledIds={disabledFor(selected)} />
+              ) : (
+                <SingleSelect key={slot.id} label={slot.label} memberOptions={eligibleMembers}
+                  selected={selected[0] || ''} onChange={v => updateInstrumentSlot(slot.id, v ? [v] : [])}
+                  disabledIds={disabledFor(selected[0] || null)} />
+              );
+            })}
           </div>
 
           <div>
@@ -781,11 +799,19 @@ export default function LineupFormPage() {
         </div>
 
         {/* Sound Engineer */}
-        <div className="card">
-          <SingleSelect label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> Sound Engineer</span>} memberOptions={soundEngineers}
-            selected={form.soundEngineer} onChange={v => setForm(f => ({ ...f, soundEngineer: v }))}
-            disabledIds={disabledFor(form.soundEngineer || null)} />
-        </div>
+        {soundEngineerSlot && (
+          <div className="card">
+            <SingleSelect
+              label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> {soundEngineerSlot.label}</span>}
+              memberOptions={soundEngineerSlot.category
+                ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(soundEngineerSlot.category))
+                : members}
+              selected={(form.instrumentAssignments.soundEngineer || [])[0] || ''}
+              onChange={v => updateInstrumentSlot('soundEngineer', v ? [v] : [])}
+              disabledIds={disabledFor((form.instrumentAssignments.soundEngineer || [])[0] || null)}
+            />
+          </div>
+        )}
 
         {/* Additional Instruments */}
         <div className="card space-y-3">
@@ -795,92 +821,71 @@ export default function LineupFormPage() {
             </h3>
             <button
               type="button"
-              onClick={() => setForm(f => ({
-                ...f,
-                instruments: {
-                  ...f.instruments,
-                  extras: [...(f.instruments.extras || []), { label: EXTRA_INSTRUMENTS[0].label, memberIds: [] }],
-                },
-              }))}
-              className="text-primary-600 hover:underline text-xs flex items-center gap-1"
+              onClick={addExtraRow}
+              disabled={availableExtraSlots.length === 0}
+              className="text-primary-600 hover:underline text-xs flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={13} /> Add Instrument
             </button>
           </div>
-          {(form.instruments.extras || []).length === 0 && (
+          {form.activeExtraSlotIds.length === 0 && (
             <p className="text-xs text-gray-400">No additional instruments. Click "Add Instrument" to include violin, trumpet, etc.</p>
           )}
-          {(form.instruments.extras || []).map((extra, ei) => (
-            <div key={ei} className="border border-gray-100 rounded-lg p-3 space-y-2 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <select
-                  className={`${ci} flex-1`}
-                  value={extra.label}
-                  onChange={e => setForm(f => ({
-                    ...f,
-                    instruments: {
-                      ...f.instruments,
-                      extras: f.instruments.extras.map((x, i) => i === ei ? { ...x, label: e.target.value } : x),
-                    },
-                  }))}
-                >
-                  {EXTRA_INSTRUMENTS.map(inst => (
-                    <option key={inst.label} value={inst.label}>{inst.label}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({
-                    ...f,
-                    instruments: {
-                      ...f.instruments,
-                      extras: f.instruments.extras.filter((_, i) => i !== ei),
-                    },
-                  }))}
-                  className="text-red-400 hover:text-red-600 flex-shrink-0"
-                >
-                  <Trash2 size={14} />
-                </button>
+          {form.activeExtraSlotIds.map((slotId, ei) => {
+            const display = getSlotDisplay(slotId);
+            const knownSlot = nonCoreSlots.some(s => s.id === slotId);
+            const rowOptions = nonCoreSlots.filter(s => s.id === slotId || !form.activeExtraSlotIds.includes(s.id));
+            const memberIds = form.instrumentAssignments[slotId] || [];
+            return (
+              <div key={ei} className="border border-gray-100 rounded-lg p-3 space-y-2 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <select
+                    className={`${ci} flex-1`}
+                    value={slotId}
+                    onChange={e => updateExtraRowSlot(ei, e.target.value)}
+                  >
+                    {!knownSlot && <option value={slotId}>{display.label} (removed)</option>}
+                    {rowOptions.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeExtraRow(ei)}
+                    className="text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                {/* Member multi-select */}
+                <div className="flex flex-wrap gap-1.5 p-2 border border-gray-200 rounded-md bg-white min-h-8">
+                  {members.map(m => {
+                    const selected = memberIds.includes(m.id);
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => updateInstrumentSlot(
+                          slotId,
+                          selected ? memberIds.filter(mid => mid !== m.id) : [...memberIds, m.id]
+                        )}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                          selected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                {memberIds.length > 0 && (
+                  <p className="text-xs text-gray-500">
+                    Selected: {memberIds.map(mid => members.find(m => m.id === mid)?.name).filter(Boolean).join(', ')}
+                  </p>
+                )}
               </div>
-              {/* Member multi-select */}
-              <div className="flex flex-wrap gap-1.5 p-2 border border-gray-200 rounded-md bg-white min-h-8">
-                {members.map(m => {
-                  const selected = (extra.memberIds || []).includes(m.id);
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setForm(f => ({
-                        ...f,
-                        instruments: {
-                          ...f.instruments,
-                          extras: f.instruments.extras.map((x, i) => i === ei
-                            ? {
-                                ...x,
-                                memberIds: selected
-                                  ? x.memberIds.filter(id => id !== m.id)
-                                  : [...(x.memberIds || []), m.id],
-                              }
-                            : x
-                          ),
-                        },
-                      }))}
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                        selected ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {m.name}
-                    </button>
-                  );
-                })}
-              </div>
-              {(extra.memberIds || []).length > 0 && (
-                <p className="text-xs text-gray-500">
-                  Selected: {extra.memberIds.map(id => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Songs */}
