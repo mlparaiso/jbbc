@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Lock,
 } from 'lucide-react';
+import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
 
 function formatShortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -28,7 +29,7 @@ function getTodayStr() {
   return `${y}-${m}-${d}`;
 }
 
-function getAlerts(lineup) {
+function getAlerts(lineup, instrumentSlots) {
   const alerts = [];
 
   // 1. Missing worship leader
@@ -38,8 +39,10 @@ function getAlerts(lineup) {
     lineup.worshipLeaders.some((wl) => wl.memberId && wl.memberId.trim() !== '');
   if (!hasWL) alerts.push('Missing WL');
 
+  const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+
   // 2. Missing sound engineer
-  if (!lineup.soundEngineer || lineup.soundEngineer.trim() === '') {
+  if (!(assignments.soundEngineer?.length > 0)) {
     alerts.push('Missing SE');
   }
 
@@ -53,11 +56,9 @@ function getAlerts(lineup) {
     alerts.push('No practice date');
   }
 
-  // 5. Incomplete band — require k1, bass, drums (nested under lineup.instruments)
+  // 5. Incomplete band — require k1, bass, drums
   const coreRoles = ['k1', 'bass', 'drums'];
-  const missingCore = coreRoles.some(
-    (role) => !lineup.instruments?.[role] || lineup.instruments[role].length === 0
-  );
+  const missingCore = coreRoles.some((role) => !(assignments[role]?.length > 0));
   if (missingCore) alerts.push('Incomplete band');
 
   return alerts;
@@ -92,7 +93,7 @@ function SummaryCard({ label, value, sub, colorClass }) {
 }
 
 export default function DashboardPage() {
-  const { lineups, getMemberById, canManageLineups } = useApp();
+  const { lineups, getMemberById, canManageLineups, instrumentSlots } = useApp();
   const navigate = useNavigate();
 
   // Access guard
@@ -119,7 +120,7 @@ export default function DashboardPage() {
     .sort((a, b) => a.date.localeCompare(b.date));
 
   // Compute alerts per lineup
-  const lineupAlerts = upcoming.map((l) => ({ lineup: l, alerts: getAlerts(l) }));
+  const lineupAlerts = upcoming.map((l) => ({ lineup: l, alerts: getAlerts(l, instrumentSlots) }));
 
   const withIssues = lineupAlerts.filter((la) => la.alerts.length > 0);
   const totalAlerts = withIssues.reduce((sum, la) => sum + la.alerts.length, 0);
