@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { auth, googleProvider, db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { DEFAULT_WORSHIP_LEADER_ROLES, DEFAULT_INSTRUMENT_SLOTS } from '../data/defaultAppConfig';
 
 const AppContext = createContext(null);
 
@@ -22,6 +23,7 @@ export function AppProvider({ children }) {
   const [songs, setSongs] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [myRole, setMyRole] = useState(null); // 'main_admin' | 'co_admin' | 'member' | null
+  const [appConfig, setAppConfig] = useState(null); // { worshipLeaderRoles, instrumentSlots } — null until config/appConfig loads (or doesn't exist)
 
   // For public (guest) viewing — loaded without auth
   const [publicTeamId, setPublicTeamId] = useState(null);
@@ -221,6 +223,17 @@ export function AppProvider({ children }) {
     return unsub;
   }, [teamId]);
 
+  // --- Load global app config (worship leader roles & instrument slots) ---
+  // Not team-scoped — a single shared document for the whole app. Loaded
+  // regardless of auth state (Firestore rules allow public read) so both the
+  // authenticated app and unauthenticated public lineup pages can use it.
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'appConfig'), (snap) => {
+      setAppConfig(snap.exists() ? snap.data() : null);
+    });
+    return unsub;
+  }, []);
+
   // ==================== AUTH ====================
   const loginWithGoogle = async () => {
     await signInWithPopup(auth, googleProvider);
@@ -243,6 +256,11 @@ export function AppProvider({ children }) {
   // Team feature flags derived from team doc
   const hasTeamA = team?.hasTeamA === true;
 
+  // Roles/instrument-slot config with hardcoded fallbacks — so nothing breaks
+  // before config/appConfig exists or before an admin customizes a field.
+  const worshipLeaderRoles = appConfig?.worshipLeaderRoles || DEFAULT_WORSHIP_LEADER_ROLES;
+  const instrumentSlots = appConfig?.instrumentSlots || DEFAULT_INSTRUMENT_SLOTS;
+
   // ==================== TEAM MANAGEMENT ====================
   function generateInviteCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -260,6 +278,11 @@ export function AppProvider({ children }) {
   const updateTeamSettings = async (patch) => {
     if (!teamId) return;
     await updateDoc(doc(db, 'teams', teamId), patch);
+  };
+
+  // ==================== APP CONFIG (global, not team-scoped) ====================
+  const updateAppConfig = async (patch) => {
+    await setDoc(doc(db, 'config', 'appConfig'), patch, { merge: true });
   };
 
   // Load a team's public data without being logged in
@@ -628,6 +651,9 @@ export function AppProvider({ children }) {
         userTeams,
         isPublic,
         hasTeamA,
+        worshipLeaderRoles,
+        instrumentSlots,
+        updateAppConfig,
         createTeam,
         joinTeam,
         leaveTeam,
