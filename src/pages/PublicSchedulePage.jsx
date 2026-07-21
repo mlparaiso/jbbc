@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { CalendarDays, ChevronLeft, ChevronRight, LogIn, Lock, Mic2, BookOpen, Quote, CalendarCheck } from 'lucide-react';
 import { Piano, Guitar, Waves, Drum, SlidersHorizontal } from 'lucide-react';
 import DonateSection from '../components/DonateSection';
+import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
 
 function shortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -27,7 +28,7 @@ export default function PublicSchedulePage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { loadPublicTeam, publicTeam, publicLineups, publicMembers, publicLoading, publicError } = useApp();
+  const { loadPublicTeam, publicTeam, publicLineups, publicMembers, publicLoading, publicError, instrumentSlots } = useApp();
 
   const now = new Date();
   const paramYear = parseInt(searchParams.get('year'));
@@ -263,13 +264,14 @@ export default function PublicSchedulePage() {
                     return name ? `${name}${roleLabel}` : '';
                   }).filter(Boolean).join(', ');
                   const backupNames = (lineup.backUps || []).map(id => getMemberName(id)).filter(Boolean).join(', ');
-                  const k1 = (lineup.instruments?.k1 || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const k2 = (lineup.instruments?.k2 || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const bass = (lineup.instruments?.bass || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const lg = (lineup.instruments?.leadGuitar || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const ag = (lineup.instruments?.acousticGuitar || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const drums = (lineup.instruments?.drums || []).map(id => getMemberName(id)).filter(Boolean).join('/');
-                  const seName = getMemberName(lineup.soundEngineer);
+                  const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+                  const k1 = (assignments.k1 || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const k2 = (assignments.k2 || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const bass = (assignments.bass || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const lg = (assignments.leadGuitar || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const ag = (assignments.acousticGuitar || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const drums = (assignments.drums || []).map(id => getMemberName(id)).filter(Boolean).join('/');
+                  const seName = getMemberName(assignments.soundEngineer?.[0]);
                   return (
                     <div
                       key={lineup.id}
