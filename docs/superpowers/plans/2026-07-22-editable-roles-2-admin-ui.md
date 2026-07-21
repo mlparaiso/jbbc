@@ -211,15 +211,18 @@ export default function RolesInstrumentsSettings() {
               ) : (
                 <>
                   <span className="flex-1 text-sm text-gray-700">{role}</span>
-                  <button type="button" onClick={() => reorderRole(i, -1)} disabled={i === 0} className="text-gray-300 hover:text-gray-500 disabled:opacity-30"><ArrowUp size={13} /></button>
-                  <button type="button" onClick={() => reorderRole(i, 1)} disabled={i === worshipLeaderRoles.length - 1} className="text-gray-300 hover:text-gray-500 disabled:opacity-30"><ArrowDown size={13} /></button>
-                  <button type="button" onClick={() => startEditRole(i)} className="text-gray-400 hover:text-primary-600"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => deleteRole(i)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => reorderRole(i, -1)} disabled={i === 0 || editingRoleIndex !== null} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowUp size={13} /></button>
+                  <button type="button" onClick={() => reorderRole(i, 1)} disabled={i === worshipLeaderRoles.length - 1 || editingRoleIndex !== null} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowDown size={13} /></button>
+                  <button type="button" onClick={() => startEditRole(i)} disabled={editingRoleIndex !== null} className="text-gray-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed"><Pencil size={13} /></button>
+                  <button type="button" onClick={() => deleteRole(i)} disabled={editingRoleIndex !== null} className="text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"><Trash2 size={13} /></button>
                 </>
               )}
             </div>
           ))}
         </div>
+        {/* Disabling reorder/edit/delete on other rows while one is being edited prevents the
+            array from shifting under an in-progress edit, which would otherwise let
+            commitEditRole silently overwrite a different role by index. */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -350,7 +353,7 @@ Run: `npm run dev`, sign in as a team admin (main_admin or co_admin), navigate t
 2. Under "Worship Leader Roles", the 6 default roles (Opening/Welcome, Praise, Worship, Lord's Table, Opening, Other) are listed.
 3. Adding a new role (type text, click the `+` button) adds it to the bottom of the list immediately (no page reload needed — confirms the Firestore `onSnapshot` round-trip works).
 4. Clicking the pencil icon on a role lets you rename it inline; clicking the trash icon prompts a confirm dialog and removes it on confirm.
-5. Under "Instrument Slots", all 31 default slots are listed, each showing its icon, label, and a "Core"/"Optional" badge matching Task 1 of Plan 1's data (7 "Core", 24 "Optional").
+5. Under "Instrument Slots", all 32 default slots are listed, each showing its icon, label, and a "Core"/"Optional" badge matching Task 1 of Plan 1's data (7 "Core", 25 "Optional").
 6. Clicking "Add Slot" opens the inline form; filling in a label and clicking "Save" adds a new slot to the bottom of the list.
 7. Sign out (or view as a non-admin member) and confirm the entire "Roles & Instruments" card is not rendered.
 

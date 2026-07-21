@@ -121,7 +121,7 @@ Run: `npm run dev`, then in the app's browser console (any page) run:
 import('/src/data/defaultAppConfig.js').then(m => console.log(m.DEFAULT_INSTRUMENT_SLOTS.length, m.DEFAULT_WORSHIP_LEADER_ROLES))
 ```
 
-Expected: logs `31 (6) ['Opening/Welcome', 'Praise', 'Worship', "Lord's Table", 'Opening', 'Other']` (31 slots: 7 core + 24 optional) with no import errors in the console.
+Expected: logs `32 (6) ['Opening/Welcome', 'Praise', 'Worship', "Lord's Table", 'Opening', 'Other']` (32 slots: 7 core + 25 optional) with no import errors in the console.
 
 - [ ] **Step 4: Commit**
 
@@ -167,7 +167,7 @@ export function normalizeLineupInstruments(lineup, instrumentSlots) {
 
   for (const slot of instrumentSlots) {
     if (slot.id === 'soundEngineer') {
-      result.soundEngineer = lineup.soundEngineer ? [lineup.soundEngineer] : [];
+      if (lineup.soundEngineer) result.soundEngineer = [lineup.soundEngineer];
     } else if (Array.isArray(legacyInstruments[slot.id])) {
       result[slot.id] = legacyInstruments[slot.id];
     }
@@ -388,7 +388,7 @@ window.__appDebug = document.querySelector('#root')._reactRootContainer; // may 
 
 Simpler and reliable: open DevTools → Application/Network tab, confirm a Firestore listen request for `config/appConfig` appears (it will return "not found" the first time — that's expected, nothing has written to it yet). Then temporarily add `console.log('worshipLeaderRoles', worshipLeaderRoles, 'instrumentSlots', instrumentSlots.length)` inside `LineupFormPage.jsx`'s component body (any page using `useApp()` works), reload, confirm the console prints `worshipLeaderRoles ['Opening/Welcome', 'Praise', 'Worship', "Lord's Table", 'Opening', 'Other']` and `instrumentSlots 31`, then remove the temporary `console.log`.
 
-Expected: no console errors, values match the defaults from Task 1 exactly (since `config/appConfig` doesn't exist in Firestore yet).
+Expected: no console errors, `instrumentSlots` has 32 entries (7 core + 25 optional), values otherwise match the defaults from Task 1 exactly (since `config/appConfig` doesn't exist in Firestore yet).
 
 - [ ] **Step 7: Commit**
 
