@@ -32,10 +32,15 @@ function deriveActiveExtraSlotIds(assignments, instrumentSlots) {
 }
 
 // Converts a saved lineup (old or new field shape) into the form's working shape.
+// Strips the legacy `instruments`/`soundEngineer` fields so that saving the form
+// (new or edited lineup) only ever persists the new `instrumentAssignments` shape —
+// otherwise a merge:true save on a legacy lineup would keep re-writing the stale
+// old-shape fields alongside the correct new ones.
 function buildFormFromLineup(lineup, instrumentSlots) {
   const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+  const { instruments, soundEngineer, ...rest } = lineup;
   return {
-    ...lineup,
+    ...rest,
     instrumentAssignments: assignments,
     activeExtraSlotIds: deriveActiveExtraSlotIds(assignments, instrumentSlots),
   };

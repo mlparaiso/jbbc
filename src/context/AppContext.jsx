@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import {
-  doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc,
+  doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc, deleteField,
 } from 'firebase/firestore';
 import { auth, googleProvider, db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -507,7 +507,18 @@ export function AppProvider({ children }) {
 
   const updateLineup = async (id, updates) => {
     if (!teamId) return;
-    await setDoc(doc(db, 'teams', teamId, 'lineups', id), { ...updates, id }, { merge: true });
+    // This write uses merge:true, which never removes a field that's simply absent
+    // from `updates` — so a legacy-shaped lineup's stale `instruments`/`soundEngineer`
+    // fields would otherwise survive every edit forever. Every lineup save now goes
+    // exclusively through `instrumentAssignments` (see normalizeLineupInstruments),
+    // so explicitly clear the old fields with Firestore's deleteField() sentinel on
+    // every update, regardless of what the caller passed in.
+    await setDoc(doc(db, 'teams', teamId, 'lineups', id), {
+      ...updates,
+      id,
+      instruments: deleteField(),
+      soundEngineer: deleteField(),
+    }, { merge: true });
   };
 
   const deleteLineup = async (id) => {
