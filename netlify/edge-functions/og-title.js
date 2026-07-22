@@ -28,25 +28,38 @@ export default async (request, context) => {
   }
   if (!title) return response;
 
-  return new HTMLRewriter()
-    .on('title', {
-      element(element) {
-        element.setInnerContent(title);
-      },
-    })
-    .on('meta[property="og:title"]', {
-      element(element) {
-        element.setAttribute('content', title);
-      },
-    })
-    .on('meta[name="twitter:title"]', {
-      element(element) {
-        element.setAttribute('content', title);
-      },
-    })
-    .transform(response);
+  // This whole block only mutates the <head> tags above — it must never be
+  // able to break the underlying page. If HTMLRewriter (a third-party import)
+  // throws for any reason, fall back to the original, unmodified response,
+  // which is always safe to serve as-is (just without the rewritten title).
+  try {
+    return new HTMLRewriter()
+      .on('title', {
+        element(element) {
+          element.setInnerContent(title);
+        },
+      })
+      .on('meta[property="og:title"]', {
+        element(element) {
+          element.setAttribute('content', title);
+        },
+      })
+      .on('meta[name="twitter:title"]', {
+        element(element) {
+          element.setAttribute('content', title);
+        },
+      })
+      .transform(response);
+  } catch {
+    return response;
+  }
 };
 
+// onError: 'bypass' tells Netlify to serve the normal (un-rewritten) response
+// if this function throws for any reason not already caught above — e.g. if
+// context.next() itself throws. This function is purely cosmetic middleware,
+// so it should never be able to turn a working page into a 500.
 export const config = {
   path: '/team/*',
+  onError: 'bypass',
 };
