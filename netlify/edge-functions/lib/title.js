@@ -3,7 +3,7 @@
 // this file can be verified with plain Node, independent of the Netlify
 // Edge Function runtime that consumes it (see og-title.js).
 
-const LINEUP_PATH_RE = /\/team\/[^/]+\/lineup\/lineup-(\d{4})-(\d{2})-(\d{2})(?:\/|$)/;
+const LINEUP_PATH_RE = /^\/team\/[^/]+\/lineup\/lineup-(\d{4})-(\d{2})-(\d{2})(?:\/|$)/;
 
 // Extracts the date from a lineup share-link path, e.g.
 // "/team/jbbc-main/lineup/lineup-2026-07-26" -> Date(2026-07-26).
@@ -34,6 +34,7 @@ export function parseMonthFromQuery(searchParams) {
   const month = Number(monthRaw);
   if (!Number.isInteger(year) || !Number.isInteger(month)) return null;
   if (month < 1 || month > 12) return null;
+  if (year < 2000 || year > 2100) return null;
   return { year, month };
 }
 
