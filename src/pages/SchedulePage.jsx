@@ -5,8 +5,22 @@ import {
   Mic2, Music4, CalendarCheck, ChevronLeft, ChevronRight,
   CalendarDays, Plus, BookOpen, Quote, Pencil, Check, X, Printer, Wand2, ExternalLink, Share2
 } from 'lucide-react';
-import { Piano, Guitar, Waves, Drum, SlidersHorizontal, Music2 } from 'lucide-react';
 import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
+import { SlotIcon } from '../data/instrumentIcons';
+
+// Abbreviated pill label + accent color for the original 7 core slots, preserved
+// for visual familiarity. Any other core slot (e.g. one an admin adds later via
+// the Roles & Instruments admin UI) falls back to its own label and a neutral
+// accent — see the generic loop below where these are used.
+const CORE_SLOT_PILL_META = {
+  k1: { abbr: 'K1', iconClass: 'text-primary-400' },
+  k2: { abbr: 'K2', iconClass: 'text-amber-500' },
+  bass: { abbr: 'BG', iconClass: 'text-primary-400' },
+  leadGuitar: { abbr: 'LG', iconClass: 'text-orange-400' },
+  acousticGuitar: { abbr: 'AG', iconClass: 'text-primary-400' },
+  drums: { abbr: 'D', iconClass: 'text-primary-400' },
+  soundEngineer: { abbr: 'SE', iconClass: 'text-blue-400' },
+};
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -117,9 +131,13 @@ export default function SchedulePage() {
       const copyCount = Math.min(sourceLineups.length, targetSundays.length);
       for (let i = 0; i < copyCount; i++) {
         const src = sourceLineups[i];
+        // Strip legacy instrument fields from the spread so a copied lineup never
+        // carries stale `instruments`/`soundEngineer` keys alongside the new
+        // `instrumentAssignments` map (see normalizeLineupInstruments for the shim
+        // that reads both shapes).
+        const { id: _srcId, instruments: _legacyInstruments, soundEngineer: _legacySoundEngineer, ...srcRest } = src;
         toAdd.push({
-          ...src,
-          id: undefined,
+          ...srcRest,
           date: targetSundays[i],
           theme: src.theme || '',
           bibleVerse: src.bibleVerse || '',
@@ -130,10 +148,7 @@ export default function SchedulePage() {
             ? (src.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }])
             : [{ memberId: '', role: 'Worship Leader' }],
           backUps: copyMembers ? (src.backUps || []) : [],
-          instruments: copyMembers
-            ? (src.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] })
-            : { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-          soundEngineer: copyMembers ? (src.soundEngineer || '') : '',
+          instrumentAssignments: copyMembers ? normalizeLineupInstruments(src, instrumentSlots) : {},
           songs: copySongs ? (src.songs || []) : [],
           notes: src.notes || '',
         });
@@ -147,8 +162,7 @@ export default function SchedulePage() {
           bibleVerse: '',
           worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
           backUps: [],
-          instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-          soundEngineer: '',
+          instrumentAssignments: {},
           practiceDate: '',
           practiceTiming: 'after',
           nextWL: '',
@@ -167,8 +181,7 @@ export default function SchedulePage() {
           bibleVerse: '',
           worshipLeaders: template.worshipLeaders || [{ memberId: '', role: 'Worship Leader' }],
           backUps: template.backUps || [],
-          instruments: template.instruments || { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-          soundEngineer: template.soundEngineer || '',
+          instrumentAssignments: normalizeLineupInstruments(template, instrumentSlots),
           practiceDate: '',
           practiceTiming: 'after',
           nextWL: '',
@@ -186,8 +199,7 @@ export default function SchedulePage() {
           bibleVerse: '',
           worshipLeaders: [{ memberId: '', role: 'Worship Leader' }],
           backUps: [],
-          instruments: { k1: [], k2: [], bass: [], leadGuitar: [], acousticGuitar: [], drums: [], extras: [] },
-          soundEngineer: '',
+          instrumentAssignments: {},
           practiceDate: '',
           practiceTiming: 'after',
           nextWL: '',
@@ -410,13 +422,6 @@ export default function SchedulePage() {
 
             const backupNames = lineup.backUps.map(id => getMemberById(id)?.name).filter(Boolean).join(', ');
             const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
-            const k1 = (assignments.k1 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const k2 = (assignments.k2 || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const bass = (assignments.bass || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const lg = (assignments.leadGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const ag = (assignments.acousticGuitar || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const drums = (assignments.drums || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/') || '';
-            const se = getMemberById(assignments.soundEngineer?.[0]);
 
             return (
               <div key={lineup.id}>
@@ -455,18 +460,18 @@ export default function SchedulePage() {
                     )}
                   </div>
 
-                  {/* Instruments */}
+                  {/* Instruments — every core slot (any admin-added core slot included,
+                      not just the original 7), then any non-core "extra" slots in use */}
                   <div className="flex flex-wrap gap-1 px-4 pb-2 pt-0.5">
-                    {k1 && <InstrumentPill icon={<Piano size={10} />} name={`K1: ${k1}`} iconClass="text-primary-400" />}
-                    {k2 && <InstrumentPill icon={<Piano size={10} />} name={`K2: ${k2}`} iconClass="text-amber-500" />}
-                    {bass && <InstrumentPill icon={<Waves size={10} />} name={`BG: ${bass}`} iconClass="text-primary-400" />}
-                    {lg && <InstrumentPill icon={<Guitar size={10} />} name={`LG: ${lg}`} iconClass="text-orange-400" />}
-                    {ag && <InstrumentPill icon={<Guitar size={10} />} name={`AG: ${ag}`} iconClass="text-primary-400" />}
-                    {drums && <InstrumentPill icon={<Drum size={10} />} name={`D: ${drums}`} iconClass="text-primary-400" />}
-                    {se && <InstrumentPill icon={<SlidersHorizontal size={10} />} name={`SE: ${se.name}`} iconClass="text-blue-400" />}
+                    {instrumentSlots.filter(s => s.core).map(slot => {
+                      const names = (assignments[slot.id] || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/');
+                      if (!names) return null;
+                      const meta = CORE_SLOT_PILL_META[slot.id] || { abbr: slot.label, iconClass: 'text-primary-400' };
+                      return <InstrumentPill key={slot.id} icon={<SlotIcon name={slot.icon} size={10} />} name={`${meta.abbr}: ${names}`} iconClass={meta.iconClass} />;
+                    })}
                     {instrumentSlots.filter(s => !s.core && (assignments[s.id]?.length > 0)).map(slot => {
                       const names = (assignments[slot.id] || []).map(id => getMemberById(id)?.name).filter(Boolean).join('/');
-                      return <InstrumentPill key={slot.id} icon={<Music2 size={10} />} name={`${slot.label}: ${names}`} iconClass="text-purple-400" />;
+                      return <InstrumentPill key={slot.id} icon={<SlotIcon name={slot.icon} size={10} />} name={`${slot.label}: ${names}`} iconClass="text-purple-400" />;
                     })}
                     {lineup.setListUrl && (
                       <a
