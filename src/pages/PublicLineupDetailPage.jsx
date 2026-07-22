@@ -1,18 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, LogIn, Lock, Mic2, Music4, BookOpen, CalendarCheck, SlidersHorizontal, Piano, Guitar, Waves, Drum, Youtube, AlertCircle, ChevronLeft, ChevronRight, Music2, AudioLines, Bell, Repeat2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, LogIn, Lock, Mic2, Music4, BookOpen, CalendarCheck, SlidersHorizontal, Youtube, AlertCircle, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import DonateSection from '../components/DonateSection';
-
-const EXTRA_ICON_MAP = {
-  Music2: <Music2 size={14} />,
-  AudioLines: <AudioLines size={14} />,
-  Drum: <Drum size={14} />,
-  Bell: <Bell size={14} />,
-  Guitar: <Guitar size={14} />,
-  Piano: <Piano size={14} />,
-  Repeat2: <Repeat2 size={14} />,
-};
+import { normalizeLineupInstruments } from '../utils/normalizeLineupInstruments';
+import { SlotIcon } from '../data/instrumentIcons';
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -35,15 +27,6 @@ function getPracticeTimingLabel(practiceTiming) {
   }
 }
 
-const INSTRUMENT_CONFIG = [
-  { key: 'k1',             icon: <Piano size={14} />,  label: 'Keyboard 1',      iconClass: 'text-primary-500' },
-  { key: 'k2',             icon: <Piano size={14} />,  label: 'Keyboard 2',      iconClass: 'text-amber-500' },
-  { key: 'bass',           icon: <Waves size={14} />,  label: 'Bass Guitar',     iconClass: 'text-primary-500' },
-  { key: 'leadGuitar',     icon: <Guitar size={14} />, label: 'Lead Guitar',     iconClass: 'text-orange-400' },
-  { key: 'acousticGuitar', icon: <Guitar size={14} />, label: 'Acoustic Guitar', iconClass: 'text-primary-500' },
-  { key: 'drums',          icon: <Drum size={14} />,   label: 'Drums',           iconClass: 'text-primary-500' },
-];
-
 const SECTION_ORDER = ['Opening','Opening/Welcome','Welcome','Praise and Worship',"Lord's Table",'Special Number','Other'];
 
 function groupSongs(songs) {
@@ -63,7 +46,7 @@ function groupSongs(songs) {
 export default function PublicLineupDetailPage() {
   const { teamId, lineupId } = useParams();
   const navigate = useNavigate();
-  const { loadPublicTeam, publicTeam, publicLineups, publicMembers, publicLoading, publicError } = useApp();
+  const { loadPublicTeam, publicTeam, publicLineups, publicMembers, publicLoading, publicError, instrumentSlots } = useApp();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -117,7 +100,8 @@ export default function PublicLineupDetailPage() {
 
   const getMember = (id) => publicMembers.find(m => m.id === id);
   const getMemberName = (id) => { const m = getMember(id); return m ? m.name : null; };
-  const se = getMember(lineup.soundEngineer);
+  const assignments = normalizeLineupInstruments(lineup, instrumentSlots);
+  const seNames = (assignments.soundEngineer || []).map(mid => getMemberName(mid)).filter(Boolean).join(' / ');
   const songs = lineup.songs || [];
   const songGroups = groupSongs(songs);
 
@@ -212,34 +196,27 @@ export default function PublicLineupDetailPage() {
           {/* Instruments */}
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instruments</p>
-            {/* 3-col grid: K1, K2, LG, AG, Bass, Drums + extras */}
+            {/* 3-col grid: every core slot (except Sound Engineer, shown below) + any active extras */}
             <div className="grid grid-cols-3 gap-2">
-              {INSTRUMENT_CONFIG.map(({ key, icon, label, iconClass }) => {
-                const names = ((lineup.instruments || {})[key] || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
-                return (
-                  <div key={key} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-2">
-                    <span className={`${iconClass} flex-shrink-0`}>{icon}</span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-400 leading-none">{label}</p>
-                      <p className="text-sm font-medium text-gray-800 truncate">{names}</p>
+              {instrumentSlots
+                .filter(slot => slot.id !== 'soundEngineer' && (slot.core || (assignments[slot.id]?.length > 0)))
+                .map(slot => {
+                  const names = (assignments[slot.id] || []).map(mid => getMemberName(mid)).filter(Boolean).join(' / ') || '—';
+                  return (
+                    <div
+                      key={slot.id}
+                      className={`flex items-center gap-2 rounded-lg px-2 py-2 ${slot.core ? 'bg-gray-50' : 'bg-purple-50'}`}
+                    >
+                      <span className={`${slot.core ? 'text-primary-500' : 'text-purple-400'} flex-shrink-0`}>
+                        <SlotIcon name={slot.icon} size={14} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-400 leading-none">{slot.label}</p>
+                        <p className="text-sm font-medium text-gray-800 truncate">{names}</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {/* Extra instruments */}
-              {((lineup.instruments || {}).extras || []).map((extra, ei) => {
-                const names = (extra.memberIds || []).map(id => getMemberName(id)).filter(Boolean).join(' / ') || '—';
-                const icon = EXTRA_ICON_MAP[extra.icon] || EXTRA_ICON_MAP['Music2'];
-                return (
-                  <div key={ei} className="flex items-center gap-2 bg-purple-50 rounded-lg px-2 py-2">
-                    <span className="text-purple-400 flex-shrink-0">{icon}</span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-400 leading-none">{extra.label}</p>
-                      <p className="text-sm font-medium text-gray-800 truncate">{names}</p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
 
             {/* 2-col row: Sound Engineer + Set List (50/50) */}
@@ -248,7 +225,7 @@ export default function PublicLineupDetailPage() {
                 <span className="text-blue-400 flex-shrink-0"><SlidersHorizontal size={14} /></span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-gray-400 leading-none">Sound Engineer</p>
-                  <p className="text-sm font-medium text-gray-800 truncate">{se?.name || '—'}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{seNames || '—'}</p>
                 </div>
               </div>
               {lineup.setListUrl ? (
