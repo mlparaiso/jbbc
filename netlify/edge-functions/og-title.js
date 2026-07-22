@@ -9,6 +9,10 @@
 // crawlers) — it only ever touches these three <head> tags, so the app
 // boots exactly as before either way.
 import { computeTitle } from './lib/title.js';
+// HTMLRewriter is NOT a global in Netlify's Edge Functions runtime (unlike
+// Cloudflare Workers) — it must be imported from a URL, per Netlify's own
+// edge-functions-examples.netlify.app/example/htmlrewriter reference impl.
+import { HTMLRewriter } from 'https://ghuc.cc/worker-tools/html-rewriter/index.ts';
 
 export default async (request, context) => {
   const response = await context.next();
