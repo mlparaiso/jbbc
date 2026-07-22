@@ -41,7 +41,7 @@ function drawWrappedText(ctx, text, x, y, maxW, lineH) {
   return cy + lineH;
 }
 
-export async function generateLineupImage({ lineup, getMemberById, songGroups, url, formatDate, shortDate, INSTRUMENT_CONFIG }) {
+export async function generateLineupImage({ lineup, getMemberById, songGroups, url, formatDate, shortDate, instrumentSlots, assignments }) {
   // ---- first pass: measure height ----
   const scale = 2;
   const tempCanvas = document.createElement('canvas');
@@ -75,7 +75,7 @@ export async function generateLineupImage({ lineup, getMemberById, songGroups, u
 
     // Instruments label
     y += 20;
-    const instrCount = INSTRUMENT_CONFIG.length + 1; // +1 SE
+    const instrCount = instrumentSlots.filter(s => s.core || (assignments[s.id]?.length > 0)).length;
     const cols = 4;
     const rows = Math.ceil(instrCount / cols);
     y += rows * 48 + (rows - 1) * 8;
@@ -257,18 +257,13 @@ export async function generateLineupImage({ lineup, getMemberById, songGroups, u
   ctx.fillText('INSTRUMENTS', innerX, y);
   y += 16;
 
-  const allInstrs = [
-    ...INSTRUMENT_CONFIG.map(({ key, label }) => ({
-      label,
-      name: (lineup.instruments[key] || []).map(iid => getMemberById(iid)?.name).filter(Boolean).join(' / ') || '—',
-      bg: '#f9fafb',
-    })),
-    {
-      label: 'Sound Engineer',
-      name: getMemberById(lineup.soundEngineer)?.name || '—',
-      bg: '#eff6ff',
-    },
-  ];
+  const allInstrs = instrumentSlots
+    .filter(slot => slot.core || (assignments[slot.id]?.length > 0))
+    .map(slot => ({
+      label: slot.label,
+      name: (assignments[slot.id] || []).map(iid => getMemberById(iid)?.name).filter(Boolean).join(' / ') || '—',
+      bg: slot.id === 'soundEngineer' ? '#eff6ff' : '#f9fafb',
+    }));
 
   const cols = 4;
   const cellW = Math.floor(innerW / cols);
