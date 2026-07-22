@@ -9,17 +9,6 @@ export const ROLE_CATEGORIES = {
   SOUND: 'Sound Engineer',
 };
 
-// Instrument role keys used in lineups
-export const INSTRUMENT_ROLES = [
-  { key: 'k1', label: 'Keyboard 1 (K1)', category: ROLE_CATEGORIES.KEYBOARD },
-  { key: 'k2', label: 'Keyboard 2 (K2)', category: ROLE_CATEGORIES.KEYBOARD },
-  { key: 'bass', label: 'Bass (B)', category: ROLE_CATEGORIES.BASS },
-  { key: 'leadGuitar', label: 'Lead Guitar (LG)', category: ROLE_CATEGORIES.GUITAR },
-  { key: 'acousticGuitar', label: 'Acoustic Guitar (AG)', category: ROLE_CATEGORIES.GUITAR },
-  { key: 'drums', label: 'Drums (D)', category: ROLE_CATEGORIES.DRUMS },
-  { key: 'soundEngineer', label: 'Sound Engineer (SE)', category: ROLE_CATEGORIES.SOUND },
-];
-
 // Pre-populated members from the JBBC Music Team lineup PDF
 export const INITIAL_MEMBERS = [
   // ===== TEAM A (Senior Leaders) =====
