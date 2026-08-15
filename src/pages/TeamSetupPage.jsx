@@ -5,7 +5,7 @@ import { Music2, Plus, LogIn, Copy, Check, LogOut, RefreshCw, AlertTriangle, Use
 import TeamLogoUploader from '../components/TeamLogoUploader';
 import RolesInstrumentsSettings from '../components/RolesInstrumentsSettings';
 export default function TeamSetupPage() {
-  const { user, team, teamId, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
+  const { user, team, teamId, teamInviteCode, userTeams, isPublic, myRole, isMainAdmin, canSeeInviteCode, canManageLineups, hasTeamA, templates, createTeam, joinTeam, leaveTeam, switchToTeam, logout, updateTeamVisibility, updateTeamLogo, updateTeamSettings, updateTemplate, deleteTemplate, authLoading, teamLoading } = useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -30,7 +30,7 @@ export default function TeamSetupPage() {
   // Already has a team → show team info / invite code
   if (teamId && team) {
     const copyCode = () => {
-      navigator.clipboard.writeText(team.inviteCode);
+      navigator.clipboard.writeText(teamInviteCode || '');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     };
@@ -97,7 +97,7 @@ export default function TeamSetupPage() {
                 Invite Code — share with {isMainAdmin ? 'co-admins and members' : 'new members'}
               </p>
               <div className="flex items-center justify-center gap-2">
-                <span className="text-lg font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
+                <span className="text-lg font-mono font-bold text-primary-700 tracking-widest">{teamInviteCode}</span>
                 <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
                   {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                 </button>
@@ -295,7 +295,7 @@ export default function TeamSetupPage() {
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2 bg-white border border-amber-200 rounded p-2">
-                <span className="font-mono font-bold text-primary-700 tracking-widest">{team.inviteCode}</span>
+                <span className="font-mono font-bold text-primary-700 tracking-widest">{teamInviteCode}</span>
                 <button onClick={copyCode} className="text-gray-400 hover:text-primary-600">
                   {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                 </button>

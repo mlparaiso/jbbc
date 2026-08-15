@@ -20,6 +20,14 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/teams/$(teamId)).data;
     }
 
+    // Read the team's protected secrets doc (inviteCode/adminUids/createdBy/createdByEmail).
+    // These fields used to live on the team doc itself, but that doc must be world-readable
+    // for public share links to work, and Firestore has no field-level read security — so
+    // anything sensitive lives here instead, gated to the team's own creator/admins.
+    function getTeamSecrets(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)/private/secrets).data;
+    }
+
     // Is the team marked public (default true if field absent)?
     function isTeamPublic(teamId) {
       let team = getTeam(teamId);
@@ -29,12 +37,12 @@ service cloud.firestore {
     // Is the signed-in user the creator of the team?
     // Checks both uid (new teams) and email (legacy teams where createdBy stored email).
     function isTeamCreator(teamId) {
-      let team = getTeam(teamId);
+      let secrets = getTeamSecrets(teamId);
       return isSignedIn() && (
-        team.createdBy == request.auth.uid ||
+        secrets.createdBy == request.auth.uid ||
         (
-          ('createdByEmail' in team) &&
-          team.createdByEmail == request.auth.token.email
+          ('createdByEmail' in secrets) &&
+          secrets.createdByEmail == request.auth.token.email
         )
       );
     }
@@ -42,11 +50,11 @@ service cloud.firestore {
     // Is the signed-in user listed in the team's adminUids array?
     // Guards against missing/null adminUids field.
     function isTeamAdmin(teamId) {
-      let team = getTeam(teamId);
+      let secrets = getTeamSecrets(teamId);
       return isSignedIn() &&
-        ('adminUids' in team) &&
-        team.adminUids != null &&
-        request.auth.uid in team.adminUids;
+        ('adminUids' in secrets) &&
+        secrets.adminUids != null &&
+        request.auth.uid in secrets.adminUids;
     }
 
     // Is the signed-in user a member of the team?
@@ -81,18 +89,48 @@ service cloud.firestore {
 
     // ─── /users/{uid} ────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      // Writing a non-null teamId (joining, creating, or switching teams)
+      // requires proving knowledge of that team's real invite code via a
+      // `joinCode` field submitted alongside teamId, checked against the
+      // authoritative value in the team's protected secrets doc. Without
+      // this, any signed-in user could self-assign membership in any team
+      // just by knowing its id (which is public — it's in every share link).
+      // The client already has the code on hand in every legitimate case:
+      // the code just entered (join), the code just generated (create), or
+      // the code already stored in the user's own `teams` history (switch).
+      allow create, update: if isOwner(uid) && (
+        request.resource.data.teamId == null ||
+        request.resource.data.joinCode == getTeamSecrets(request.resource.data.teamId).inviteCode
+      );
     }
 
     // ─── /teams/{teamId} ─────────────────────────────────────────────────────
     match /teams/{teamId} {
-      // Allow anyone to read the team document so that isTeamPublic() can be
-      // evaluated for subcollection rules without a circular-read denial.
-      // Sensitive fields (inviteCode, adminUids) are only useful to logged-in
-      // admins, but the document itself must be readable to support public links.
+      // Anyone can read the team document — but it now only ever holds
+      // non-sensitive fields (name, logoUrl, isPublic, hasTeamA, createdAt,
+      // contactEmail). inviteCode/adminUids/createdBy live in the protected
+      // private/secrets subdocument below, since Firestore can't restrict
+      // reads to specific fields on a single document.
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if canWriteTeam(teamId);
+
+      // ─── /teams/{teamId}/private/secrets ─────────────────────────────────
+      // inviteCode, adminUids, createdBy, createdByEmail. Only the team's own
+      // creator/admins can read or update this — it's the actual security
+      // boundary for join/admin authorization, so it must never be readable
+      // by an arbitrary visitor the way the public team doc is.
+      match /private/secrets {
+        allow read, update: if isTeamCreator(teamId) || isTeamAdmin(teamId);
+        // Only allowed at team-creation time: the payload must claim the
+        // requester as both createdBy and a member of adminUids — i.e. you
+        // can only ever create secrets for a team you're creating yourself.
+        allow create: if isSignedIn()
+          && request.resource.data.createdBy == request.auth.uid
+          && request.auth.uid in request.resource.data.adminUids;
+        allow delete: if false;
+      }
 
       // ─── /teams/{teamId}/members ─────────────────────────────────────────
       match /members/{memberId} {
@@ -117,6 +155,26 @@ service cloud.firestore {
         allow read: if isTeamPublic(teamId) || isMemberOfTeam(teamId);
         allow write: if canWriteTeam(teamId);
       }
+    }
+
+    // ─── /inviteCodes/{code} ─────────────────────────────────────────────────
+    // Maps an invite code (the doc id) to the teamId it belongs to. This is
+    // the standard Firestore "capability lookup" pattern: `get` is allowed
+    // unconditionally so a client that already knows the exact code (typed
+    // by a user, or embedded in an invite link) can resolve it — but `list`
+    // is denied so nobody can enumerate/scan every code in the collection.
+    // A code has ~5×10^11 possibilities (8 chars over a 32-char alphabet),
+    // so a single-doc `get` by guessed code is not a practical attack.
+    match /inviteCodes/{code} {
+      allow get: if true;
+      allow list: if false;
+      // Only the team's own creator/admin can mint a code pointing at their
+      // own team (checked against the payload's own teamId).
+      allow create: if isSignedIn() && (
+        isTeamCreator(request.resource.data.teamId) ||
+        isTeamAdmin(request.resource.data.teamId)
+      );
+      allow update, delete: if false;
     }
 
     // ─── /config/appConfig ───────────────────────────────────────────────────

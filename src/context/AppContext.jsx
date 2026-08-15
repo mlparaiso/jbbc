@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import {
-  doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, query, where, addDoc, deleteField,
+  doc, collection, onSnapshot, setDoc, deleteDoc, updateDoc, getDoc, getDocs, addDoc, deleteField,
+  arrayUnion, arrayRemove, writeBatch,
 } from 'firebase/firestore';
 import { auth, googleProvider, db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -23,6 +24,7 @@ export function AppProvider({ children }) {
   const [songs, setSongs] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [myRole, setMyRole] = useState(null); // 'main_admin' | 'co_admin' | 'member' | null
+  const [teamInviteCode, setTeamInviteCode] = useState(null); // only populated for admins — see effect below
   const [appConfig, setAppConfig] = useState(null); // { worshipLeaderRoles, instrumentSlots } — null until config/appConfig loads (or doesn't exist)
 
   // For public (guest) viewing — loaded without auth
@@ -55,10 +57,11 @@ export function AppProvider({ children }) {
         if (!snap.exists() || !snap.data().welcomeSent) {
           // Mark sent immediately (before the fetch) to avoid duplicates on fast re-renders
           await setDoc(userRef, { welcomeSent: true }, { merge: true });
+          const idToken = await u.getIdToken();
           fetch('/api/send-signup-welcome', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ toEmail: u.email, toName: u.displayName || '' }),
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+            body: JSON.stringify({ toName: u.displayName || '' }),
           }).catch(e => console.warn('Signup welcome email failed:', e));
         }
       } catch (e) {
@@ -79,14 +82,18 @@ export function AppProvider({ children }) {
         const currentTeamId = data.teamId || null;
         setTeamId(currentTeamId);
 
-        // Backfill teams history for existing users who don't have it yet
+        // Backfill teams history for existing users who don't have it yet.
+        // inviteCode no longer lives on the public team doc (see private/secrets),
+        // so it's reconstructed from this user's own already-validated `joinCode`
+        // field — guaranteed correct for their current team by the write-time
+        // Firestore rule check on every join/create/switch.
         if (currentTeamId && (!data.teams || data.teams.length === 0)) {
           try {
             const teamSnap = await getDoc(doc(db, 'teams', currentTeamId));
             if (teamSnap.exists()) {
               const teamData = teamSnap.data();
               const backfilledTeams = [
-                { teamId: currentTeamId, name: teamData.name, inviteCode: teamData.inviteCode }
+                { teamId: currentTeamId, name: teamData.name, inviteCode: data.joinCode || null }
               ];
               await setDoc(userRef, { teams: backfilledTeams }, { merge: true });
               setUserTeams(backfilledTeams);
@@ -118,70 +125,85 @@ export function AppProvider({ children }) {
   }, [teamId]);
 
   // --- Derive myRole from team members list (match by email) ---
-  // Also syncs uid onto the member doc and into adminUids so Firestore rules work correctly.
+  // Also syncs uid onto the member doc and into the team's protected secrets
+  // doc's adminUids so Firestore rules work correctly. Secrets are readable
+  // only by the team's own creator/admins — for a plain member, the getDoc
+  // below is *expected* to be denied (caught and ignored); their role still
+  // resolves correctly from the members-collection lookup regardless.
   useEffect(() => {
     if (!user || !teamId || !team) { setMyRole(null); return; }
+    let cancelled = false;
 
-    const currentAdminUids = team.adminUids || [];
-
-    // Team creator is always main_admin — also ensure their uid is in adminUids
-    const isCreatorByUid = team.createdBy === user.uid;
-    const isCreatorByEmail = team.createdByEmail &&
-      team.createdByEmail.toLowerCase() === user.email?.toLowerCase();
-
-    if (isCreatorByUid || isCreatorByEmail) {
-      setMyRole('main_admin');
-
-      // Build the update patch — always ensure uid is in adminUids
-      const patch = {};
-      if (!currentAdminUids.includes(user.uid)) {
-        patch.adminUids = [...currentAdminUids, user.uid];
+    (async () => {
+      let secrets = null;
+      try {
+        const secretsSnap = await getDoc(doc(db, 'teams', teamId, 'private', 'secrets'));
+        if (secretsSnap.exists()) secrets = secretsSnap.data();
+      } catch {
+        // Not creator/admin yet — fine, see comment above.
       }
-      // If createdBy was stored as email (old teams), fix it to uid
-      if (!isCreatorByUid) {
-        patch.createdBy = user.uid;
-      }
-      if (Object.keys(patch).length > 0) {
-        updateDoc(doc(db, 'teams', teamId), patch).catch(() => {});
-      }
-      return;
-    }
+      if (cancelled) return;
 
-    // Look up member by email and read their teamRole field
-    const match = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
-    if (match) {
-      const role = match.teamRole || 'member';
-      setMyRole(role);
+      const currentAdminUids = secrets?.adminUids || [];
+      const secretsRef = doc(db, 'teams', teamId, 'private', 'secrets');
 
-      // Backfill: store uid on the member doc if missing
-      if (!match.uid) {
-        updateDoc(doc(db, 'teams', teamId, 'members', match.id), { uid: user.uid }).catch(() => {});
+      // Team creator is always main_admin — also ensure their uid is in adminUids
+      const isCreatorByUid = secrets?.createdBy === user.uid;
+      const isCreatorByEmail = secrets?.createdByEmail &&
+        secrets.createdByEmail.toLowerCase() === user.email?.toLowerCase();
+
+      if (isCreatorByUid || isCreatorByEmail) {
+        setMyRole('main_admin');
+        const patch = {};
+        if (!currentAdminUids.includes(user.uid)) patch.adminUids = arrayUnion(user.uid);
+        if (!isCreatorByUid) patch.createdBy = user.uid; // fix legacy email-only createdBy
+        if (Object.keys(patch).length > 0) updateDoc(secretsRef, patch).catch(() => {});
+        return;
       }
 
-      // Sync adminUids on the team doc so Firestore write rules work for co_admin / main_admin
-      if (role === 'co_admin' || role === 'main_admin') {
-        if (!currentAdminUids.includes(user.uid)) {
-          updateDoc(doc(db, 'teams', teamId), {
-            adminUids: [...currentAdminUids, user.uid],
-          }).catch(() => {});
+      // Look up member by email and read their teamRole field
+      const match = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
+      if (match) {
+        const role = match.teamRole || 'member';
+        setMyRole(role);
+
+        // Backfill: store uid on the member doc if missing
+        if (!match.uid) {
+          updateDoc(doc(db, 'teams', teamId, 'members', match.id), { uid: user.uid }).catch(() => {});
+        }
+
+        // Sync adminUids on the secrets doc — only possible once already
+        // readable (i.e. once already admin/creator); otherwise a no-op,
+        // same as before this uid was ever added.
+        if (secrets) {
+          if (role === 'co_admin' || role === 'main_admin') {
+            if (!currentAdminUids.includes(user.uid)) {
+              updateDoc(secretsRef, { adminUids: arrayUnion(user.uid) }).catch(() => {});
+            }
+          } else if (currentAdminUids.includes(user.uid)) {
+            updateDoc(secretsRef, { adminUids: arrayRemove(user.uid) }).catch(() => {});
+          }
         }
       } else {
-        // If demoted to member, remove from adminUids if present
-        if (currentAdminUids.includes(user.uid)) {
-          updateDoc(doc(db, 'teams', teamId), {
-            adminUids: currentAdminUids.filter(uid => uid !== user.uid),
-          }).catch(() => {});
-        }
+        // Fallback: if user is in adminUids, treat as co_admin
+        setMyRole(currentAdminUids.includes(user.uid) ? 'co_admin' : 'member');
       }
-    } else {
-      // Fallback: if user is in adminUids, treat as co_admin
-      if (currentAdminUids.includes(user.uid)) {
-        setMyRole('co_admin');
-      } else {
-        setMyRole('member');
-      }
-    }
+    })();
+
+    return () => { cancelled = true; };
   }, [user, teamId, team, members]);
+
+  // --- Load invite code for display (admins only — see firestore.rules) ---
+  useEffect(() => {
+    const canSee = myRole === 'main_admin' || myRole === 'co_admin';
+    if (!teamId || !canSee) { setTeamInviteCode(null); return; }
+    const unsub = onSnapshot(
+      doc(db, 'teams', teamId, 'private', 'secrets'),
+      (snap) => setTeamInviteCode(snap.exists() ? snap.data().inviteCode : null),
+      () => setTeamInviteCode(null),
+    );
+    return unsub;
+  }, [teamId, myRole]);
 
   // --- Load members ---
   useEffect(() => {
@@ -309,14 +331,14 @@ export function AppProvider({ children }) {
       const lineupsSnap = await getDocs(collection(db, 'teams', tId, 'lineups'));
       setPublicLineups(
         lineupsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => a.date.localeCompare(b.date))
+          .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
       );
 
       // Load members
       const membersSnap = await getDocs(collection(db, 'teams', tId, 'members'));
       setPublicMembers(
         membersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => a.name.localeCompare(b.name))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
       );
 
       setPublicLoading(false);
@@ -338,12 +360,15 @@ export function AppProvider({ children }) {
       .filter(t => t.isPublic !== false && t.name.toLowerCase().includes(term));
   };
 
-  // Find a public team by invite code
+  // Find a public team by invite code — resolved via the inviteCodes lookup
+  // collection (get-only, unenumerable), since inviteCode no longer lives on
+  // the public team doc.
   const findPublicTeamByCode = async (code) => {
-    const q = query(collection(db, 'teams'), where('inviteCode', '==', code.trim().toUpperCase()));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    const data = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    const codeSnap = await getDoc(doc(db, 'inviteCodes', code.trim().toUpperCase()));
+    if (!codeSnap.exists()) return null;
+    const teamSnap = await getDoc(doc(db, 'teams', codeSnap.data().teamId));
+    if (!teamSnap.exists()) return null;
+    const data = { id: teamSnap.id, ...teamSnap.data() };
     if (data.isPublic === false) return null;
     return data;
   };
@@ -351,15 +376,22 @@ export function AppProvider({ children }) {
   const createTeam = async (teamName) => {
     if (!user) throw new Error('Not logged in');
     const inviteCode = generateInviteCode();
+    // Public doc: only ever non-sensitive fields — invite code/admin list
+    // live in the protected private/secrets subdocument (see firestore.rules).
     const teamRef = await addDoc(collection(db, 'teams'), {
       name: teamName,
-      createdBy: user.uid,
-      createdByEmail: user.email,
-      inviteCode,
-      adminUids: [user.uid],
       isPublic: true,
+      contactEmail: user.email,
       createdAt: new Date().toISOString(),
     });
+    await setDoc(doc(db, 'teams', teamRef.id, 'private', 'secrets'), {
+      inviteCode,
+      adminUids: [user.uid],
+      createdBy: user.uid,
+      createdByEmail: user.email,
+    });
+    await setDoc(doc(db, 'inviteCodes', inviteCode), { teamId: teamRef.id });
+
     // Build updated teams history (avoid duplicates)
     const existingTeams = userTeams.filter(t => t.teamId !== teamRef.id);
     const updatedTeams = [
@@ -368,6 +400,9 @@ export function AppProvider({ children }) {
     ];
     await setDoc(doc(db, 'users', user.uid), {
       teamId: teamRef.id,
+      // Proves knowledge of the real invite code — required by firestore.rules
+      // for any write that sets teamId (see /users/{uid} rule).
+      joinCode: inviteCode,
       email: user.email,
       displayName: user.displayName,
       role: 'admin',
@@ -377,11 +412,11 @@ export function AppProvider({ children }) {
     // Send welcome email (fire-and-forget — don't block team creation)
     try {
       const scheduleUrl = `${window.location.origin}/team/${teamRef.id}`;
+      const idToken = await user.getIdToken();
       await fetch('/api/send-welcome-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
         body: JSON.stringify({
-          toEmail: user.email,
           toName: user.displayName || '',
           teamName,
           inviteCode,
@@ -399,60 +434,64 @@ export function AppProvider({ children }) {
   const joinTeam = async (inviteCode) => {
     if (!user) throw new Error('Not logged in');
     const code = inviteCode.trim().toUpperCase();
-    const q = query(collection(db, 'teams'), where('inviteCode', '==', code));
-    const snap = await getDocs(q);
-    if (snap.empty) throw new Error('Invalid invite code. Please check and try again.');
-    const teamDoc = snap.docs[0];
-    const teamData = teamDoc.data();
+    const codeSnap = await getDoc(doc(db, 'inviteCodes', code));
+    if (!codeSnap.exists()) throw new Error('Invalid invite code. Please check and try again.');
+    const targetTeamId = codeSnap.data().teamId;
+    const teamSnap = await getDoc(doc(db, 'teams', targetTeamId));
+    if (!teamSnap.exists()) throw new Error('Invalid invite code. Please check and try again.');
+    const teamData = teamSnap.data();
+
     // Build updated teams history (avoid duplicates)
-    const existingTeams = userTeams.filter(t => t.teamId !== teamDoc.id);
+    const existingTeams = userTeams.filter(t => t.teamId !== targetTeamId);
     const updatedTeams = [
       ...existingTeams,
-      { teamId: teamDoc.id, name: teamData.name, inviteCode: teamData.inviteCode },
+      { teamId: targetTeamId, name: teamData.name, inviteCode: code },
     ];
     await setDoc(doc(db, 'users', user.uid), {
-      teamId: teamDoc.id,
+      teamId: targetTeamId,
+      joinCode: code,
       email: user.email,
       displayName: user.displayName,
       role: 'admin',
       teams: updatedTeams,
     });
 
-    // Send join emails: welcome to joiner + notification to admin (fire-and-forget)
+    // Send join emails: welcome to joiner + notification to admin (fire-and-forget).
+    // teamName/adminEmail are looked up server-side from the team's own public
+    // record — the function only needs teamId, not client-asserted team data.
     try {
-      const scheduleUrl = `${window.location.origin}/team/${teamDoc.id}`;
+      const scheduleUrl = `${window.location.origin}/team/${targetTeamId}`;
+      const idToken = await user.getIdToken();
       fetch('/api/send-join-emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          joinerEmail: user.email,
-          joinerName: user.displayName || '',
-          adminEmail: teamData.createdByEmail || null,
-          adminName: '',
-          teamName: teamData.name,
-          scheduleUrl,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ teamId: targetTeamId, scheduleUrl }),
       }).catch(e => console.warn('Join emails failed:', e));
     } catch (e) {
       console.warn('Join emails failed:', e);
     }
 
-    return teamDoc.id;
+    return targetTeamId;
   };
 
   const switchToTeam = async (targetTeamId) => {
     if (!user) return;
-    // Get fresh team data to ensure invite code is current
+    // The invite code for a team already in this user's own history comes
+    // from that history entry itself (their own doc, always readable to
+    // them) — not from the team doc, which no longer carries it.
+    const existingEntry = userTeams.find(t => t.teamId === targetTeamId);
+    if (!existingEntry) throw new Error('Team not found.');
     const teamSnap = await getDoc(doc(db, 'teams', targetTeamId));
     if (!teamSnap.exists()) throw new Error('Team not found.');
     const teamData = teamSnap.data();
     const existingTeams = userTeams.filter(t => t.teamId !== targetTeamId);
     const updatedTeams = [
       ...existingTeams,
-      { teamId: targetTeamId, name: teamData.name, inviteCode: teamData.inviteCode },
+      { teamId: targetTeamId, name: teamData.name, inviteCode: existingEntry.inviteCode },
     ];
     await setDoc(doc(db, 'users', user.uid), {
       teamId: targetTeamId,
+      joinCode: existingEntry.inviteCode,
       email: user.email,
       displayName: user.displayName,
       role: 'admin',
@@ -587,45 +626,42 @@ export function AppProvider({ children }) {
     // Update the member's teamRole field
     await updateDoc(doc(db, 'teams', teamId, 'members', memberId), { teamRole: newRole });
 
-    // Sync adminUids on the team document so Firestore rules stay accurate.
-    // We need the member's uid to add/remove from adminUids.
+    // Sync adminUids on the protected secrets doc so Firestore rules stay
+    // accurate. arrayUnion/arrayRemove are atomic server-side operations —
+    // unlike a read-then-write of the local array, two concurrent role
+    // changes can't clobber each other's update.
     const targetMember = members.find(m => m.id === memberId);
     if (targetMember?.uid) {
-      const currentAdminUids = team?.adminUids || [];
-      let updatedAdminUids;
+      const secretsRef = doc(db, 'teams', teamId, 'private', 'secrets');
       if (newRole === 'main_admin' || newRole === 'co_admin') {
-        // Add uid to adminUids if not already present
-        updatedAdminUids = currentAdminUids.includes(targetMember.uid)
-          ? currentAdminUids
-          : [...currentAdminUids, targetMember.uid];
+        await updateDoc(secretsRef, { adminUids: arrayUnion(targetMember.uid) });
       } else {
-        // Remove uid from adminUids (demoted to member or removed)
-        updatedAdminUids = currentAdminUids.filter(uid => uid !== targetMember.uid);
+        await updateDoc(secretsRef, { adminUids: arrayRemove(targetMember.uid) });
       }
-      await updateDoc(doc(db, 'teams', teamId), { adminUids: updatedAdminUids });
     }
   };
 
   /**
    * Transfer Main Admin to another member (only current main_admin can do this).
-   * Demotes current user to 'member', promotes target to 'main_admin', and updates team.createdBy.
+   * Demotes current user to 'member', promotes target to 'main_admin', and updates
+   * the secrets doc's createdBy — all in one atomic batch so a failure partway
+   * through can't leave the team with two main_admins or a dangling createdBy.
    */
   const transferMainAdmin = async (newMainAdminMemberId) => {
     if (!teamId || myRole !== 'main_admin') throw new Error('Permission denied');
     const targetMember = members.find(m => m.id === newMainAdminMemberId);
     if (!targetMember) throw new Error('Member not found');
-    // Update team's createdBy to the new admin's uid (if they have one stored)
-    // We store the new admin role on the member document; role is derived from email match
-    await updateDoc(doc(db, 'teams', teamId, 'members', newMainAdminMemberId), { teamRole: 'main_admin' });
-    // Also update team.createdBy if the target has a uid
-    if (targetMember.uid) {
-      await updateDoc(doc(db, 'teams', teamId), { createdBy: targetMember.uid });
-    }
-    // Demote current user's member record
     const myMember = members.find(m => m.email && m.email.toLowerCase() === user.email.toLowerCase());
-    if (myMember) {
-      await updateDoc(doc(db, 'teams', teamId, 'members', myMember.id), { teamRole: 'member' });
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'teams', teamId, 'members', newMainAdminMemberId), { teamRole: 'main_admin' });
+    if (targetMember.uid) {
+      batch.update(doc(db, 'teams', teamId, 'private', 'secrets'), { createdBy: targetMember.uid });
     }
+    if (myMember) {
+      batch.update(doc(db, 'teams', teamId, 'members', myMember.id), { teamRole: 'member' });
+    }
+    await batch.commit();
   };
 
   // ==================== TEAM LOGO ====================
@@ -659,6 +695,7 @@ export function AppProvider({ children }) {
         // Team
         team,
         teamId,
+        teamInviteCode,
         userTeams,
         isPublic,
         hasTeamA,
