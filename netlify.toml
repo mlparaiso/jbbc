@@ -5,6 +5,21 @@
 [functions]
   directory = "netlify/functions"
 
+# Baseline security headers on every response. CSP is scoped to what this app
+# actually calls: Firebase Auth/Firestore/Storage (all under *.googleapis.com),
+# the Firebase auth-helper iframe (*.firebaseapp.com), and the Google favicon
+# icon on the login page (img-src https:). 'unsafe-inline' on style-src is for
+# React's inline `style={{...}}` attributes, used throughout the app — script-src
+# stays strict with no inline/eval allowance. Watch the browser console for CSP
+# violations after the next deploy in case something here needs loosening.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com; frame-src https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+
 # Never cache index.html or service worker — always fetch fresh from server
 [[headers]]
   for = "/index.html"

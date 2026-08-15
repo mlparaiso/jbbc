@@ -12,7 +12,11 @@ import { computeTitle } from './lib/title.js';
 // HTMLRewriter is NOT a global in Netlify's Edge Functions runtime (unlike
 // Cloudflare Workers) — it must be imported from a URL, per Netlify's own
 // edge-functions-examples.netlify.app/example/htmlrewriter reference impl.
-import { HTMLRewriter } from 'https://ghuc.cc/worker-tools/html-rewriter/index.ts';
+// Pinned to a specific release tag (matching Netlify's own documented
+// example) rather than the default branch, so a future upstream change or
+// an unreachable default-branch resolution at deploy time can't silently
+// change this function's behavior or break the build.
+import { HTMLRewriter } from 'https://ghuc.cc/worker-tools/html-rewriter@v0.1.0-pre.17/index.ts';
 
 export default async (request, context) => {
   const response = await context.next();
@@ -20,19 +24,20 @@ export default async (request, context) => {
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('text/html')) return response;
 
-  let title;
+  // This whole block only mutates the <head> tags below — it must never be
+  // able to break the underlying page. If title computation or HTMLRewriter
+  // (a third-party import) throws for any reason, fall back to the original,
+  // unmodified response, which is always safe to serve as-is (just without
+  // the rewritten title). Note: this can only catch a *synchronous* failure —
+  // HTMLRewriter.transform() returns immediately and does its actual parsing
+  // lazily as the response body streams out, so a failure during that later,
+  // async phase is not something a try/catch around this call can observe.
+  // There's no code-level fix for that; it's an inherent limit of wrapping a
+  // streaming third-party transform in a synchronous try/catch.
   try {
-    title = computeTitle(new URL(request.url));
-  } catch {
-    return response;
-  }
-  if (!title) return response;
+    const title = computeTitle(new URL(request.url));
+    if (!title) return response;
 
-  // This whole block only mutates the <head> tags above — it must never be
-  // able to break the underlying page. If HTMLRewriter (a third-party import)
-  // throws for any reason, fall back to the original, unmodified response,
-  // which is always safe to serve as-is (just without the rewritten title).
-  try {
     return new HTMLRewriter()
       .on('title', {
         element(element) {

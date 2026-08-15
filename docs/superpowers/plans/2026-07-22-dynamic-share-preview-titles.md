@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Historical record, not living documentation:** this plan predates several follow-up fixes to
+> `netlify/edge-functions/og-title.js` and `netlify/edge-functions/lib/title.js` (the `try/catch` +
+> `onError: 'bypass'` fail-safe from commit `a28964c`, a pinned `HTMLRewriter` import version, an
+> anchored lineup-path regex, and a shared year-bound check on both parsing paths — see an app-wide
+> code review dated 2026-08-15). The embedded code blocks below were updated once (commit `fef22d9`)
+> but have drifted again since. **Treat the actual source files as ground truth**, not this doc.
+
 **Goal:** Make public lineup and monthly-schedule share links show a specific, date-based title (`Worship Schedule - July 26, 2026`) in chat-app link previews, instead of the generic "Worship Schedule" title, by deriving the date entirely from the URL and rewriting the response HTML at the CDN edge.
 
 **Architecture:** A Netlify Edge Function registered on `/team/*` calls `context.next()` to get the real `index.html` response, computes a title from the request URL (no database lookups — the date is already encoded in the lineup ID or the `?year=&month=` query params), and uses the Deno-global `HTMLRewriter` to replace `<title>`, `<meta property="og:title">`, and `<meta name="twitter:title">` before returning the response. The URL-parsing/title-formatting logic lives in its own plain-JS module so it can be unit-verified with plain Node, independent of the Deno-only edge runtime.
