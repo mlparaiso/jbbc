@@ -1,42 +1,12 @@
 // Netlify serverless function — sends a welcome email when a user signs in for the first time
 // Called by AppContext after the first Google sign-in (new user)
+import { handleEmailRequest, sendResendEmail, escapeHtml } from './lib/sendEmail.js';
 
-export default async (req) => {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+export default async (req) => handleEmailRequest(req, async ({ body, auth, apiKey }) => {
+  const { toName } = body;
+  const toEmail = auth.email; // verified caller — never client-supplied
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { toEmail, toName } = body;
-
-  if (!toEmail) {
-    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Email service not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const firstName = toName ? toName.split(' ')[0] : 'there';
+  const firstName = toName ? escapeHtml(String(toName).split(' ')[0]) : 'there';
   const appUrl = 'https://worshipschedule.netlify.app';
 
   const html = `
@@ -111,7 +81,7 @@ export default async (req) => {
 
               <p style="margin:0;font-size:12px;color:#d1d5db;line-height:1.6;text-align:center;">
                 Worship Schedule · Made for church music teams<br />
-                This email was sent to ${toEmail}
+                This email was sent to ${escapeHtml(toEmail)}
               </p>
             </td>
           </tr>
@@ -122,43 +92,15 @@ export default async (req) => {
 </body>
 </html>`;
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Worship Schedule <onboarding@resend.dev>',
-        to: [toEmail],
-        subject: `Welcome to Worship Schedule, ${firstName}! 🙏`,
-        html,
-      }),
-    });
+  const data = await sendResendEmail(apiKey, {
+    from: 'Worship Schedule <onboarding@resend.dev>',
+    to: [toEmail],
+    subject: `Welcome to Worship Schedule, ${firstName}! 🙏`,
+    html,
+  });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error('Resend error:', data);
-      return new Response(JSON.stringify({ error: data.message || 'Email send failed' }), {
-        status: res.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, id: data.id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('Function error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-};
+  return { success: true, id: data.id };
+});
 
 export const config = {
   path: '/api/send-signup-welcome',

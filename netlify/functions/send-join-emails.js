@@ -1,44 +1,43 @@
 // Netlify serverless function — sends two emails when someone joins a team:
 // 1. Welcome email to the person who joined
 // 2. Notification email to the team admin
+import { handleEmailRequest, sendResendEmail, escapeHtml, sanitizeScheduleUrl } from './lib/sendEmail.js';
 
-export default async (req) => {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+const PROJECT_ID = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+
+// Reads the team's public doc straight from the Firestore REST API — no
+// credentials needed, since firestore.rules already makes this doc world-
+// readable. Used so `teamName`/`adminEmail` come from the real, authoritative
+// team record rather than being trusted verbatim from the request body.
+async function fetchPublicTeam(teamId) {
+  if (!PROJECT_ID || !teamId) return null;
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/teams/${encodeURIComponent(teamId)}`
+  );
+  if (!res.ok) return null;
+  const doc = await res.json();
+  const fields = doc.fields || {};
+  return {
+    name: fields.name?.stringValue || null,
+    contactEmail: fields.contactEmail?.stringValue || null,
+  };
+}
+
+export default async (req) => handleEmailRequest(req, async ({ body, auth, apiKey }) => {
+  const { teamId, scheduleUrl } = body;
+  const joinerEmail = auth.email; // verified caller — never client-supplied
+  const joinerName = auth.email.split('@')[0];
+
+  const team = await fetchPublicTeam(teamId);
+  if (!team) {
+    const err = new Error('Team not found');
+    err.status = 400;
+    throw err;
   }
-
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { joinerEmail, joinerName, adminEmail, adminName, teamName, scheduleUrl } = body;
-
-  if (!joinerEmail || !teamName) {
-    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Email service not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const joinerFirst = joinerName ? joinerName.split(' ')[0] : 'there';
-  const adminFirst = adminName ? adminName.split(' ')[0] : 'Admin';
+  const teamName = escapeHtml(team.name || 'your team');
+  const adminEmail = team.contactEmail || null;
+  const joinerFirst = escapeHtml(joinerName);
+  const safeUrl = sanitizeScheduleUrl(scheduleUrl);
 
   // ── Email 1: Welcome to the person who joined ─────────────────────────────
   const joinerHtml = `
@@ -67,7 +66,7 @@ export default async (req) => {
             <td style="padding:32px;">
               <p style="margin:0 0 12px;font-size:16px;color:#374151;font-weight:600;">Hi ${joinerFirst}! 👋</p>
               <p style="margin:0 0 20px;font-size:15px;color:#6b7280;line-height:1.6;">
-                You've successfully joined <strong style="color:#4263eb;">${teamName}</strong> on Worship Schedule. 
+                You've successfully joined <strong style="color:#4263eb;">${teamName}</strong> on Worship Schedule.
                 You can now view the team's upcoming worship lineups and schedule.
               </p>
 
@@ -94,26 +93,26 @@ export default async (req) => {
                 </tr>
               </table>
 
-              ${scheduleUrl ? `
+              ${safeUrl ? `
               <!-- CTA Button -->
               <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td style="background:#4263eb;border-radius:10px;">
-                    <a href="${scheduleUrl}" style="display:inline-block;padding:13px 30px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:-0.3px;">
+                    <a href="${safeUrl}" style="display:inline-block;padding:13px 30px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:-0.3px;">
                       View Team Schedule →
                     </a>
                   </td>
                 </tr>
               </table>
               <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Schedule link:</p>
-              <p style="margin:0 0 24px;font-size:12px;color:#4263eb;word-break:break-all;">${scheduleUrl}</p>
+              <p style="margin:0 0 24px;font-size:12px;color:#4263eb;word-break:break-all;">${safeUrl}</p>
               ` : ''}
 
               <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 20px;" />
 
               <p style="margin:0;font-size:12px;color:#d1d5db;line-height:1.6;text-align:center;">
                 Worship Schedule · Made for church music teams<br />
-                This email was sent to ${joinerEmail}
+                This email was sent to ${escapeHtml(joinerEmail)}
               </p>
             </td>
           </tr>
@@ -149,7 +148,7 @@ export default async (req) => {
           <!-- Body -->
           <tr>
             <td style="padding:32px;">
-              <p style="margin:0 0 12px;font-size:16px;color:#374151;">Hi ${adminFirst} 👋,</p>
+              <p style="margin:0 0 12px;font-size:16px;color:#374151;">Hi 👋,</p>
               <p style="margin:0 0 20px;font-size:15px;color:#6b7280;line-height:1.6;">
                 Someone just joined your worship team on <strong style="color:#4263eb;">Worship Schedule</strong>.
               </p>
@@ -161,12 +160,8 @@ export default async (req) => {
                     <p style="margin:0 0 12px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">New Member</p>
                     <table width="100%" cellpadding="0" cellspacing="4">
                       <tr>
-                        <td style="font-size:13px;color:#6b7280;width:80px;padding:4px 0;">Name</td>
-                        <td style="font-size:14px;font-weight:700;color:#1f2937;">${joinerName || 'Unknown'}</td>
-                      </tr>
-                      <tr>
                         <td style="font-size:13px;color:#6b7280;padding:4px 0;">Email</td>
-                        <td style="font-size:14px;color:#4263eb;">${joinerEmail}</td>
+                        <td style="font-size:14px;color:#4263eb;">${escapeHtml(joinerEmail)}</td>
                       </tr>
                       <tr>
                         <td style="font-size:13px;color:#6b7280;padding:4px 0;">Team</td>
@@ -185,7 +180,7 @@ export default async (req) => {
 
               <p style="margin:0;font-size:12px;color:#d1d5db;line-height:1.6;text-align:center;">
                 Worship Schedule · Made for church music teams<br />
-                This email was sent to ${adminEmail}
+                This email was sent to ${escapeHtml(adminEmail)}
               </p>
             </td>
           </tr>
@@ -196,74 +191,24 @@ export default async (req) => {
 </body>
 </html>` : null;
 
-  try {
-    const sends = [];
+  await sendResendEmail(apiKey, {
+    from: 'Worship Schedule <onboarding@resend.dev>',
+    to: [joinerEmail],
+    subject: `You joined ${team.name || 'your team'} on Worship Schedule 🎶`,
+    html: joinerHtml,
+  });
 
-    // Send to joiner
-    sends.push(
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Worship Schedule <onboarding@resend.dev>',
-          to: [joinerEmail],
-          subject: `You joined ${teamName} on Worship Schedule 🎶`,
-          html: joinerHtml,
-        }),
-      })
-    );
-
-    // Send to admin (if we have their email)
-    if (adminEmail && adminHtml) {
-      sends.push(
-        fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'Worship Schedule <onboarding@resend.dev>',
-            to: [adminEmail],
-            subject: `${joinerName || 'Someone'} joined ${teamName} 👤`,
-            html: adminHtml,
-          }),
-        })
-      );
-    }
-
-    const results = await Promise.all(sends);
-    const errors = [];
-    for (const r of results) {
-      if (!r.ok) {
-        const d = await r.json();
-        errors.push(d.message || 'Email send failed');
-      }
-    }
-
-    if (errors.length > 0) {
-      console.error('Resend errors:', errors);
-      return new Response(JSON.stringify({ error: errors.join('; ') }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('Function error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+  if (adminEmail && adminHtml) {
+    await sendResendEmail(apiKey, {
+      from: 'Worship Schedule <onboarding@resend.dev>',
+      to: [adminEmail],
+      subject: `${joinerName} joined ${team.name || 'your team'} 👤`,
+      html: adminHtml,
     });
   }
-};
+
+  return { success: true };
+});
 
 export const config = {
   path: '/api/send-join-emails',

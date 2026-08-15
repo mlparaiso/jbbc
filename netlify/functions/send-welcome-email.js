@@ -1,42 +1,24 @@
 // Netlify serverless function — sends welcome email via Resend when a team is created
 // Called by AppContext after createTeam() succeeds
+import { handleEmailRequest, sendResendEmail, escapeHtml, sanitizeScheduleUrl } from './lib/sendEmail.js';
 
-export default async (req) => {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+export default async (req) => handleEmailRequest(req, async ({ body, auth, apiKey }) => {
+  const { toName, teamName, inviteCode, scheduleUrl } = body;
+  // The recipient is always the verified, signed-in caller — never a
+  // client-supplied address — so this endpoint can't be used to spam an
+  // arbitrary address even with a valid token.
+  const toEmail = auth.email;
+
+  if (!teamName || !inviteCode) {
+    const err = new Error('Missing required fields');
+    err.status = 400;
+    throw err;
   }
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { toEmail, toName, teamName, inviteCode, scheduleUrl } = body;
-
-  if (!toEmail || !teamName || !inviteCode) {
-    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Email service not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const firstName = toName ? toName.split(' ')[0] : 'there';
+  const firstName = toName ? escapeHtml(String(toName).split(' ')[0]) : 'there';
+  const safeTeamName = escapeHtml(teamName);
+  const safeInviteCode = escapeHtml(inviteCode);
+  const safeUrl = sanitizeScheduleUrl(scheduleUrl);
 
   const html = `
 <!DOCTYPE html>
@@ -64,7 +46,7 @@ export default async (req) => {
             <td style="padding:32px;">
               <p style="margin:0 0 8px;font-size:16px;color:#374151;">Hi ${firstName} 👋,</p>
               <p style="margin:0 0 20px;font-size:15px;color:#6b7280;line-height:1.6;">
-                Your worship team has been created on <strong style="color:#4263eb;">Worship Schedule</strong>. 
+                Your worship team has been created on <strong style="color:#4263eb;">Worship Schedule</strong>.
                 You're all set to build lineups, assign instruments, and share your schedule with the team.
               </p>
 
@@ -76,12 +58,12 @@ export default async (req) => {
                     <table width="100%" cellpadding="0" cellspacing="4">
                       <tr>
                         <td style="font-size:13px;color:#6b7280;width:120px;padding:4px 0;">Team Name</td>
-                        <td style="font-size:14px;font-weight:700;color:#1f2937;">${teamName}</td>
+                        <td style="font-size:14px;font-weight:700;color:#1f2937;">${safeTeamName}</td>
                       </tr>
                       <tr>
                         <td style="font-size:13px;color:#6b7280;padding:4px 0;">Invite Code</td>
                         <td>
-                          <span style="display:inline-block;background:#4263eb;color:#ffffff;font-weight:700;font-size:15px;letter-spacing:2px;padding:4px 12px;border-radius:6px;">${inviteCode}</span>
+                          <span style="display:inline-block;background:#4263eb;color:#ffffff;font-weight:700;font-size:15px;letter-spacing:2px;padding:4px 12px;border-radius:6px;">${safeInviteCode}</span>
                         </td>
                       </tr>
                     </table>
@@ -91,11 +73,12 @@ export default async (req) => {
 
               <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">Share the invite code with your worship team members so they can join and view the schedule:</p>
 
+              ${safeUrl ? `
               <!-- CTA Button -->
               <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td style="background:#4263eb;border-radius:10px;">
-                    <a href="${scheduleUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:-0.3px;">
+                    <a href="${safeUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:-0.3px;">
                       View Your Schedule →
                     </a>
                   </td>
@@ -103,13 +86,14 @@ export default async (req) => {
               </table>
 
               <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Or copy this link:</p>
-              <p style="margin:0 0 24px;font-size:12px;color:#4263eb;word-break:break-all;">${scheduleUrl}</p>
+              <p style="margin:0 0 24px;font-size:12px;color:#4263eb;word-break:break-all;">${safeUrl}</p>
+              ` : ''}
 
               <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 20px;" />
 
               <p style="margin:0;font-size:12px;color:#d1d5db;line-height:1.6;text-align:center;">
                 Worship Schedule · Made for church music teams<br />
-                This email was sent to ${toEmail}
+                This email was sent to ${escapeHtml(toEmail)}
               </p>
             </td>
           </tr>
@@ -120,43 +104,15 @@ export default async (req) => {
 </body>
 </html>`;
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Worship Schedule <onboarding@resend.dev>',
-        to: [toEmail],
-        subject: `Your team "${teamName}" is ready! 🎵`,
-        html,
-      }),
-    });
+  const data = await sendResendEmail(apiKey, {
+    from: 'Worship Schedule <onboarding@resend.dev>',
+    to: [toEmail],
+    subject: `Your team "${teamName}" is ready! 🎵`,
+    html,
+  });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error('Resend error:', data);
-      return new Response(JSON.stringify({ error: data.message || 'Email send failed' }), {
-        status: res.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, id: data.id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('Function error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-};
+  return { success: true, id: data.id };
+});
 
 export const config = {
   path: '/api/send-welcome-email',
