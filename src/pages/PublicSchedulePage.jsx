@@ -60,7 +60,7 @@ export default function PublicSchedulePage() {
           const d = new Date(l.date + 'T00:00:00');
           return d.getFullYear() === year && d.getMonth() + 1 === selectedMonth;
         })
-        .sort((a, b) => a.date.localeCompare(b.date))
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
     : [];
 
   const getMemberName = (id) => {

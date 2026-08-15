@@ -98,7 +98,7 @@ function MemberForm({ initial, onSave, onCancel }) {
 }
 
 export default function MembersPage() {
-  const { members, isAdmin, canManageLineups, isMainAdmin, isCoAdmin, myRole, addMember, updateMember, deleteMember, updateMemberRole } = useApp();
+  const { user, members, isAdmin, canManageLineups, isMainAdmin, isCoAdmin, myRole, addMember, updateMember, deleteMember, updateMemberRole } = useApp();
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterAccess, setFilterAccess] = useState('');
@@ -117,9 +117,12 @@ export default function MembersPage() {
   const teamA = filtered.filter(m => m.isTeamA);
   const others = filtered.filter(m => !m.isTeamA);
 
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Remove ${name} from the team? This cannot be undone.`)) {
-      deleteMember(id);
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Remove ${name} from the team? This cannot be undone.`)) return;
+    try {
+      await deleteMember(id);
+    } catch (e) {
+      alert(e.message || 'Failed to remove member. Please try again.');
     }
   };
 
@@ -150,14 +153,26 @@ export default function MembersPage() {
       return (
         <MemberForm
           initial={m}
-          onSave={(data) => { updateMember(m.id, data); setEditId(null); }}
+          onSave={async (data) => {
+            try {
+              await updateMember(m.id, data);
+              setEditId(null);
+            } catch (e) {
+              alert(e.message || 'Failed to save member. Please try again.');
+            }
+          }}
           onCancel={() => setEditId(null)}
         />
       );
     }
 
     const teamRole = m.teamRole || 'member';
-    const canChangeThisRole = canManageLineups && (
+    const isSelf = !!(user?.email && m.email && user.email.toLowerCase() === m.email.toLowerCase());
+    // A main_admin changing their own role away from main_admin would leave
+    // the team with no main_admin at all — there's currently no UI flow that
+    // atomically hands the role to someone else while doing this, so block
+    // it outright rather than risk an unrecoverable lockout.
+    const canChangeThisRole = canManageLineups && !(isSelf && teamRole === 'main_admin') && (
       isMainAdmin ? true : isCoAdmin && teamRole !== 'main_admin'
     );
 
@@ -193,7 +208,9 @@ export default function MembersPage() {
               ))}
             </select>
           ) : (
-            <TeamRoleBadge role={teamRole} />
+            <span title={isSelf && teamRole === 'main_admin' ? "You can't change your own Main Admin role here" : undefined}>
+              <TeamRoleBadge role={teamRole} />
+            </span>
           )}
           {canManageLineups && (
             <>
@@ -259,7 +276,14 @@ export default function MembersPage() {
       {canManageLineups && showAdd && (
         <div className="mb-4">
           <MemberForm
-            onSave={(data) => { addMember({ ...data, teamRole: 'member' }); setShowAdd(false); }}
+            onSave={async (data) => {
+              try {
+                await addMember({ ...data, teamRole: 'member' });
+                setShowAdd(false);
+              } catch (e) {
+                alert(e.message || 'Failed to add member. Please try again.');
+              }
+            }}
             onCancel={() => setShowAdd(false)}
           />
         </div>

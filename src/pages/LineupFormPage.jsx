@@ -271,6 +271,8 @@ export default function LineupFormPage() {
 
   const [form, setForm] = useState(existing ? buildFormFromLineup(existing, instrumentSlots) : emptyForm);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [templateApplied, setTemplateApplied] = useState(false);
   const [showSaveTemplatePanel, setShowSaveTemplatePanel] = useState(false);
@@ -446,6 +448,20 @@ export default function LineupFormPage() {
     m.roles.includes(ROLE_CATEGORIES.BACK_UP) || m.roles.includes(ROLE_CATEGORIES.VOCALIST)
   ));
 
+  // Ensures a selector's option list always includes whatever is currently
+  // selected, even if a category filter would otherwise hide it (a member
+  // was recategorized since this lineup was saved) — falling back to a
+  // synthetic "(Removed member)" placeholder if the id no longer resolves to
+  // any member at all (deleted). Without this, an orphaned assignment is
+  // invisible in the edit UI yet still silently re-persisted on every save.
+  const withOrphaned = (eligible, ids) => {
+    const idList = Array.isArray(ids) ? ids : (ids ? [ids] : []);
+    const missing = idList
+      .filter(id => id && !eligible.some(m => m.id === id))
+      .map(id => members.find(m => m.id === id) || { id, name: '(Removed member)' });
+    return missing.length ? [...eligible, ...missing] : eligible;
+  };
+
   // Build the full set of all currently assigned member IDs across every slot.
   // Used to disable already-assigned members in other selectors.
   const nonWlAssignedIds = new Set([
@@ -567,17 +583,25 @@ export default function LineupFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.date) return alert('Please select a date.');
-    if (isEdit) {
-      await updateLineup(id, form);
-      setSaved(true);
-      // After editing, go back to the lineup detail page
-      setTimeout(() => navigate(`/lineup/${id}`), 500);
-    } else {
-      const newId = await addLineup(form);
-      setSaved(true);
-      // After creating, go to the new lineup's detail page
-      const targetId = newId || `lineup-${form.date}`;
-      setTimeout(() => navigate(`/lineup/${targetId}`), 500);
+    setSaving(true);
+    setSaveError('');
+    try {
+      if (isEdit) {
+        await updateLineup(id, form);
+        setSaved(true);
+        // After editing, go back to the lineup detail page
+        setTimeout(() => navigate(`/lineup/${id}`), 500);
+      } else {
+        const newId = await addLineup(form);
+        setSaved(true);
+        // After creating, go to the new lineup's detail page
+        const targetId = newId || `lineup-${form.date}`;
+        setTimeout(() => navigate(`/lineup/${targetId}`), 500);
+      }
+    } catch (err) {
+      setSaveError('Failed to save. Please check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -594,12 +618,16 @@ export default function LineupFormPage() {
         <button
           type="submit"
           form="lineup-form"
-          disabled={saved}
-          className={`btn-primary text-sm py-1.5 px-4 flex-shrink-0 ${saved ? 'opacity-70' : ''}`}
+          disabled={saved || saving}
+          className={`btn-primary text-sm py-1.5 px-4 flex-shrink-0 ${(saved || saving) ? 'opacity-70' : ''}`}
         >
-          {saved ? '✅ Saved!' : isEdit ? 'Save' : 'Create'}
+          {saved ? '✅ Saved!' : saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
         </button>
       </div>
+
+      {saveError && (
+        <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 mb-4">{saveError}</p>
+      )}
 
       <form id="lineup-form" onSubmit={handleSubmit} className="space-y-6">
 
@@ -705,7 +733,7 @@ export default function LineupFormPage() {
                 <select className="input" value={wl.memberId}
                   onChange={e => updateWL(i, 'memberId', e.target.value)}>
                   <option value="">— Select Member —</option>
-                  {vocalists.map(m => {
+                  {withOrphaned(vocalists, wl.memberId).map(m => {
                     const isDisabled = m.id !== wl.memberId && (form.isTeamA ? nonWlAssignedIds.has(m.id) : allAssignedIds.has(m.id));
                     return (
                       <option key={m.id} value={m.id} disabled={isDisabled}>
@@ -741,7 +769,7 @@ export default function LineupFormPage() {
         <div className="card">
           <MultiSelect
             label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><Music4 size={14} className="text-primary-500" /> Back Ups</span>}
-            memberOptions={backUpVocalists}
+            memberOptions={withOrphaned(backUpVocalists, form.backUps)}
             selected={form.backUps}
             onChange={val => setForm(f => ({ ...f, backUps: val }))}
             disabledIds={disabledFor(form.backUps)}
@@ -774,9 +802,12 @@ export default function LineupFormPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {coreInstrumentSlots.map(slot => {
               const selected = form.instrumentAssignments[slot.id] || [];
-              const eligibleMembers = slot.category
-                ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(slot.category))
-                : members;
+              const eligibleMembers = withOrphaned(
+                slot.category
+                  ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(slot.category))
+                  : members,
+                selected,
+              );
               return slot.multiSelect ? (
                 <MultiSelect key={slot.id} label={slot.label} memberOptions={eligibleMembers}
                   selected={selected} onChange={v => updateInstrumentSlot(slot.id, v)}
@@ -808,9 +839,12 @@ export default function LineupFormPage() {
           <div className="card">
             <SingleSelect
               label={<span className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide mb-1"><SlidersHorizontal size={14} className="text-primary-500" /> {soundEngineerSlot.label}</span>}
-              memberOptions={soundEngineerSlot.category
-                ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(soundEngineerSlot.category))
-                : members}
+              memberOptions={withOrphaned(
+                soundEngineerSlot.category
+                  ? members.filter(m => Array.isArray(m.roles) && m.roles.includes(soundEngineerSlot.category))
+                  : members,
+                (form.instrumentAssignments.soundEngineer || [])[0] || null,
+              )}
               selected={(form.instrumentAssignments.soundEngineer || [])[0] || ''}
               onChange={v => updateInstrumentSlot('soundEngineer', v ? [v] : [])}
               disabledIds={disabledFor((form.instrumentAssignments.soundEngineer || [])[0] || null)}

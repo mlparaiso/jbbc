@@ -56,9 +56,12 @@ function getAlerts(lineup, instrumentSlots) {
     alerts.push('No practice date');
   }
 
-  // 5. Incomplete band — require k1, bass, drums
-  const coreRoles = ['k1', 'bass', 'drums'];
-  const missingCore = coreRoles.some((role) => !(assignments[role]?.length > 0));
+  // 5. Incomplete band — require k1, bass, drums, but only while those slots
+  // still exist (an admin can rename/remove instrument slots via Roles &
+  // Instruments settings; checking a slot id that no longer exists would
+  // permanently flag every lineup with no way to clear the alert).
+  const coreRoles = ['k1', 'bass', 'drums'].filter((id) => instrumentSlots.some((s) => s.id === id));
+  const missingCore = coreRoles.length > 0 && coreRoles.some((role) => !(assignments[role]?.length > 0));
   if (missingCore) alerts.push('Incomplete band');
 
   return alerts;

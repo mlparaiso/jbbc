@@ -84,12 +84,18 @@ export default function SchedulePage() {
   const [copyMembers, setCopyMembers] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generateDone, setGenerateDone] = useState(false);
+  const [generateError, setGenerateError] = useState('');
+  const [themeSaveError, setThemeSaveError] = useState('');
+  const [savingTheme, setSavingTheme] = useState(false);
 
   const MIN_YEAR = 2026;
   const MIN_MONTH = 1;
   const atMin = year === MIN_YEAR && month === MIN_MONTH;
 
-  const todayStr = now.toISOString().slice(0, 10);
+  // Local date, not UTC — everything else in this file (getSundaysInMonth,
+  // shortDate, etc.) deliberately stays in local time; toISOString() here
+  // would make "today" lag by hours in UTC+ timezones like Asia/Manila.
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   const monthLineups = lineups
     .filter((l) => {
@@ -113,9 +119,10 @@ export default function SchedulePage() {
     else goToMonth(year, month + 1);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (generating || generateDone) return;
     setGenerating(true);
+    setGenerateError('');
 
     const targetSundays = getSundaysInMonth(year, month);
     const toAdd = [];
@@ -131,11 +138,13 @@ export default function SchedulePage() {
       const copyCount = Math.min(sourceLineups.length, targetSundays.length);
       for (let i = 0; i < copyCount; i++) {
         const src = sourceLineups[i];
-        // Strip legacy instrument fields from the spread so a copied lineup never
-        // carries stale `instruments`/`soundEngineer` keys alongside the new
-        // `instrumentAssignments` map (see normalizeLineupInstruments for the shim
-        // that reads both shapes).
-        const { id: _srcId, instruments: _legacyInstruments, soundEngineer: _legacySoundEngineer, ...srcRest } = src;
+        // Strip legacy instrument fields, and setListUrl, from the spread:
+        // instruments/soundEngineer so a copied lineup never carries stale
+        // fields alongside the new instrumentAssignments map (see
+        // normalizeLineupInstruments), and setListUrl because it's a link to
+        // a specific service's song list — it must never carry forward to a
+        // different date unless the admin explicitly opts into copying songs.
+        const { id: _srcId, instruments: _legacyInstruments, soundEngineer: _legacySoundEngineer, setListUrl: _srcSetListUrl, ...srcRest } = src;
         toAdd.push({
           ...srcRest,
           date: targetSundays[i],
@@ -150,6 +159,7 @@ export default function SchedulePage() {
           backUps: copyMembers ? (src.backUps || []) : [],
           instrumentAssignments: copyMembers ? normalizeLineupInstruments(src, instrumentSlots) : {},
           songs: copySongs ? (src.songs || []) : [],
+          setListUrl: copySongs ? (src.setListUrl || '') : '',
           notes: src.notes || '',
         });
       }
@@ -209,13 +219,18 @@ export default function SchedulePage() {
       }
     }
 
-    addLineups(toAdd);
-    setGenerating(false);
-    setGenerateDone(true);
-    setTimeout(() => {
-      setShowGeneratePanel(false);
-      setGenerateDone(false);
-    }, 1000);
+    try {
+      await addLineups(toAdd);
+      setGenerateDone(true);
+      setTimeout(() => {
+        setShowGeneratePanel(false);
+        setGenerateDone(false);
+      }, 1000);
+    } catch (e) {
+      setGenerateError('Failed to generate schedule. Please try again.');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
@@ -354,7 +369,6 @@ export default function SchedulePage() {
                   </button>
                 )}
               </div>
-              {false && null /* theme name is now inline above */}
               {monthBibleVerse && (
                 <div className="mt-2 pt-2 border-t border-primary-100">
                   <div className="flex items-start gap-1.5">
@@ -384,18 +398,38 @@ export default function SchedulePage() {
                 value={verseInput}
                 onChange={e => setVerseInput(e.target.value)}
               />
+              {themeSaveError && <p className="text-xs text-red-500">{themeSaveError}</p>}
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    monthLineups.forEach(l => updateLineup(l.id, { ...l, theme: themeInput, bibleVerse: verseInput }));
-                    setEditingTheme(false);
+                  disabled={savingTheme}
+                  onClick={async () => {
+                    setSavingTheme(true);
+                    setThemeSaveError('');
+                    try {
+                      // Only the fields actually being edited are sent, normalized
+                      // through instrumentAssignments — updateLineup unconditionally
+                      // clears the legacy instruments/soundEngineer fields on every
+                      // write, so passing the raw (possibly legacy-shaped) snapshot
+                      // object here would silently wipe a lineup's instrument
+                      // assignments the moment its theme/verse is edited.
+                      await Promise.all(monthLineups.map(l => updateLineup(l.id, {
+                        theme: themeInput,
+                        bibleVerse: verseInput,
+                        instrumentAssignments: normalizeLineupInstruments(l, instrumentSlots),
+                      })));
+                      setEditingTheme(false);
+                    } catch (e) {
+                      setThemeSaveError('Failed to save. Please try again.');
+                    } finally {
+                      setSavingTheme(false);
+                    }
                   }}
-                  className="btn-primary text-xs py-1 px-3 flex items-center gap-1"
+                  className="btn-primary text-xs py-1 px-3 flex items-center gap-1 disabled:opacity-60"
                 >
-                  <Check size={12} /> Save
+                  <Check size={12} /> {savingTheme ? 'Saving…' : 'Save'}
                 </button>
                 <button
-                  onClick={() => setEditingTheme(false)}
+                  onClick={() => { setEditingTheme(false); setThemeSaveError(''); }}
                   className="btn-secondary text-xs py-1 px-3 flex items-center gap-1"
                 >
                   <X size={12} /> Cancel
@@ -669,6 +703,10 @@ export default function SchedulePage() {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {generateError && (
+                <p className="text-xs text-red-500">{generateError}</p>
               )}
 
               {/* Action buttons */}

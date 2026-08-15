@@ -182,7 +182,7 @@ export default function SongsPage() {
 
   const filteredSongs = useMemo(() => {
     return songs.filter((song) => {
-      const matchesSearch = !search.trim() || song.title.toLowerCase().includes(search.trim().toLowerCase());
+      const matchesSearch = !search.trim() || (song.title || '').toLowerCase().includes(search.trim().toLowerCase());
       const matchesLanguage = !languageFilter || song.language === languageFilter;
       const matchesTag = !tagFilter || (song.tags || []).includes(tagFilter);
       return matchesSearch && matchesLanguage && matchesTag;
